@@ -1,0 +1,19 @@
+@import '../../define.scss';
+
+.embedding-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.embedding {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.embedding-svg {
+  width: 100%;
+  height: 100%;
+  background-color: $amber-100;
+}

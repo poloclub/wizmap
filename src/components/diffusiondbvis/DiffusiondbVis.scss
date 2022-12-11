@@ -1,0 +1,27 @@
+@import '../../define.scss';
+
+.diffusiondbvis-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 5px);
+  max-height: 950px;
+  width: 100vw;
+  box-sizing: border-box;
+  overflow-x: hidden;
+
+  position: relative;
+}
+
+.main-app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 800px;
+  height: 800px;
+  border: 1px solid $gray-border;
+  border-radius: 5px;
+  // box-shadow: $shadow-border-light;
+}
