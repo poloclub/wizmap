@@ -15,5 +15,9 @@
 .embedding-svg {
   width: 100%;
   height: 100%;
-  background-color: $amber-100;
+  border-radius: $border-radius;
+}
+
+:global(.prompt-point) {
+  fill: $gray-800;
 }

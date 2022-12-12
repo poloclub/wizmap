@@ -9,8 +9,6 @@
 
 <div class="diffusiondbvis-page">
   <div class="main-app" bind:this={component}>
-    <div calss="view-container">
-      <Embedding />
-    </div>
+    <Embedding />
   </div>
 </div>

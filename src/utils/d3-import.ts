@@ -59,6 +59,8 @@ import { format } from 'd3-format';
 
 import { timeFormat } from 'd3-time-format';
 
+import { randomLcg, randomUniform } from 'd3-random';
+
 export default {
   select,
   selectAll,
@@ -110,5 +112,7 @@ export default {
   arc,
   linkHorizontal,
   linkVertical,
-  path
+  path,
+  randomLcg,
+  randomUniform
 };
