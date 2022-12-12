@@ -2,6 +2,12 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface GridData {
+  grid: number[][];
+  xRange: number[];
+  yRange: number[];
+}
+
 export interface PromptPoint extends Point {
   promptID: number;
   visible: boolean;

@@ -30,7 +30,7 @@ module.exports = {
   plugins: ['svelte3', '@typescript-eslint', 'prettier'],
   ignorePatterns: ['node_modules'],
   rules: {
-    indent: ['error', 2, { SwitchCase: 1 }],
+    indent: 'off',
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
     'prefer-const': ['error'],

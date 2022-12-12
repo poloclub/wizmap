@@ -9,10 +9,15 @@ import {
   scaleBand,
   scalePow,
   scaleOrdinal,
-  scaleLog
+  scaleLog,
+  scaleSequential
 } from 'd3-scale';
 
-import { schemeTableau10, interpolateRainbow } from 'd3-scale-chromatic';
+import {
+  schemeTableau10,
+  interpolateRainbow,
+  interpolateBlues
+} from 'd3-scale-chromatic';
 
 import { lch, hsl, color } from 'd3-color';
 
@@ -61,6 +66,10 @@ import { timeFormat } from 'd3-time-format';
 
 import { randomLcg, randomUniform } from 'd3-random';
 
+import { contours } from 'd3-contour';
+
+import { geoPath } from 'd3-geo';
+
 export default {
   select,
   selectAll,
@@ -72,8 +81,10 @@ export default {
   scalePow,
   scaleOrdinal,
   scaleLog,
+  scaleSequential,
   schemeTableau10,
   interpolateRainbow,
+  interpolateBlues,
   lch,
   hsl,
   color,
@@ -114,5 +125,7 @@ export default {
   linkVertical,
   path,
   randomLcg,
-  randomUniform
+  randomUniform,
+  contours,
+  geoPath
 };

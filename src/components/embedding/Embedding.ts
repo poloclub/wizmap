@@ -1,5 +1,11 @@
 import d3 from '../../utils/d3-import';
-import type { PromptUMAPData, Size, Padding, PromptPoint } from '../my-types';
+import type {
+  PromptUMAPData,
+  Size,
+  Padding,
+  PromptPoint,
+  GridData
+} from '../my-types';
 
 /**
  * Class for the Embedding view
@@ -14,8 +20,10 @@ export class Embedding {
 
   component: HTMLElement;
 
+  // Data
   prompts: string[] = [];
   promptPoints: PromptPoint[] = [];
+  gridData: GridData;
 
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
 
@@ -47,9 +55,15 @@ export class Embedding {
     this.yScale = d3.scaleLinear();
 
     // Initialize the data
+    this.gridData = {
+      grid: [[]],
+      xRange: [],
+      yRange: []
+    };
+
     console.log(this.svgSize);
     this.initData().then(() => {
-      this.drawScatter();
+      this.drawUMAP();
     });
   }
 
@@ -105,6 +119,12 @@ export class Embedding {
 
     // Randomly sample the points before drawing
     this.sampleVisiblePoints(5000);
+
+    // Read the grid data for contour background
+    const gridData = await d3.json<GridData>('/data/umap-grid.json');
+    if (gridData) {
+      this.gridData = gridData;
+    }
   };
 
   /**
@@ -143,16 +163,31 @@ export class Embedding {
   };
 
   /**
-   * Draw a scatter plot for the UMAP.
+   * Visualize the UMAP using a contour in the background and a scatter plot in
+   * the foreground.
    */
-  drawScatter = () => {
-    const scatterGroup = this.svg
+  drawUMAP = () => {
+    const umapGroup = this.svg
       .append('g')
+      .attr('class', 'umap-group')
       .attr(
         'transform',
         `translate(${this.svgPadding.left}, ${this.svgPadding.top})`
       );
 
+    const contourGroup = umapGroup.append('g').attr('class', 'contour-group');
+    const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
+
+    this.drawContour(contourGroup);
+    this.drawScatter(scatterGroup);
+  };
+
+  /**
+   * Draw a scatter plot for the UMAP.
+   */
+  drawScatter = (
+    scatterGroup: d3.Selection<SVGGElement, unknown, null, undefined>
+  ) => {
     // Draw all points
     scatterGroup
       .selectAll('circle.prompt-point')
@@ -162,6 +197,70 @@ export class Embedding {
       .attr('cx', d => this.xScale(d.x))
       .attr('cy', d => this.yScale(d.y))
       .attr('r', 1)
+      .attr('title', d => this.prompts[d.promptID])
       .style('display', d => (d.visible ? 'unset' : 'none'));
+  };
+
+  /**
+   * Draw the KDE contour in the background.
+   */
+  drawContour = (
+    contourGroup: d3.Selection<SVGGElement, unknown, null, undefined>
+  ) => {
+    contourGroup
+      .append('circle')
+      .attr('cx', 200)
+      .attr('cy', 200)
+      .attr('r', 100);
+
+    const gridData1D: number[] = [];
+    for (const row of this.gridData.grid) {
+      for (const item of row) {
+        gridData1D.push(item);
+      }
+    }
+
+    let contours = d3
+      .contours()
+      .size([this.gridData.grid.length, this.gridData.grid[0].length])(
+      gridData1D
+    );
+
+    const contourXScale = d3
+      .scaleLinear()
+      .domain([0, this.gridData.grid.length])
+      .range(this.gridData.xRange);
+
+    const contourYScale = d3
+      .scaleLinear()
+      .domain([0, this.gridData.grid[0].length])
+      .range(this.gridData.yRange);
+
+    contours = contours.map(item => {
+      item.coordinates = item.coordinates.map(coordinates => {
+        return coordinates.map(positions => {
+          return positions.map(point => {
+            return [
+              this.xScale(contourXScale(point[0])),
+              this.yScale(contourYScale(point[1]))
+            ];
+          });
+        });
+      });
+      return item;
+    });
+
+    const colorScale = d3.scaleSequential(
+      d3.extent([0, 0.001, 0.01, 0.1]) as number[],
+      d3.interpolateBlues
+    );
+    contourGroup
+      .selectAll('path')
+      .data(contours)
+      .join('path')
+      .attr('fill', d => colorScale(d.value))
+      .attr('d', d3.geoPath());
+
+    console.log(contours);
   };
 }
