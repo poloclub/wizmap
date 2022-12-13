@@ -4,8 +4,10 @@ import type {
   Size,
   Padding,
   PromptPoint,
-  GridData
+  GridData,
+  QuadtreeNode
 } from '../my-types';
+import { downloadJSON } from '../../utils/utils';
 
 /**
  * Class for the Embedding view
@@ -79,7 +81,7 @@ export class Embedding {
         this.promptPoints.push({
           x: result.xs[i],
           y: result.ys[i],
-          promptID: i,
+          id: i,
           visible: true
         });
       }
@@ -91,13 +93,23 @@ export class Embedding {
     const yRange = d3.extent(this.promptPoints, d => d.y) as [number, number];
 
     // Force the plot to be a square
-    const xLength = xRange[1] - xRange[0];
-    const yLength = yRange[1] - yRange[0];
+    let xLength = xRange[1] - xRange[0];
+    let yLength = yRange[1] - yRange[0];
 
     if (xLength < yLength) {
+      // Leave some padding
+      yRange[0] -= yLength / 50;
+      yRange[1] += yLength / 50;
+      yLength = yRange[1] - yRange[0];
+
       xRange[0] -= (yLength - xLength) / 2;
       xRange[1] += (yLength - xLength) / 2;
     } else {
+      // Leave some padding
+      xRange[0] -= xLength / 50;
+      xRange[1] += xLength / 50;
+      xLength = xRange[1] - xRange[0];
+
       yRange[0] -= (xLength - yLength) / 2;
       yRange[1] += (xLength - yLength) / 2;
     }
@@ -176,10 +188,62 @@ export class Embedding {
       );
 
     const contourGroup = umapGroup.append('g').attr('class', 'contour-group');
+    const rectGroup = umapGroup.append('g').attr('class', 'rect-group');
     const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
 
-    this.drawContour(contourGroup);
-    this.drawScatter(scatterGroup);
+    // this.drawContour(contourGroup);
+    // this.drawScatter(scatterGroup);
+
+    // Draw the quadtree
+    this.drawQuadtree(rectGroup);
+  };
+
+  /**
+   * Initialize a quadtree
+   */
+  drawQuadtree = (
+    rectGroup: d3.Selection<SVGGElement, unknown, null, undefined>
+  ) => {
+    const tree = d3
+      .quadtree<PromptPoint>()
+      .x(d => d.x)
+      .y(d => d.y)
+      .extent([
+        [this.xScale.domain()[0], this.yScale.domain()[0]],
+        [this.xScale.domain()[1], this.yScale.domain()[1]]
+      ])
+      .addAll(this.promptPoints);
+
+    // Collapse the quadtree into an array of rectangles.
+    const nodes: QuadtreeNode[] = [];
+    tree.visit((_, x0, y0, x1, y1) => {
+      const curNode = {
+        x0,
+        x1,
+        y0,
+        y1
+      };
+      nodes.push(curNode);
+    });
+    console.log(nodes);
+
+    // Draw the rectangles
+    rectGroup
+      .selectAll('.node')
+      .data(nodes)
+      .join('rect')
+      .attr('class', 'node')
+      .attr('x', d => this.xScale(d.x0))
+      .attr('y', d => this.yScale(d.y1))
+      .attr('width', d => this.yScale(d.y0) - this.yScale(d.y1))
+      .attr('height', d => this.xScale(d.x1) - this.xScale(d.x0))
+      .style('fill', 'none')
+      .style('stroke', 'gray')
+      .style('stroke-width', 0.2)
+      .style('opacity', 0.9);
+
+    // downloadJSON(tree);
+    console.log(tree);
   };
 
   /**
@@ -197,7 +261,7 @@ export class Embedding {
       .attr('cx', d => this.xScale(d.x))
       .attr('cy', d => this.yScale(d.y))
       .attr('r', 1)
-      .attr('title', d => this.prompts[d.promptID])
+      .attr('title', d => this.prompts[d.id])
       .style('display', d => (d.visible ? 'unset' : 'none'));
   };
 

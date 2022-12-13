@@ -2,6 +2,13 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface QuadtreeNode {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+
 export interface GridData {
   grid: number[][];
   xRange: number[];
@@ -9,7 +16,7 @@ export interface GridData {
 }
 
 export interface PromptPoint extends Point {
-  promptID: number;
+  id: number;
   visible: boolean;
 }
 

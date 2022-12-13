@@ -70,6 +70,8 @@ import { contours } from 'd3-contour';
 
 import { geoPath } from 'd3-geo';
 
+import { quadtree } from 'd3-quadtree';
+
 export default {
   select,
   selectAll,
@@ -127,5 +129,6 @@ export default {
   randomLcg,
   randomUniform,
   contours,
-  geoPath
+  geoPath,
+  quadtree
 };
