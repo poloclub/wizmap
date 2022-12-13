@@ -73,7 +73,7 @@ export class Embedding {
    * Load the UMAP data from json.
    */
   initData = async () => {
-    const result = await d3.json<PromptUMAPData>('/data/umap-50k.json');
+    const result = await d3.json<PromptUMAPData>('/data/umap-60k.json');
     if (result !== undefined) {
       for (let i = 0; i < result.xs.length; i++) {
         // Collect prompts
@@ -130,10 +130,10 @@ export class Embedding {
       ]);
 
     // Randomly sample the points before drawing
-    this.sampleVisiblePoints(5000);
+    this.sampleVisiblePoints(6000);
 
     // Read the grid data for contour background
-    const gridData = await d3.json<GridData>('/data/umap-grid.json');
+    const gridData = await d3.json<GridData>('/data/umap-60k-grid.json');
     if (gridData) {
       this.gridData = gridData;
     }
@@ -191,11 +191,11 @@ export class Embedding {
     const rectGroup = umapGroup.append('g').attr('class', 'rect-group');
     const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
 
-    // this.drawContour(contourGroup);
+    this.drawContour(contourGroup);
     // this.drawScatter(scatterGroup);
 
     // Draw the quadtree
-    this.drawQuadtree(rectGroup);
+    // this.drawQuadtree(rectGroup);
   };
 
   /**
@@ -216,23 +216,25 @@ export class Embedding {
 
     // Collapse the quadtree into an array of rectangles.
     const nodes: QuadtreeNode[] = [];
-    tree.visit((_, x0, y0, x1, y1) => {
-      const curNode = {
-        x0,
-        x1,
-        y0,
-        y1
-      };
-      nodes.push(curNode);
+    tree.visit((cur_node, x0, y0, x1, y1) => {
+      if (cur_node.length === undefined) {
+        const curNode = {
+          x0,
+          x1,
+          y0,
+          y1
+        };
+        nodes.push(curNode);
+      }
     });
     console.log(nodes);
 
     // Draw the rectangles
     rectGroup
-      .selectAll('.node')
+      .selectAll('.quadtree-node')
       .data(nodes)
       .join('rect')
-      .attr('class', 'node')
+      .attr('class', 'quadtree-node')
       .attr('x', d => this.xScale(d.x0))
       .attr('y', d => this.yScale(d.y1))
       .attr('width', d => this.yScale(d.y0) - this.yScale(d.y1))
@@ -284,12 +286,24 @@ export class Embedding {
       }
     }
 
+    // Linear interpolate the levels to determine the thresholds
+    const levels = 12;
+    const thresholds: number[] = [];
+    const minValue = Math.min(...gridData1D);
+    const maxValue = Math.max(...gridData1D);
+    const step = (maxValue - minValue) / levels;
+    for (let i = 0; i < levels; i++) {
+      thresholds.push(minValue + step * i);
+    }
+
     let contours = d3
       .contours()
+      .thresholds(thresholds)
       .size([this.gridData.grid.length, this.gridData.grid[0].length])(
       gridData1D
     );
 
+    // Convert the scale of the generated paths
     const contourXScale = d3
       .scaleLinear()
       .domain([0, this.gridData.grid.length])
@@ -314,10 +328,26 @@ export class Embedding {
       return item;
     });
 
+    // Create a new blue interpolator based on d3.interpolateBlues
+    // (starting from white here)
+    const blues = [
+      '#ffffff',
+      '#deebf7',
+      '#c6dbef',
+      '#9ecae1',
+      '#6baed6',
+      '#4292c6',
+      '#2171b5',
+      '#08519c',
+      '#08306b'
+    ];
+    const blueScale = d3.interpolateRgbBasis(blues);
     const colorScale = d3.scaleSequential(
-      d3.extent([0, 0.001, 0.01, 0.1]) as number[],
-      d3.interpolateBlues
+      d3.extent(thresholds) as number[],
+      d => blueScale(d / 1.3)
     );
+
+    // Draw the contours
     contourGroup
       .selectAll('path')
       .data(contours)

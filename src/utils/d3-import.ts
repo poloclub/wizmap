@@ -21,7 +21,14 @@ import {
 
 import { lch, hsl, color } from 'd3-color';
 
-import { quantize, interpolate } from 'd3-interpolate';
+import {
+  quantize,
+  interpolate,
+  interpolateHsl,
+  interpolateLab,
+  interpolateRgb,
+  interpolateRgbBasis
+} from 'd3-interpolate';
 
 import { max, maxIndex, min, minIndex, extent, sum, bin } from 'd3-array';
 
@@ -87,6 +94,10 @@ export default {
   schemeTableau10,
   interpolateRainbow,
   interpolateBlues,
+  interpolateHsl,
+  interpolateLab,
+  interpolateRgb,
+  interpolateRgbBasis,
   lch,
   hsl,
   color,
