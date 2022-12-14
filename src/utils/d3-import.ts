@@ -15,6 +15,7 @@ import {
 
 import {
   schemeTableau10,
+  schemePastel1,
   interpolateRainbow,
   interpolateBlues
 } from 'd3-scale-chromatic';
@@ -92,6 +93,7 @@ export default {
   scaleLog,
   scaleSequential,
   schemeTableau10,
+  schemePastel1,
   interpolateRainbow,
   interpolateBlues,
   interpolateHsl,

@@ -2,6 +2,28 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface TileDataItem {
+  /**
+   * Node ID
+   */
+  i: number;
+
+  /**
+   * Position [x0, y0, x1, y1]
+   */
+  p: [number, number, number, number];
+
+  /**
+   * Number of points in this tile
+   */
+  s: number;
+
+  /**
+   * Tile level in the quadtree
+   */
+  l: number;
+}
+
 export interface QuadtreeNode {
   x0: number;
   x1: number;
