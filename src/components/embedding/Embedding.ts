@@ -6,9 +6,12 @@ import type {
   PromptPoint,
   GridData,
   QuadtreeNode,
-  TileDataItem
+  LevelTileDataItem,
+  LevelTileMap
 } from '../my-types';
 import { downloadJSON } from '../../utils/utils';
+
+const DATA_SIZE = '60k';
 
 /**
  * Class for the Embedding view
@@ -27,7 +30,7 @@ export class Embedding {
   prompts: string[] = [];
   promptPoints: PromptPoint[] = [];
   gridData: GridData;
-  tileData: TileDataItem[] = [];
+  tileData: LevelTileMap | null = null;
 
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
 
@@ -75,7 +78,9 @@ export class Embedding {
    * Load the UMAP data from json.
    */
   initData = async () => {
-    const result = await d3.json<PromptUMAPData>('/data/umap-60k.json');
+    const result = await d3.json<PromptUMAPData>(
+      `/data/umap-${DATA_SIZE}.json`
+    );
     if (result !== undefined) {
       for (let i = 0; i < result.xs.length; i++) {
         // Collect prompts
@@ -141,8 +146,8 @@ export class Embedding {
     }
 
     // Read the tile data for the topic map
-    const tileData = await d3.json<TileDataItem[]>(
-      '/data/umap-60k-tile-l6.json'
+    const tileData = await d3.json<LevelTileMap>(
+      '/data/umap-60k-level-topics.json'
     );
     if (tileData) {
       this.tileData = tileData;
@@ -202,11 +207,10 @@ export class Embedding {
     const tileGroup = umapGroup.append('g').attr('class', 'tile-group');
     const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
 
-    // this.drawContour(contourGroup);
-    this.drawScatter(scatterGroup);
-    // this.drawQuadtree(rectGroup);
-    console.log(this.tileData);
-    this.drawTopicTiles(tileGroup);
+    this.drawContour(contourGroup);
+    // this.drawScatter(scatterGroup);
+    // this.drawQuadtree(quadRectGroup);
+    // this.drawTopicTiles(tileGroup);
   };
 
   drawTopicTiles = (
@@ -216,17 +220,20 @@ export class Embedding {
     const levelColors = window.structuredClone(d3.schemePastel1) as string[];
     levelColors.reverse();
 
+    const curData = this.tileData!['6'];
+    console.log(curData);
+
     // Draw the rectangles
     tileGroup
       .selectAll('.tile-rect')
-      .data(this.tileData)
+      .data(curData)
       .join('rect')
-      .attr('class', d => `tile-rect tile-rect-${d.l}`)
+      .attr('class', 'tile-rect')
       .attr('x', d => this.xScale(d.p[0]))
       .attr('y', d => this.yScale(d.p[3]))
       .attr('width', d => this.yScale(d.p[1]) - this.yScale(d.p[3]))
       .attr('height', d => this.xScale(d.p[2]) - this.xScale(d.p[0]))
-      .style('fill', d => levelColors[d.l % 9])
+      .style('fill', levelColors[0])
       .style('stroke', 'var(--md-gray-400)')
       .style('stroke-width', 0.4)
       .style('opacity', 0.5);
@@ -279,7 +286,6 @@ export class Embedding {
       .style('opacity', 0.9);
 
     // downloadJSON(tree);
-    console.log(tree);
   };
 
   /**

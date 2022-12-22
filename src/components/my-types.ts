@@ -2,6 +2,15 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface LevelTileMap {
+  [level: string]: LevelTileDataItem[];
+}
+
+export interface LevelTileDataItem {
+  w: [string, number][];
+  p: [number, number, number, number];
+}
+
 export interface TileDataItem {
   /**
    * Node ID

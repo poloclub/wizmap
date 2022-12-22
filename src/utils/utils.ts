@@ -86,6 +86,7 @@ export const downloadJSON = (
 
   if (dlAnchorElem === null) {
     myDlAnchorElem = document.createElement('a');
+    myDlAnchorElem.classList.add('download-anchor');
     myDlAnchorElem.style.display = 'none';
     needToRemoveAnchor = true;
   }
