@@ -433,8 +433,8 @@ export class Embedding {
     }
 
     const k = Math.min(
-      this.svgSize.width / (x1 - x0),
-      this.svgSize.height / (y1 - y0)
+      this.svgFullSize.width / (x1 - x0),
+      this.svgFullSize.height / (y1 - y0)
     );
 
     this.svg
@@ -447,7 +447,7 @@ export class Embedding {
         ])
       );
 
-    // Double click to reset zoom
+    // Double click to reset zoom to the initial viewpoint
     this.svg.on('dblclick', () => {
       this.svg
         .transition()
