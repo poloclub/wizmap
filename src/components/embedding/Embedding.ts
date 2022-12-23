@@ -19,11 +19,17 @@ const DATA_SIZE = '60k';
 
 export class Embedding {
   svg: d3.Selection<HTMLElement, unknown, null, undefined>;
+  /** The size of the BBox of the SVG element */
+  svgFullSize: Size;
+  /** The size of the drawing space of the SVG element */
   svgSize: Size;
   svgPadding: Padding;
+
+  zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
+  // initialZoom
+
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
-
   component: HTMLElement;
 
   // Data
@@ -45,11 +51,11 @@ export class Embedding {
     // Initialize the SVG
     this.svg = d3.select(this.component).select('.embedding-svg');
 
-    this.svgSize = { width: 0, height: 0 };
+    this.svgFullSize = { width: 0, height: 0 };
     const svgBBox = this.svg.node()?.getBoundingClientRect();
     if (svgBBox !== undefined) {
-      this.svgSize.width = svgBBox.width;
-      this.svgSize.height = svgBBox.height;
+      this.svgFullSize.width = svgBBox.width;
+      this.svgFullSize.height = svgBBox.height;
     }
 
     this.svgPadding = {
@@ -58,6 +64,13 @@ export class Embedding {
       left: 5,
       right: 5
     };
+    this.svgSize = {
+      width:
+        this.svgFullSize.width - this.svgPadding.left - this.svgPadding.right,
+      height:
+        this.svgFullSize.width - this.svgPadding.top - this.svgPadding.bottom
+    };
+
     this.xScale = d3.scaleLinear();
     this.yScale = d3.scaleLinear();
 
@@ -68,7 +81,6 @@ export class Embedding {
       yRange: []
     };
 
-    console.log(this.svgSize);
     this.initData().then(() => {
       this.drawUMAP();
     });
@@ -124,17 +136,11 @@ export class Embedding {
     this.xScale = d3
       .scaleLinear()
       .domain(xRange)
-      .range([
-        0,
-        this.svgSize.width - this.svgPadding.left - this.svgPadding.right
-      ]);
+      .range([0, this.svgSize.width]);
     this.yScale = d3
       .scaleLinear()
       .domain(yRange)
-      .range([
-        this.svgSize.height - this.svgPadding.top - this.svgPadding.bottom,
-        0
-      ]);
+      .range([this.svgSize.height, 0]);
 
     // Randomly sample the points before drawing
     this.sampleVisiblePoints(60000);
@@ -206,6 +212,17 @@ export class Embedding {
     const quadRectGroup = umapGroup.append('g').attr('class', 'quad-group');
     const tileGroup = umapGroup.append('g').attr('class', 'tile-group');
     const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
+
+    // Register zoom
+    this.zoom = d3
+      .zoom<HTMLElement, unknown>()
+      .extent([
+        [0, 0],
+        [this.svgSize.width, this.svgSize.height]
+      ])
+      .scaleExtent([1, 8])
+      .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
+    this.svg.call(this.zoom).on('dblclick.zoom', null);
 
     this.drawContour(contourGroup);
     // this.drawScatter(scatterGroup);
@@ -395,6 +412,63 @@ export class Embedding {
       .attr('fill', d => colorScale(d.value))
       .attr('d', d3.geoPath());
 
-    console.log(contours);
+    // Zoom in to focus on the second level of the contour
+    // The first level is at 0
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+
+    if (contours.length > 1) {
+      for (const coord of contours[1].coordinates) {
+        for (const coordPoints of coord) {
+          for (const point of coordPoints) {
+            if (point[0] < x0) x0 = point[0];
+            if (point[1] < y0) y0 = point[1];
+            if (point[0] > x1) x1 = point[0];
+            if (point[1] > y1) y1 = point[1];
+          }
+        }
+      }
+    }
+
+    const k = Math.min(
+      this.svgSize.width / (x1 - x0),
+      this.svgSize.height / (y1 - y0)
+    );
+
+    this.svg
+      .transition()
+      .duration(300)
+      .call(selection =>
+        this.zoom?.scaleTo(selection, k, [
+          this.svgSize.width / 2,
+          this.svgSize.height / 2
+        ])
+      );
+
+    // Double click to reset zoom
+    this.svg.on('dblclick', () => {
+      this.svg
+        .transition()
+        .duration(700)
+        .call(selection => {
+          this.zoom?.transform(
+            selection,
+            d3.zoomIdentity
+              .translate(this.svgSize.width / 2, this.svgSize.height / 2)
+              .scale(k)
+              .translate(-this.svgSize.width / 2, -this.svgSize.height / 2)
+          );
+        });
+    });
+
+    return contours;
+  };
+
+  zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
+    const contourGroup = this.svg.select('.contour-group');
+    const transform = e.transform;
+    contourGroup.attr('transform', `${transform.toString()}`);
   };
 }

@@ -64,7 +64,7 @@ import { hierarchy, partition, tree } from 'd3-hierarchy';
 
 import { brush } from 'd3-brush';
 
-import { zoom, zoomIdentity } from 'd3-zoom';
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 
 import { drag } from 'd3-drag';
 
@@ -126,6 +126,7 @@ export default {
   brush,
   zoom,
   zoomIdentity,
+  zoomTransform,
   drag,
   format,
   curveMonotoneX,
