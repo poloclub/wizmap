@@ -88,13 +88,12 @@ export class Embedding {
       yRange: []
     };
 
+    // Initialize the SVG
+    this.initSVGGroups();
+
     timeit('Init data', DEBUG);
     this.initData().then(() => {
       timeit('Init data', DEBUG);
-
-      timeit('Draw UMAP', DEBUG);
-      this.drawUMAP();
-      timeit('Draw UMAP', DEBUG);
     });
   }
 
@@ -102,6 +101,7 @@ export class Embedding {
    * Load the UMAP data from json.
    */
   initData = async () => {
+    // Read point data in bulk
     const result = await d3.json<PromptUMAPData>(
       `/data/umap-${DATA_SIZE}.json`
     );
@@ -118,28 +118,6 @@ export class Embedding {
       }
     }
     console.log(this.promptPoints);
-
-    // Read the data point through streaming
-    fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
-      const reader = response?.body
-        ?.pipeThrough(new TextDecoderStream())
-        ?.pipeThrough(splitStreamTransform('\n'))
-        ?.pipeThrough(parseJSONTransform())
-        ?.getReader();
-
-      while (true && reader !== undefined) {
-        const result = await reader.read();
-        const point = result.value as UMAPPointStreamData;
-        const done = result.done;
-
-        if (done) {
-          console.log('Finished streaming');
-          break;
-        } else {
-          this.processPointStream(point);
-        }
-      }
-    });
 
     // Initialize the data scales
     const xRange = d3.extent(this.promptPoints, d => d.x) as [number, number];
@@ -179,19 +157,43 @@ export class Embedding {
     // Randomly sample the points before drawing
     this.sampleVisiblePoints(60000);
 
+    // Read the data point through streaming
+    fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
+      const reader = response?.body
+        ?.pipeThrough(new TextDecoderStream())
+        ?.pipeThrough(splitStreamTransform('\n'))
+        ?.pipeThrough(parseJSONTransform())
+        ?.getReader();
+
+      while (true && reader !== undefined) {
+        const result = await reader.read();
+        const point = result.value as UMAPPointStreamData;
+        const done = result.done;
+
+        if (done) {
+          console.log('Finished streaming');
+          break;
+        } else {
+          this.processPointStream(point);
+        }
+      }
+    });
+
     // Read the grid data for contour background
-    const gridData = await d3.json<GridData>('/data/umap-60k-grid.json');
-    if (gridData) {
-      this.gridData = gridData;
-    }
+    d3.json<GridData>('/data/umap-60k-grid.json').then(gridData => {
+      if (gridData) this.gridData = gridData;
+      const contour = this.svg.select<SVGGElement>('.contour-group');
+      this.drawContour(contour);
+    });
 
     // Read the tile data for the topic map
-    const tileData = await d3.json<LevelTileMap>(
-      '/data/umap-60k-level-topics.json'
-    );
-    if (tileData) {
-      this.tileData = tileData;
-    }
+    // d3.json<LevelTileMap>('/data/umap-60k-level-topics.json').then(tileData => {
+    //   if (tileData) {
+    //     this.tileData = tileData;
+    //     const tileGroup = this.svg.select<SVGGElement>('.tile-group');
+    //     // this.drawTopicTiles(tileGroup);
+    //   }
+    // });
   };
 
   /**
@@ -230,10 +232,9 @@ export class Embedding {
   };
 
   /**
-   * Visualize the UMAP using a contour in the background and a scatter plot in
-   * the foreground.
+   * Initialize the groups to draw elements in the SVG.
    */
-  drawUMAP = () => {
+  initSVGGroups = () => {
     const umapGroup = this.svg
       .append('g')
       .attr('class', 'umap-group')
@@ -242,10 +243,10 @@ export class Embedding {
         `translate(${this.svgPadding.left}, ${this.svgPadding.top})`
       );
 
-    const contourGroup = umapGroup.append('g').attr('class', 'contour-group');
-    const quadRectGroup = umapGroup.append('g').attr('class', 'quad-group');
-    const tileGroup = umapGroup.append('g').attr('class', 'tile-group');
-    const scatterGroup = umapGroup.append('g').attr('class', 'scatter-group');
+    umapGroup.append('g').attr('class', 'contour-group');
+    umapGroup.append('g').attr('class', 'quad-group');
+    umapGroup.append('g').attr('class', 'tile-group');
+    umapGroup.append('g').attr('class', 'scatter-group');
 
     // Register zoom
     this.zoom = d3
@@ -257,14 +258,6 @@ export class Embedding {
       .scaleExtent([1, 8])
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
     this.svg.call(this.zoom).on('dblclick.zoom', null);
-
-    timeit('Drawing contour', DEBUG);
-    this.drawContour(contourGroup);
-    timeit('Drawing contour', DEBUG);
-
-    // this.drawScatter(scatterGroup);
-    // this.drawQuadtree(quadRectGroup);
-    // this.drawTopicTiles(tileGroup);
   };
 
   drawTopicTiles = (
