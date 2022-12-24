@@ -231,3 +231,59 @@ export const splitFileName = (file: File) => {
   const extension = name.slice(lastDot + 1);
   return [value, extension];
 };
+
+/**
+ * Split the reader stream text by a string
+ * @param sep String used to separate the input string
+ * @returns TransformStream
+ */
+export const splitStreamTransform = (sep: string) => {
+  let buffer = '';
+
+  const transform = new TransformStream({
+    transform: (chunk, controller) => {
+      buffer += chunk;
+      const parts = buffer.split(sep);
+      parts.slice(0, -1).forEach(part => controller.enqueue(part));
+      buffer = parts[parts.length - 1];
+    },
+    flush: controller => {
+      if (buffer) {
+        controller.enqueue(buffer);
+      }
+    }
+  });
+
+  return transform;
+};
+
+/**
+ * Parse the input stream as JSON
+ * @returns TransformStream
+ */
+export const parseJSONTransform = () => {
+  const transform = new TransformStream({
+    transform: (chunk, controller) => {
+      controller.enqueue(JSON.parse(chunk as string));
+    }
+  });
+  return transform;
+};
+
+const timeitQueue = new Set();
+/**
+ * Trace the execution time
+ * @param label Label for the time tracer
+ * @param show Whether to printout the output in console
+ */
+export const timeit = (label: string, show: boolean) => {
+  if (show) {
+    if (timeitQueue.has(label)) {
+      console.timeEnd(label);
+      timeitQueue.delete(label);
+    } else {
+      console.time(label);
+      timeitQueue.add(label);
+    }
+  }
+};

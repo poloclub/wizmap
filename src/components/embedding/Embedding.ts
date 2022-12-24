@@ -7,11 +7,18 @@ import type {
   GridData,
   QuadtreeNode,
   LevelTileDataItem,
+  UMAPPointStreamData,
   LevelTileMap
 } from '../my-types';
-import { downloadJSON } from '../../utils/utils';
+import {
+  downloadJSON,
+  splitStreamTransform,
+  parseJSONTransform,
+  timeit
+} from '../../utils/utils';
 
 const DATA_SIZE = '60k';
+const DEBUG = true;
 
 /**
  * Class for the Embedding view
@@ -81,8 +88,13 @@ export class Embedding {
       yRange: []
     };
 
+    timeit('Init data', DEBUG);
     this.initData().then(() => {
+      timeit('Init data', DEBUG);
+
+      timeit('Draw UMAP', DEBUG);
       this.drawUMAP();
+      timeit('Draw UMAP', DEBUG);
     });
   }
 
@@ -106,6 +118,28 @@ export class Embedding {
       }
     }
     console.log(this.promptPoints);
+
+    // Read the data point through streaming
+    fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
+      const reader = response?.body
+        ?.pipeThrough(new TextDecoderStream())
+        ?.pipeThrough(splitStreamTransform('\n'))
+        ?.pipeThrough(parseJSONTransform())
+        ?.getReader();
+
+      while (true && reader !== undefined) {
+        const result = await reader.read();
+        const point = result.value as UMAPPointStreamData;
+        const done = result.done;
+
+        if (done) {
+          console.log('Finished streaming');
+          break;
+        } else {
+          this.processPointStream(point);
+        }
+      }
+    });
 
     // Initialize the data scales
     const xRange = d3.extent(this.promptPoints, d => d.x) as [number, number];
@@ -224,7 +258,10 @@ export class Embedding {
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
     this.svg.call(this.zoom).on('dblclick.zoom', null);
 
+    timeit('Drawing contour', DEBUG);
     this.drawContour(contourGroup);
+    timeit('Drawing contour', DEBUG);
+
     // this.drawScatter(scatterGroup);
     // this.drawQuadtree(quadRectGroup);
     // this.drawTopicTiles(tileGroup);
@@ -470,5 +507,13 @@ export class Embedding {
     const contourGroup = this.svg.select('.contour-group');
     const transform = e.transform;
     contourGroup.attr('transform', `${transform.toString()}`);
+  };
+
+  /**
+   * Process the umap point reading stream
+   * @param point Point (x, y, prompt)
+   */
+  processPointStream = (point: UMAPPointStreamData) => {
+    // pass
   };
 }

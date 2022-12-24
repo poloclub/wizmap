@@ -2,6 +2,11 @@
  * Custom types for DiffusionDB-Vis
  */
 
+/**
+ * A UMAP data point (x, y, prompt)
+ */
+export type UMAPPointStreamData = [number, number, string];
+
 export interface LevelTileMap {
   [level: string]: LevelTileDataItem[];
 }

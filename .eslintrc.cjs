@@ -41,6 +41,7 @@ module.exports = {
         code: 80
       }
     ],
+    'no-constant-condition': ['error', { checkLoops: false }],
     'prettier/prettier': 2,
     '@typescript-eslint/no-floating-promises': 'off',
     '@typescript-eslint/no-unsafe-return': 'off',
