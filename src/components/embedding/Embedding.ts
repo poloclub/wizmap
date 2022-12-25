@@ -16,6 +16,7 @@ import {
   parseJSONTransform,
   timeit
 } from '../../utils/utils';
+import { config } from '../../config/config';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
@@ -32,8 +33,10 @@ export class Embedding {
   svgSize: Size;
   svgPadding: Padding;
 
+  pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  pointContext: CanvasRenderingContext2D;
+
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
-  // initialZoom
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -81,15 +84,37 @@ export class Embedding {
     this.xScale = d3.scaleLinear();
     this.yScale = d3.scaleLinear();
 
+    // Initialize the SVG groups
+    this.initSVGGroups();
+
+    // Initialize the canvas
+    this.pointCanvas = d3
+      .select(this.component)
+      .select<HTMLElement>('.embedding-canvas')
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height);
+    this.pointContext = (
+      this.pointCanvas.node()! as HTMLCanvasElement
+    ).getContext('2d')!;
+
+    // Register zoom
+    this.zoom = d3
+      .zoom<HTMLElement, unknown>()
+      .extent([
+        [0, 0],
+        [this.svgSize.width, this.svgSize.height]
+      ])
+      .scaleExtent([1, 8])
+      .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
+
+    this.pointCanvas.call(this.zoom).on('dblclick.zoom', null);
+
     // Initialize the data
     this.gridData = {
       grid: [[]],
       xRange: [],
       yRange: []
     };
-
-    // Initialize the SVG
-    this.initSVGGroups();
 
     timeit('Init data', DEBUG);
     this.initData().then(() => {
@@ -155,7 +180,9 @@ export class Embedding {
       .range([this.svgSize.height, 0]);
 
     // Randomly sample the points before drawing
-    this.sampleVisiblePoints(60000);
+    this.sampleVisiblePoints(6000);
+    // this.drawScatterCanvas();
+    // this.drawScatter();
 
     // Read the data point through streaming
     fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
@@ -182,8 +209,7 @@ export class Embedding {
     // Read the grid data for contour background
     d3.json<GridData>('/data/umap-60k-grid.json').then(gridData => {
       if (gridData) this.gridData = gridData;
-      const contour = this.svg.select<SVGGElement>('.contour-group');
-      this.drawContour(contour);
+      this.drawContour();
     });
 
     // Read the tile data for the topic map
@@ -247,22 +273,11 @@ export class Embedding {
     umapGroup.append('g').attr('class', 'quad-group');
     umapGroup.append('g').attr('class', 'tile-group');
     umapGroup.append('g').attr('class', 'scatter-group');
-
-    // Register zoom
-    this.zoom = d3
-      .zoom<HTMLElement, unknown>()
-      .extent([
-        [0, 0],
-        [this.svgSize.width, this.svgSize.height]
-      ])
-      .scaleExtent([1, 8])
-      .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
-    this.svg.call(this.zoom).on('dblclick.zoom', null);
   };
 
-  drawTopicTiles = (
-    tileGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-  ) => {
+  drawTopicTiles = () => {
+    const tileGroup = this.svg.select('g.tile-group');
+
     // Color each rectangle based on their level
     const levelColors = window.structuredClone(d3.schemePastel1) as string[];
     levelColors.reverse();
@@ -289,9 +304,8 @@ export class Embedding {
   /**
    * Initialize a quadtree
    */
-  drawQuadtree = (
-    rectGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-  ) => {
+  drawQuadtree = () => {
+    const rectGroup = this.svg.select('g.quad-group');
     const tree = d3
       .quadtree<PromptPoint>()
       .x(d => d.x)
@@ -338,9 +352,8 @@ export class Embedding {
   /**
    * Draw a scatter plot for the UMAP.
    */
-  drawScatter = (
-    scatterGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-  ) => {
+  drawScatter = () => {
+    const scatterGroup = this.svg.select('g.scatter-group');
     // Draw all points
     scatterGroup
       .selectAll('circle.prompt-point')
@@ -355,11 +368,33 @@ export class Embedding {
   };
 
   /**
+   * Draw a scatter plot for the UMAP on a canvas.
+   */
+  drawScatterCanvas = () => {
+    const r = 1;
+    for (const point of this.promptPoints) {
+      if (point.visible) {
+        this.pointContext.beginPath();
+        const x = this.xScale(point.x);
+        const y = this.yScale(point.y);
+        this.pointContext.moveTo(x, y);
+        this.pointContext.arc(x, y, r, 0, 2 * Math.PI);
+
+        // Fill the data point circle
+        const color = d3.color(config.colors['pink-300'])!;
+        color.opacity = 0.5;
+        this.pointContext.fillStyle = color.toString();
+        this.pointContext.fill();
+        this.pointContext.closePath();
+      }
+    }
+  };
+
+  /**
    * Draw the KDE contour in the background.
    */
-  drawContour = (
-    contourGroup: d3.Selection<SVGGElement, unknown, null, undefined>
-  ) => {
+  drawContour = () => {
+    const contourGroup = this.svg.select<SVGGElement>('.contour-group');
     contourGroup
       .append('circle')
       .attr('cx', 200)
@@ -467,7 +502,7 @@ export class Embedding {
       this.svgFullSize.height / (y1 - y0)
     );
 
-    this.svg
+    this.pointCanvas
       .transition()
       .duration(300)
       .call(selection =>
@@ -478,8 +513,8 @@ export class Embedding {
       );
 
     // Double click to reset zoom to the initial viewpoint
-    this.svg.on('dblclick', () => {
-      this.svg
+    this.pointCanvas.on('dblclick', () => {
+      this.pointCanvas
         .transition()
         .duration(700)
         .call(selection => {
@@ -497,9 +532,29 @@ export class Embedding {
   };
 
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
-    const contourGroup = this.svg.select('.contour-group');
     const transform = e.transform;
-    contourGroup.attr('transform', `${transform.toString()}`);
+
+    // console.log(transform);
+
+    // Transform the SVG elements
+    const umapGroup = this.svg.select('.umap-group');
+    umapGroup.attr('transform', `${transform.toString()}`);
+
+    // Transform the canvas elements
+    this.pointContext.save();
+    this.pointContext.clearRect(
+      0,
+      0,
+      this.svgFullSize.width,
+      this.svgFullSize.height
+    );
+    this.pointContext.translate(transform.x, transform.y);
+    this.pointContext.scale(transform.k, transform.k);
+
+    // timeit('Draw canvas', DEBUG);
+    this.drawScatterCanvas();
+    // timeit('Draw canvas', DEBUG);
+    this.pointContext.restore();
   };
 
   /**
