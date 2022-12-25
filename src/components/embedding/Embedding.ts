@@ -14,12 +14,14 @@ import {
   downloadJSON,
   splitStreamTransform,
   parseJSONTransform,
-  timeit
+  timeit,
+  rgbToHex
 } from '../../utils/utils';
 import { config } from '../../config/config';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
+const SCATTER_DOT_RADIUS = 1;
 
 /**
  * Class for the Embedding view
@@ -33,10 +35,17 @@ export class Embedding {
   svgSize: Size;
   svgPadding: Padding;
 
+  topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
+
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
-  pointContext: CanvasRenderingContext2D;
+  pointCtx: CanvasRenderingContext2D;
+
+  pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  pointBackCtx: CanvasRenderingContext2D;
+  colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
 
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
+  curZoomTransform: d3.ZoomTransform | null = null;
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -87,15 +96,29 @@ export class Embedding {
     // Initialize the SVG groups
     this.initSVGGroups();
 
+    // Initialize the top svg element
+    this.topSvg = this.initTopSvg();
+
     // Initialize the canvas
     this.pointCanvas = d3
       .select(this.component)
       .select<HTMLElement>('.embedding-canvas')
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
-    this.pointContext = (
-      this.pointCanvas.node()! as HTMLCanvasElement
+    this.pointCtx = (this.pointCanvas.node()! as HTMLCanvasElement).getContext(
+      '2d'
+    )!;
+
+    // Initialize the background canvas (for mouseover)
+    this.pointBackCanvas = d3
+      .select(this.component)
+      .select<HTMLElement>('.embedding-canvas-back')
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height);
+    this.pointBackCtx = (
+      this.pointBackCanvas.node()! as HTMLCanvasElement
     ).getContext('2d')!;
+    this.pointBackCtx.imageSmoothingEnabled = false;
 
     // Register zoom
     this.zoom = d3
@@ -107,7 +130,7 @@ export class Embedding {
       .scaleExtent([1, 8])
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
 
-    this.pointCanvas.call(this.zoom).on('dblclick.zoom', null);
+    this.topSvg.call(this.zoom).on('dblclick.zoom', null);
 
     // Initialize the data
     this.gridData = {
@@ -121,6 +144,30 @@ export class Embedding {
       timeit('Init data', DEBUG);
     });
   }
+
+  /**
+   * Initialize the top SVG element
+   * @returns Top SVG selection
+   */
+  initTopSvg = () => {
+    const topSvg = d3
+      .select(this.component)
+      .select<HTMLElement>('.top-svg')
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height)
+      .on('mousemove', e => this.mousemoveHandler(e as MouseEvent));
+
+    const topGroup = topSvg.append('g').attr('class', 'top-group');
+
+    topGroup
+      .append('rect')
+      .attr('class', 'mouse-track-rect')
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height);
+
+    topGroup.append('g').attr('class', 'top-content');
+    return topSvg;
+  };
 
   /**
    * Load the UMAP data from json.
@@ -371,21 +418,70 @@ export class Embedding {
    * Draw a scatter plot for the UMAP on a canvas.
    */
   drawScatterCanvas = () => {
-    const r = 1;
     for (const point of this.promptPoints) {
       if (point.visible) {
-        this.pointContext.beginPath();
+        this.pointCtx.beginPath();
         const x = this.xScale(point.x);
         const y = this.yScale(point.y);
-        this.pointContext.moveTo(x, y);
-        this.pointContext.arc(x, y, r, 0, 2 * Math.PI);
+        this.pointCtx.moveTo(x, y);
+        this.pointCtx.arc(x, y, SCATTER_DOT_RADIUS, 0, 2 * Math.PI);
 
         // Fill the data point circle
         const color = d3.color(config.colors['pink-300'])!;
         color.opacity = 0.5;
-        this.pointContext.fillStyle = color.toString();
-        this.pointContext.fill();
-        this.pointContext.closePath();
+        this.pointCtx.fillStyle = color.toString();
+        this.pointCtx.fill();
+        this.pointCtx.closePath();
+      }
+    }
+  };
+
+  /**
+   * Get a unique color in hex.
+   */
+  getNextUniqueColor = () => {
+    if (this.colorPointMap.size >= 256 * 256 * 256) {
+      console.error('Unique color overflow.');
+      return '#fffff';
+    }
+
+    const rng = d3.randomInt(0, 256);
+    let hex = rgbToHex(rng(), rng(), rng());
+    while (this.colorPointMap.has(hex) || hex === '#000000') {
+      hex = rgbToHex(rng(), rng(), rng());
+    }
+    return hex;
+  };
+
+  /**
+   * Draw a hidden scatter plot for the UMAP on a background canvas. We give
+   * each dot a unique color for quicker mouseover detection.
+   */
+  drawScatterBackCanvas = () => {
+    this.colorPointMap.clear();
+
+    for (const point of this.promptPoints) {
+      if (point.visible) {
+        this.pointBackCtx.beginPath();
+        const x = this.xScale(point.x);
+        const y = this.yScale(point.y);
+        this.pointBackCtx.moveTo(x, y);
+
+        // Trick: here we draw a slightly larger circle when user zooms out the
+        // viewpoint, so that the pixel coverage is higher (smoother/better
+        // mouseover picking)
+        const r = Math.max(
+          1,
+          3.5 - (this.curZoomTransform?.k ? this.curZoomTransform?.k : 2)
+        );
+        this.pointBackCtx.arc(x, y, r, 0, 2 * Math.PI);
+
+        // Fill the data point with a unique color
+        const color = this.getNextUniqueColor();
+        this.colorPointMap.set(color, point);
+        this.pointBackCtx.fillStyle = color;
+        this.pointBackCtx.fill();
+        this.pointBackCtx.closePath();
       }
     }
   };
@@ -502,7 +598,7 @@ export class Embedding {
       this.svgFullSize.height / (y1 - y0)
     );
 
-    this.pointCanvas
+    this.topSvg
       .transition()
       .duration(300)
       .call(selection =>
@@ -513,8 +609,8 @@ export class Embedding {
       );
 
     // Double click to reset zoom to the initial viewpoint
-    this.pointCanvas.on('dblclick', () => {
-      this.pointCanvas
+    this.topSvg.on('dblclick', () => {
+      this.topSvg
         .transition()
         .duration(700)
         .call(selection => {
@@ -533,28 +629,41 @@ export class Embedding {
 
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
     const transform = e.transform;
-
-    // console.log(transform);
+    this.curZoomTransform = transform;
 
     // Transform the SVG elements
-    const umapGroup = this.svg.select('.umap-group');
-    umapGroup.attr('transform', `${transform.toString()}`);
+    this.svg.select('.umap-group').attr('transform', `${transform.toString()}`);
 
-    // Transform the canvas elements
-    this.pointContext.save();
-    this.pointContext.clearRect(
+    // Transform the top SVG elements
+    this.topSvg
+      .select('.top-group')
+      .attr('transform', `${transform.toString()}`);
+
+    // Transform the point canvas elements
+    this.pointCtx.save();
+    this.pointCtx.clearRect(
       0,
       0,
       this.svgFullSize.width,
       this.svgFullSize.height
     );
-    this.pointContext.translate(transform.x, transform.y);
-    this.pointContext.scale(transform.k, transform.k);
-
-    // timeit('Draw canvas', DEBUG);
+    this.pointCtx.translate(transform.x, transform.y);
+    this.pointCtx.scale(transform.k, transform.k);
     this.drawScatterCanvas();
-    // timeit('Draw canvas', DEBUG);
-    this.pointContext.restore();
+    this.pointCtx.restore();
+
+    // Transform the background canvas elements
+    this.pointBackCtx.save();
+    this.pointBackCtx.clearRect(
+      0,
+      0,
+      this.svgFullSize.width,
+      this.svgFullSize.height
+    );
+    this.pointBackCtx.translate(transform.x, transform.y);
+    this.pointBackCtx.scale(transform.k, transform.k);
+    this.drawScatterBackCanvas();
+    this.pointBackCtx.restore();
   };
 
   /**
@@ -563,5 +672,43 @@ export class Embedding {
    */
   processPointStream = (point: UMAPPointStreamData) => {
     // pass
+  };
+
+  /**
+   * Highlight the point where the user hovers over
+   * @param point The point that user hovers over
+   */
+  highlightPoint = (point: PromptPoint | undefined) => {
+    // Draw the point on the top svg
+    const topContent = this.topSvg.select('g.top-content');
+    const oldHighlightPoint = topContent.select('circle.highlight-point');
+    if (!oldHighlightPoint.empty()) oldHighlightPoint.remove();
+
+    if (point === undefined) {
+      return;
+    }
+
+    topContent
+      .append('circle')
+      .attr('class', 'highlight-point')
+      .attr('cx', this.xScale(point.x))
+      .attr('cy', this.yScale(point.y))
+      .attr('r', SCATTER_DOT_RADIUS * 2);
+  };
+
+  /**
+   * Event handler for mousemove
+   * @param e Mouse event
+   */
+  mousemoveHandler = (e: MouseEvent) => {
+    // Show tooltip when mouse over a data point on canvas
+    // We need to use color picking to figure out which point is hovered over
+    const x = e.offsetX;
+    const y = e.offsetY;
+
+    const pixel = this.pointBackCtx.getImageData(x, y, 1, 1);
+    const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);
+    const point = this.colorPointMap.get(hex);
+    this.highlightPoint(point);
   };
 }

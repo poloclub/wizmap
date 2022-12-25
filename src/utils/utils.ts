@@ -287,3 +287,22 @@ export const timeit = (label: string, show: boolean) => {
     }
   }
 };
+
+/**
+ * Convert a color from rgb to hex
+ * @param r Value in the red channel
+ * @param g Value in the green channel
+ * @param b Value in the blue channel
+ * @returns Hex string
+ */
+export const rgbToHex = (r: number, g: number, b: number) => {
+  const numToHex = (number: number) => {
+    const hex = number.toString(16);
+    if (hex.length == 1) {
+      return `0${hex}`;
+    } else {
+      return hex;
+    }
+  };
+  return `#${numToHex(r)}${numToHex(g)}${numToHex(b)}`;
+};

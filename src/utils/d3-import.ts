@@ -72,7 +72,7 @@ import { format } from 'd3-format';
 
 import { timeFormat } from 'd3-time-format';
 
-import { randomLcg, randomUniform } from 'd3-random';
+import { randomLcg, randomUniform, randomInt } from 'd3-random';
 
 import { contours } from 'd3-contour';
 
@@ -142,6 +142,7 @@ export default {
   path,
   randomLcg,
   randomUniform,
+  randomInt,
   contours,
   geoPath,
   quadtree

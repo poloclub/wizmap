@@ -31,7 +31,9 @@
 
 <div class="embedding-wrapper" bind:this={component}>
   <div class="embedding">
+    <svg class="top-svg" />
     <canvas class="embedding-canvas" />
+    <canvas class="embedding-canvas-back" />
     <svg class="embedding-svg" />
   </div>
 </div>

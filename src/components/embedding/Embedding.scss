@@ -28,4 +28,25 @@
   position: absolute;
   top: 0px;
   left: 0px;
+  z-index: 1;
+  // display: none;
+}
+
+.embedding-canvas-back {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  display: none;
+}
+
+.top-svg {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  border-radius: $border-radius;
+  z-index: 2;
+}
+
+:global(.top-svg .mouse-track-rect) {
+  fill: none;
 }
