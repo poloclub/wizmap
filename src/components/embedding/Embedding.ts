@@ -742,13 +742,21 @@ export class Embedding {
     }
 
     // There is no point highlighted yet
+    const highlightRadius = Math.max(
+      SCATTER_DOT_RADIUS * 1.5,
+      7 / (this.curZoomTransform ? this.curZoomTransform.k : 1)
+    );
+    const highlightStroke =
+      1.2 / (this.curZoomTransform ? this.curZoomTransform.k : 1);
+
     if (oldHighlightPoint.empty()) {
       const highlightPoint = topContent
         .append('circle')
         .attr('class', 'highlight-point')
         .attr('cx', this.xScale(point.x))
         .attr('cy', this.yScale(point.y))
-        .attr('r', SCATTER_DOT_RADIUS * 2);
+        .attr('r', highlightRadius)
+        .style('stroke-width', highlightStroke);
 
       // Get the point position
       const position = highlightPoint.node()!.getBoundingClientRect();
@@ -780,7 +788,9 @@ export class Embedding {
       // There has been a highlighted point already
       oldHighlightPoint
         .attr('cx', this.xScale(point.x))
-        .attr('cy', this.yScale(point.y));
+        .attr('cy', this.yScale(point.y))
+        .attr('r', highlightRadius)
+        .style('stroke-width', highlightStroke);
 
       // Get the point position
       const position = (
