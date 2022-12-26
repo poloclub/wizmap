@@ -1,11 +1,16 @@
 <script lang="ts">
   import { Embedding } from './Embedding';
   import { onMount } from 'svelte';
+  import type { Writable } from 'svelte/store';
+  import type { TooltipStoreValue } from '../../stores';
+  import { getTooltipStoreDefaultValue } from '../../stores';
 
   let component: HTMLElement | null = null;
   let mounted = false;
   let initialized = false;
   let embedding: Embedding | null = null;
+
+  export let tooltipStore: Writable<TooltipStoreValue> | null = null;
 
   onMount(() => {
     mounted = true;
@@ -18,11 +23,11 @@
     initialized = true;
 
     if (component) {
-      embedding = new Embedding({ component });
+      embedding = new Embedding({ component, tooltipStore });
     }
   };
 
-  $: mounted && component && initView();
+  $: mounted && component && tooltipStore && initView();
 </script>
 
 <style lang="scss">

@@ -17,11 +17,17 @@ import {
   timeit,
   rgbToHex
 } from '../../utils/utils';
+import type { Writable } from 'svelte/store';
+import type { TooltipStoreValue } from '../../stores';
+import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
 const SCATTER_DOT_RADIUS = 1;
+
+let pointMouseleaveTimer: number | null = null;
+let pointMouseenterTimer: number | null = null;
 
 /**
  * Class for the Embedding view
@@ -43,6 +49,7 @@ export class Embedding {
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointBackCtx: CanvasRenderingContext2D;
   colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
+  hoverPoint: PromptPoint | null = null;
 
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
   curZoomTransform: d3.ZoomTransform | null = null;
@@ -56,16 +63,26 @@ export class Embedding {
   promptPoints: PromptPoint[] = [];
   gridData: GridData;
   tileData: LevelTileMap | null = null;
-
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
+
+  // Stores
+  tooltipStore: Writable<TooltipStoreValue>;
+  tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
 
   /**
    *
    * @param args Named parameters
    * @param args.component The component
    */
-  constructor({ component }: { component: HTMLElement }) {
+  constructor({
+    component,
+    tooltipStore
+  }: {
+    component: HTMLElement;
+    tooltipStore: Writable<TooltipStoreValue>;
+  }) {
     this.component = component;
+    this.tooltipStore = tooltipStore;
 
     // Initialize the SVG
     this.svg = d3.select(this.component).select('.embedding-svg');
@@ -143,7 +160,19 @@ export class Embedding {
     this.initData().then(() => {
       timeit('Init data', DEBUG);
     });
+
+    // Initialize the stores
+    this.initStores();
   }
+
+  /**
+   * Initialize the stores.
+   */
+  initStores = () => {
+    this.tooltipStore.subscribe(value => {
+      this.tooltipStoreValue = value;
+    });
+  };
 
   /**
    * Initialize the top SVG element
@@ -679,21 +708,107 @@ export class Embedding {
    * @param point The point that user hovers over
    */
   highlightPoint = (point: PromptPoint | undefined) => {
+    if (point === this.hoverPoint) return;
+
     // Draw the point on the top svg
     const topContent = this.topSvg.select('g.top-content');
     const oldHighlightPoint = topContent.select('circle.highlight-point');
-    if (!oldHighlightPoint.empty()) oldHighlightPoint.remove();
 
+    // Hovering empty space
     if (point === undefined) {
+      if (!oldHighlightPoint.empty()) {
+        if (pointMouseleaveTimer !== null) {
+          clearTimeout(pointMouseleaveTimer);
+          pointMouseleaveTimer = null;
+        }
+
+        // Clear the highlight and tooltip in a short delay
+        pointMouseleaveTimer = setTimeout(() => {
+          this.hoverPoint = null;
+          oldHighlightPoint.remove();
+          this.tooltipStoreValue.show = false;
+          this.tooltipStore.set(this.tooltipStoreValue);
+          pointMouseleaveTimer = null;
+        }, 50);
+      }
       return;
     }
 
-    topContent
-      .append('circle')
-      .attr('class', 'highlight-point')
-      .attr('cx', this.xScale(point.x))
-      .attr('cy', this.yScale(point.y))
-      .attr('r', SCATTER_DOT_RADIUS * 2);
+    // Hovering over a point
+    this.hoverPoint = point;
+    if (pointMouseleaveTimer !== null) {
+      clearTimeout(pointMouseleaveTimer);
+      pointMouseleaveTimer = null;
+    }
+
+    // There is no point highlighted yet
+    if (oldHighlightPoint.empty()) {
+      const highlightPoint = topContent
+        .append('circle')
+        .attr('class', 'highlight-point')
+        .attr('cx', this.xScale(point.x))
+        .attr('cy', this.yScale(point.y))
+        .attr('r', SCATTER_DOT_RADIUS * 2);
+
+      // Get the point position
+      const position = highlightPoint.node()!.getBoundingClientRect();
+      const curWidth = position.width;
+      const tooltipCenterX = position.x + curWidth / 2;
+      const tooltipCenterY = position.y;
+      this.tooltipStoreValue.html = `
+          <div class='tooltip-content' style='display: flex; flex-direction:
+            column; justify-content: center;'>
+            ${this.prompts[point.id]}
+          </div>
+        `;
+
+      this.tooltipStoreValue.left = tooltipCenterX;
+      this.tooltipStoreValue.top = tooltipCenterY;
+      this.tooltipStoreValue.show = true;
+
+      if (pointMouseenterTimer !== null) {
+        clearTimeout(pointMouseenterTimer);
+        pointMouseenterTimer = null;
+      }
+
+      // Show the tooltip after a delay
+      pointMouseenterTimer = setTimeout(() => {
+        this.tooltipStore.set(this.tooltipStoreValue);
+        pointMouseenterTimer = null;
+      }, 300);
+    } else {
+      // There has been a highlighted point already
+      oldHighlightPoint
+        .attr('cx', this.xScale(point.x))
+        .attr('cy', this.yScale(point.y));
+
+      // Get the point position
+      const position = (
+        oldHighlightPoint.node()! as HTMLElement
+      ).getBoundingClientRect();
+      const curWidth = position.width;
+      const tooltipCenterX = position.x + curWidth / 2;
+      const tooltipCenterY = position.y;
+      this.tooltipStoreValue.html = `
+          <div class='tooltip-content' style='display: flex; flex-direction:
+            column; justify-content: center;'>
+            ${this.prompts[point.id]}
+          </div>
+        `;
+      this.tooltipStoreValue.left = tooltipCenterX;
+      this.tooltipStoreValue.top = tooltipCenterY;
+      this.tooltipStoreValue.show = true;
+
+      if (pointMouseenterTimer !== null) {
+        clearTimeout(pointMouseenterTimer);
+        pointMouseenterTimer = setTimeout(() => {
+          this.tooltipStore.set(this.tooltipStoreValue);
+          pointMouseenterTimer = null;
+        }, 300);
+      } else {
+        this.tooltipStore.set(this.tooltipStoreValue);
+      }
+    }
   };
 
   /**
