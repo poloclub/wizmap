@@ -52,12 +52,16 @@
           tick().then(() => {
             const tooltipBBox = tooltip?.getBoundingClientRect();
             if (tooltipBBox) {
-              // Check if the element overflows the page
+              // Check if the element overflows the page (both left and right)
               // If so, we need to fix its width and try to position it again
               // to set its height
-              if (left + tooltipBBox.width >= window.innerWidth - 2) {
+              if (
+                left + tooltipBBox.width >= window.innerWidth - 2 ||
+                left - tooltipBBox.width <= 2
+              ) {
                 tooltipConfig.width = Math.min(
                   2 * (window.innerWidth - left),
+                  2 * left,
                   tooltipConfig.maxWidth
                 );
                 left -= tooltipConfig.width / 2;
@@ -99,7 +103,6 @@
           opacity = 0;
           tooltipConfig = value;
         }
-
         updateStyle();
       });
     }
