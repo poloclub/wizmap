@@ -14,14 +14,16 @@
   let tooltip: HTMLElement | null = null;
   let initialized = false;
   let opacity = 0;
+  let left = 0;
+  let top = 0;
 
   const updateStyle = () => {
     if (tooltipConfig.width === 0) {
-      style = `left: ${tooltipConfig.left}px; top: ${tooltipConfig.top}px;
+      style = `left: ${left}px; top: ${top}px;
         max-width: ${tooltipConfig.maxWidth}px;
         font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
     } else {
-      style = `left: ${tooltipConfig.left}px; top: ${tooltipConfig.top}px;
+      style = `left: ${left}px; top: ${top}px;
         width: ${tooltipConfig.width}px; max-width: ${tooltipConfig.maxWidth}px;
         font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
     }
@@ -37,28 +39,60 @@
         }
 
         if (value.show) {
-          opacity = 0;
           if (value.html === '') {
             value.html = ' ';
           }
+          opacity = 1;
+          left = value.x;
+          top = value.y;
           tooltipConfig = value;
+          tooltipConfig.width = 0;
 
           // Reposition the tooltip based on its height and width
           tick().then(() => {
             const tooltipBBox = tooltip?.getBoundingClientRect();
             if (tooltipBBox) {
-              tooltipConfig.left -= tooltipBBox.width / 2;
+              // Check if the element overflows the page
+              // If so, we need to fix its width and try to position it again
+              // to set its height
+              if (left + tooltipBBox.width >= window.innerWidth - 2) {
+                tooltipConfig.width = Math.min(
+                  2 * (window.innerWidth - left),
+                  tooltipConfig.maxWidth
+                );
+                left -= tooltipConfig.width / 2;
+                updateStyle();
 
-              if (tooltipConfig.orientation === 'n') {
-                tooltipConfig.top += tooltipBBox.height;
-                tooltipConfig.top += V_GAP;
+                tick().then(() => {
+                  const tooltipBBox = tooltip?.getBoundingClientRect();
+                  if (tooltipBBox) {
+                    if (tooltipConfig.orientation === 'n') {
+                      top += tooltipBBox.height;
+                      top += V_GAP;
+                    } else {
+                      top -= tooltipBBox.height;
+                      top -= V_GAP;
+                    }
+
+                    opacity = 1;
+                    updateStyle();
+                  }
+                });
               } else {
-                tooltipConfig.top -= tooltipBBox.height;
-                tooltipConfig.top -= V_GAP;
-              }
+                tooltipConfig.width = 0;
+                left -= tooltipBBox.width / 2;
 
-              opacity = 1;
-              updateStyle();
+                if (tooltipConfig.orientation === 'n') {
+                  top += tooltipBBox.height;
+                  top += V_GAP;
+                } else {
+                  top -= tooltipBBox.height;
+                  top -= V_GAP;
+                }
+
+                opacity = 1;
+                updateStyle();
+              }
             }
           });
         } else {
@@ -93,6 +127,7 @@
     box-sizing: border-box;
     pointer-events: none;
     text-align: center;
+    overflow-x: visible;
 
     &.hidden {
       visibility: hidden;

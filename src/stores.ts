@@ -3,8 +3,8 @@ import { writable } from 'svelte/store';
 export interface TooltipStoreValue {
   show: boolean;
   html: string;
-  left: number;
-  top: number;
+  x: number;
+  y: number;
   width: number;
   maxWidth: number;
   fontSize: number;
@@ -16,8 +16,8 @@ export const getTooltipStoreDefaultValue = (): TooltipStoreValue => {
   return {
     show: false,
     html: 'null',
-    left: 0,
-    top: 0,
+    x: 0,
+    y: 0,
     width: 0,
     maxWidth: 300,
     fontSize: 14,

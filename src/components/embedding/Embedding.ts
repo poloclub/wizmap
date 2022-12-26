@@ -762,8 +762,8 @@ export class Embedding {
           </div>
         `;
 
-      this.tooltipStoreValue.left = tooltipCenterX;
-      this.tooltipStoreValue.top = tooltipCenterY;
+      this.tooltipStoreValue.x = tooltipCenterX;
+      this.tooltipStoreValue.y = tooltipCenterY;
       this.tooltipStoreValue.show = true;
 
       if (pointMouseenterTimer !== null) {
@@ -795,8 +795,8 @@ export class Embedding {
             ${this.prompts[point.id]}
           </div>
         `;
-      this.tooltipStoreValue.left = tooltipCenterX;
-      this.tooltipStoreValue.top = tooltipCenterY;
+      this.tooltipStoreValue.x = tooltipCenterX;
+      this.tooltipStoreValue.y = tooltipCenterY;
       this.tooltipStoreValue.show = true;
 
       if (pointMouseenterTimer !== null) {
