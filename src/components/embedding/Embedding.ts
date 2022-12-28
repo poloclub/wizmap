@@ -8,7 +8,9 @@ import type {
   QuadtreeNode,
   LevelTileDataItem,
   UMAPPointStreamData,
-  LevelTileMap
+  LevelTileMap,
+  TopicData,
+  TopicDataJSON
 } from '../my-types';
 import {
   downloadJSON,
@@ -17,6 +19,7 @@ import {
   timeit,
   rgbToHex
 } from '../../utils/utils';
+import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
 import { getTooltipStoreDefaultValue } from '../../stores';
@@ -25,6 +28,7 @@ import { config } from '../../config/config';
 const DATA_SIZE = '60k';
 const DEBUG = true;
 const SCATTER_DOT_RADIUS = 1;
+const IDEAL_TILE_WIDTH = 35;
 
 let pointMouseleaveTimer: number | null = null;
 let pointMouseenterTimer: number | null = null;
@@ -52,7 +56,7 @@ export class Embedding {
   hoverPoint: PromptPoint | null = null;
 
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
-  curZoomTransform: d3.ZoomTransform | null = null;
+  curZoomTransform: d3.ZoomTransform = d3.zoomIdentity;
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -61,9 +65,15 @@ export class Embedding {
   // Data
   prompts: string[] = [];
   promptPoints: PromptPoint[] = [];
-  gridData: GridData;
+  gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
+
+  contours: d3.ContourMultiPolygon[] | null = null;
+  topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
+    number,
+    d3.Quadtree<TopicData>
+  >();
 
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
@@ -150,12 +160,6 @@ export class Embedding {
     this.topSvg.call(this.zoom).on('dblclick.zoom', null);
 
     // Initialize the data
-    this.gridData = {
-      grid: [[]],
-      xRange: [],
-      yRange: []
-    };
-
     timeit('Init data', DEBUG);
     this.initData().then(() => {
       timeit('Init data', DEBUG);
@@ -194,7 +198,9 @@ export class Embedding {
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
 
-    topGroup.append('g').attr('class', 'top-content');
+    const topContent = topGroup.append('g').attr('class', 'top-content');
+    topContent.append('g').attr('class', 'highlights');
+    topContent.append('g').attr('class', 'topics');
     return topSvg;
   };
 
@@ -283,15 +289,45 @@ export class Embedding {
     });
 
     // Read the grid data for contour background
-    d3.json<GridData>('/data/umap-60k-grid.json').then(gridData => {
-      if (gridData) this.gridData = gridData;
-      this.drawContour();
+    const gridPromise = d3
+      .json<GridData>('/data/umap-60k-grid.json')
+      .then(gridData => {
+        if (gridData) {
+          this.gridData = gridData;
+          this.contours = this.drawContour();
+        } else {
+          console.error('Fail to read grid data');
+        }
+      });
+
+    // Read the topic label data
+    const topicPromise = d3
+      .json<TopicDataJSON>('/data/random-topic-data.json')
+      .then(topicData => {
+        if (topicData) {
+          // Create a quad tree at each level
+          for (const level of Object.keys(topicData!.data)) {
+            const tree = d3
+              .quadtree<TopicData>()
+              .x(d => d[0])
+              .y(d => d[1])
+              .extent(topicData!.extent)
+              .addAll(topicData!.data[level]);
+            this.topicLevelTrees.set(parseInt(level), tree);
+          }
+        } else {
+          console.error('Fail to read topic data.');
+        }
+      });
+
+    // Show topic labels once we have contours and topic data
+    Promise.all([gridPromise, topicPromise]).then(() => {
+      this.showTopicLabels();
     });
 
     // Read the tile data for the topic map
     // d3.json<LevelTileMap>('/data/umap-60k-level-topics.json').then(tileData => {
-    //   if (tileData) {
-    //     this.tileData = tileData;
+    //   if (tileData) {    //     this.tileData = tileData;
     //     const tileGroup = this.svg.select<SVGGElement>('.tile-group');
     //     // this.drawTopicTiles(tileGroup);
     //   }
@@ -499,10 +535,7 @@ export class Embedding {
         // Trick: here we draw a slightly larger circle when user zooms out the
         // viewpoint, so that the pixel coverage is higher (smoother/better
         // mouseover picking)
-        const r = Math.max(
-          1,
-          3.5 - (this.curZoomTransform?.k ? this.curZoomTransform?.k : 2)
-        );
+        const r = Math.max(1, 3.5 - this.curZoomTransform.k);
         this.pointBackCtx.arc(x, y, r, 0, 2 * Math.PI);
 
         // Fill the data point with a unique color
@@ -519,6 +552,11 @@ export class Embedding {
    * Draw the KDE contour in the background.
    */
   drawContour = () => {
+    if (this.gridData == null) {
+      console.error('Grid data not initialized');
+      return null;
+    }
+
     const contourGroup = this.svg.select<SVGGElement>('.contour-group');
     contourGroup
       .append('circle')
@@ -656,6 +694,125 @@ export class Embedding {
     return contours;
   };
 
+  /**
+   * Get the ideal quadtree level based on the ideal tile width and the current
+   * zoom level
+   */
+  getIdealTopicTreeLevel = () => {
+    if (this.topicLevelTrees.size < 1) return null;
+
+    const viewWidth = Math.max(
+      this.xScale.domain()[1] - this.xScale.domain()[0],
+      this.yScale.domain()[1] - this.yScale.domain()[0]
+    );
+
+    let bestLevel = -1;
+    let bestDistance = Infinity;
+
+    for (const level of this.topicLevelTrees.keys()) {
+      const tileNum = Math.pow(2, level);
+      const tileSize = viewWidth / tileNum;
+      const scaledTileWidth =
+        Math.max(
+          this.xScale(tileSize) - this.xScale(0),
+          this.yScale(tileSize) - this.yScale(0)
+        ) * this.curZoomTransform.k;
+
+      if (Math.abs(scaledTileWidth - IDEAL_TILE_WIDTH) < bestDistance) {
+        bestLevel = level;
+        bestDistance = Math.abs(scaledTileWidth - IDEAL_TILE_WIDTH);
+      }
+    }
+
+    return bestLevel;
+  };
+
+  /**
+   * Show the topic labels at different zoom scales.
+   */
+  showTopicLabels = () => {
+    if (this.topicLevelTrees.size <= 1) return;
+    if (this.contours === null) return;
+
+    // Show the topic labels for high density regions
+    const topK = 5;
+    const group = this.topSvg.select('g.top-content g.topics');
+    const polygonCenters = [];
+    for (
+      let i = this.contours.length - 1;
+      i > this.contours.length - 1 - topK;
+      i--
+    ) {
+      const contour = this.contours[i];
+
+      // Compute the geometric center of each polygon
+      for (const polygon of contour.coordinates) {
+        const xs = [];
+        const ys = [];
+        for (const point of polygon[0]) {
+          xs.push(point[0]);
+          ys.push(point[1]);
+        }
+        const centerX = xs.reduce((a, b) => a + b) / xs.length;
+        const centerY = ys.reduce((a, b) => a + b) / ys.length;
+        polygonCenters.push([centerX, centerY]);
+      }
+    }
+
+    // Choose the topic tree level based on the current zoom level
+    const idealTreeLevel = this.getIdealTopicTreeLevel()!;
+    const topicTree = this.topicLevelTrees.get(idealTreeLevel)!;
+    const treeExtent = topicTree.extent()!;
+    const tileWidth =
+      (treeExtent[1][0] - treeExtent[0][1]) / Math.pow(2, idealTreeLevel);
+    const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+
+    // Find closest topic label for each high density point
+    const labelData = [];
+    for (const point of polygonCenters) {
+      const viewX = this.xScale.invert(point[0]);
+      const viewY = this.yScale.invert(point[1]);
+      const closestTopic = topicTree.find(viewX, viewY)!;
+      labelData.push({
+        x: closestTopic[0] - tileWidth / 2,
+        y: closestTopic[1] + tileWidth / 2,
+        px: viewX,
+        py: viewY,
+        name: closestTopic[2]
+      });
+    }
+
+    // group
+    //   .selectAll('rect.topic-tile')
+    //   .data(labelData)
+    //   .join('rect')
+    //   .attr('class', 'topic-tile')
+    //   .attr('x', d => this.xScale(d.x))
+    //   .attr('y', d => this.yScale(d.y))
+    //   .attr('width', tileScreenWidth)
+    //   .attr('height', tileScreenWidth)
+    //   .style('fill', 'none')
+    //   .style('stroke', config.colors['gray-700']);
+
+    group
+      .selectAll('text.topic-label')
+      .data(labelData)
+      .join('text')
+      .attr('class', 'topic-label')
+      .attr('x', d => this.xScale(d.px))
+      .attr('y', d => this.yScale(d.py) - 5)
+      .text(d => d.name)
+      .style('font-size', `${14 / this.curZoomTransform.k}px`);
+
+    group
+      .selectAll('circle.topic-center')
+      .data(polygonCenters)
+      .join('circle')
+      .attr('cx', d => d[0])
+      .attr('cy', d => d[1])
+      .attr('r', 2);
+  };
+
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
     const transform = e.transform;
     this.curZoomTransform = transform;
@@ -678,7 +835,7 @@ export class Embedding {
     );
     this.pointCtx.translate(transform.x, transform.y);
     this.pointCtx.scale(transform.k, transform.k);
-    this.drawScatterCanvas();
+    // this.drawScatterCanvas();
     this.pointCtx.restore();
 
     // Transform the background canvas elements
@@ -691,7 +848,7 @@ export class Embedding {
     );
     this.pointBackCtx.translate(transform.x, transform.y);
     this.pointBackCtx.scale(transform.k, transform.k);
-    this.drawScatterBackCanvas();
+    // this.drawScatterBackCanvas();
     this.pointBackCtx.restore();
   };
 
@@ -711,8 +868,8 @@ export class Embedding {
     if (point === this.hoverPoint) return;
 
     // Draw the point on the top svg
-    const topContent = this.topSvg.select('g.top-content');
-    const oldHighlightPoint = topContent.select('circle.highlight-point');
+    const group = this.topSvg.select('g.top-content g.highlights');
+    const oldHighlightPoint = group.select('circle.highlight-point');
 
     // Hovering empty space
     if (point === undefined) {
@@ -744,13 +901,12 @@ export class Embedding {
     // There is no point highlighted yet
     const highlightRadius = Math.max(
       SCATTER_DOT_RADIUS * 1.5,
-      7 / (this.curZoomTransform ? this.curZoomTransform.k : 1)
+      7 / this.curZoomTransform.k
     );
-    const highlightStroke =
-      1.2 / (this.curZoomTransform ? this.curZoomTransform.k : 1);
+    const highlightStroke = 1.2 / this.curZoomTransform.k;
 
     if (oldHighlightPoint.empty()) {
-      const highlightPoint = topContent
+      const highlightPoint = group
         .append('circle')
         .attr('class', 'highlight-point')
         .attr('cx', this.xScale(point.x))

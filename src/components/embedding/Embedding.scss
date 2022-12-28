@@ -54,5 +54,10 @@
 :global(.top-svg .highlight-point) {
   fill: $pink-300;
   stroke: $gray-900;
-  // stroke-width: 0.6;
+}
+
+:global(.top-svg .topic-label) {
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: 'Lato';
 }

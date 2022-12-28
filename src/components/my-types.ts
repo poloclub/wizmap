@@ -2,6 +2,20 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface TopicDataJSON {
+  extent: [[number, number], [number, number]];
+  data: TopicDataMap;
+}
+
+interface TopicDataMap {
+  [level: string]: TopicData[];
+}
+
+/**
+ * A topic center point (x, y, topic label)
+ */
+export type TopicData = [number, number, string];
+
 /**
  * A UMAP data point (x, y, prompt)
  */
