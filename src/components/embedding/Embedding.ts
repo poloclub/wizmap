@@ -10,14 +10,17 @@ import type {
   UMAPPointStreamData,
   LevelTileMap,
   TopicData,
-  TopicDataJSON
+  TopicDataJSON,
+  Rect
 } from '../my-types';
 import {
   downloadJSON,
   splitStreamTransform,
   parseJSONTransform,
   timeit,
-  rgbToHex
+  rgbToHex,
+  round,
+  rectsIntersect
 } from '../../utils/utils';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -302,7 +305,7 @@ export class Embedding {
 
     // Read the topic label data
     const topicPromise = d3
-      .json<TopicDataJSON>('/data/random-topic-data.json')
+      .json<TopicDataJSON>('/data/umap-60k-topic-data.json')
       .then(topicData => {
         if (topicData) {
           // Create a quad tree at each level
@@ -794,15 +797,141 @@ export class Embedding {
     //   .style('fill', 'none')
     //   .style('stroke', config.colors['gray-700']);
 
-    group
-      .selectAll('text.topic-label')
-      .data(labelData)
-      .join('text')
-      .attr('class', 'topic-label')
-      .attr('x', d => this.xScale(d.px))
-      .attr('y', d => this.yScale(d.py) - 5)
-      .text(d => d.name)
-      .style('font-size', `${14 / this.curZoomTransform.k}px`);
+    const drawnLabels: Rect[] = [];
+    const fontSize = round(14 / this.curZoomTransform.k, 0);
+    const textHeight = fontSize * 1.2;
+    const vPadding = 5;
+    const hPadding = 4;
+
+    enum Layout {
+      top = 'top',
+      bottom = 'bottom',
+      left = 'left',
+      right = 'right'
+    }
+
+    for (const label of labelData) {
+      const textWidth = getLatoTextWidth(label.name, fontSize);
+
+      // Try 4 different layout
+      let fit = true;
+      let fitRect: Rect | null = null;
+      let fitLayout: Layout | null = null;
+
+      for (const layout of [
+        Layout.top,
+        Layout.bottom,
+        Layout.left,
+        Layout.right
+      ]) {
+        const curRect: Rect = {
+          x: 0,
+          y: 0,
+          width: textWidth,
+          height: textHeight
+        };
+
+        // Compute the bounding box for this current layout
+        switch (layout) {
+          case Layout.top:
+            curRect.x = this.xScale(label.px) - textWidth / 2;
+            curRect.y = this.yScale(label.py) - textHeight - vPadding;
+            break;
+
+          case Layout.bottom:
+            curRect.x = this.xScale(label.px) - textWidth / 2;
+            curRect.y = this.yScale(label.py) + textHeight + vPadding;
+            break;
+
+          case Layout.left:
+            curRect.x = this.xScale(label.px) - textWidth - hPadding;
+            curRect.y = this.yScale(label.py) - textHeight / 2;
+            break;
+
+          case Layout.right:
+            curRect.x = this.xScale(label.px) + textWidth + hPadding;
+            curRect.y = this.yScale(label.py) - textHeight / 2;
+            break;
+
+          default:
+            console.error('Unknown layout value.');
+            break;
+        }
+
+        // Compare the current layout with existing labels to see if there is
+        // any overlapping
+        for (const drawnLabel of drawnLabels) {
+          if (rectsIntersect(curRect, drawnLabel)) {
+            fit = false;
+            break;
+          }
+        }
+
+        // The current layout does not overlap with any existing rects
+        console.log(fit);
+        if (fit) {
+          fitRect = curRect;
+          fitLayout = layout;
+          break;
+        }
+      }
+
+      // Draw this label if we find a location for it
+      if (fit && fitRect && fitLayout) {
+        drawnLabels.push(fitRect);
+        let x = this.xScale(label.px);
+        let y = this.yScale(label.py);
+
+        switch (fitLayout) {
+          case Layout.top: {
+            y -= vPadding;
+            break;
+          }
+          case Layout.bottom: {
+            y += vPadding;
+            break;
+          }
+          case Layout.left: {
+            x -= hPadding;
+            break;
+          }
+          case Layout.right: {
+            x += hPadding;
+            break;
+          }
+          default: {
+            console.error('Unknown layout value.');
+            break;
+          }
+        }
+
+        group
+          .append('text')
+          .attr('class', 'topic-label')
+          .attr('x', x)
+          .attr('y', y)
+          .classed(fitLayout.toString(), true)
+          .style('font-size', `${fontSize}px`)
+          .text(label.name);
+        // .style('text-anchor')
+      }
+    }
+
+    const rect1: Rect = {
+      x: 311,
+      y: 320,
+      width: 139,
+      height: 12
+    };
+
+    const rect2: Rect = {
+      x: 401,
+      y: 321,
+      width: 120,
+      height: 12
+    };
+
+    console.log(rectsIntersect(rect1, rect2));
 
     group
       .selectAll('circle.topic-center')

@@ -2,7 +2,7 @@
 // License: MIT
 
 import d3 from './d3-import';
-import type { Icon } from './my-types';
+
 // import type { SvelteComponent } from 'svelte';
 
 /**
@@ -23,45 +23,6 @@ export const round = (num: number, decimal: number) => {
  */
 export const random = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min)) + min;
-};
-
-/**
- * Pre-process the svg string to replace fill, stroke, color settings
- * @param {string} svgString
- * @param {string[]} resetColors A list of colors to reset to currentcolor
- * @returns {string}
- */
-
-export const preProcessSVG = (svgString: string, resetColors = []) => {
-  let newString = svgString
-    .replaceAll('black', 'currentcolor')
-    .replaceAll('fill:none', 'fill:currentcolor')
-    .replaceAll('stroke:none', 'fill:currentcolor');
-
-  resetColors.forEach(c => {
-    newString = newString.replaceAll(c, 'currentcolor');
-  });
-
-  return newString;
-};
-
-/**
- * Dynamically bind SVG files as inline SVG strings in this component
- * @param {HTMLElement} component Current component
- * @param {Icon[]} iconList A list of icon mappings (class => icon string)
- */
-
-export const bindInlineSVG = (component: HTMLElement, iconList: Icon[]) => {
-  iconList.forEach(d => {
-    d3.select(component)
-      .selectAll(`.svg-icon.${d.class}`)
-      .each((_, i, g) => {
-        const ele = d3.select(g[i]);
-        let html = ele.html();
-        html = html.concat(' ', preProcessSVG(d.svg));
-        ele.html(html);
-      });
-  });
 };
 
 /**
@@ -305,4 +266,34 @@ export const rgbToHex = (r: number, g: number, b: number) => {
     }
   };
   return `#${numToHex(r)}${numToHex(g)}${numToHex(b)}`;
+};
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Detect if two rectangles overlap.
+ * https://stackoverflow.com/a/306332
+ *
+ * @param rect1 Rectangle 1
+ * @param rect2 Rectangle 2
+ * @returns True if these two rectangles overlap.
+ */
+export const rectsIntersect = (rect1: Rect, rect2: Rect) => {
+  const right1 = rect1.x + rect1.width;
+  const right2 = rect2.x + rect2.width;
+
+  const bottom1 = rect1.y + rect1.height;
+  const bottom2 = rect2.y + rect2.height;
+
+  return (
+    rect1.x < right2 &&
+    right1 > rect2.x &&
+    rect1.y < bottom2 &&
+    bottom1 > rect2.y
+  );
 };
