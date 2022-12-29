@@ -2,6 +2,16 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface LabelData {
+  tileX: number;
+  tileY: number;
+  tileCenterX: number;
+  tileCenterY: number;
+  pointX: number;
+  pointY: number;
+  name: string;
+}
+
 export interface DrawnLabel extends Rect {
   direction: Direction;
   /**

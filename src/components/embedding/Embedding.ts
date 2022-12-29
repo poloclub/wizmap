@@ -12,7 +12,8 @@ import type {
   TopicData,
   TopicDataJSON,
   Rect,
-  DrawnLabel
+  DrawnLabel,
+  LabelData
 } from '../my-types';
 import { Direction } from '../my-types';
 import {
@@ -328,7 +329,7 @@ export class Embedding {
 
     // Show topic labels once we have contours and topic data
     Promise.all([gridPromise, topicPromise]).then(() => {
-      this.showTopicLabels();
+      this.showTopicLabels(10);
     });
 
     // Read the tile data for the topic map
@@ -736,19 +737,14 @@ export class Embedding {
   /**
    * Show the topic labels at different zoom scales.
    */
-  showTopicLabels = () => {
+  showTopicLabels = (maxLabels = -1) => {
     if (this.topicLevelTrees.size <= 1) return;
     if (this.contours === null) return;
 
-    // Show the topic labels for high density regions
-    const topK = 5;
+    // Fin near labels for high density regions
     const group = this.topSvg.select('g.top-content g.topics');
     const polygonCenters = [];
-    for (
-      let i = this.contours.length - 1;
-      i > this.contours.length - 1 - topK;
-      i--
-    ) {
+    for (let i = this.contours.length - 1; i >= 0; i--) {
       const contour = this.contours[i];
 
       // Compute the geometric center of each polygon
@@ -761,7 +757,7 @@ export class Embedding {
         }
         const centerX = xs.reduce((a, b) => a + b) / xs.length;
         const centerY = ys.reduce((a, b) => a + b) / ys.length;
-        polygonCenters.push([centerX, centerY]);
+        polygonCenters.push([centerX, centerY, contour.value]);
       }
     }
 
@@ -773,17 +769,27 @@ export class Embedding {
       (treeExtent[1][0] - treeExtent[0][1]) / Math.pow(2, idealTreeLevel);
     const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
 
-    // Find closest topic label for each high density point
-    const labelData = [];
-    const labelNames = new Set<string>();
+    // Find closest topic labels for each high density point
+    const labelDataMap = new Map<string, LabelData>();
+    const labelDataCounter = new Map<string, number>();
 
     for (const point of polygonCenters) {
       const viewX = this.xScale.invert(point[0]);
       const viewY = this.yScale.invert(point[1]);
-      const closestTopic = topicTree.find(viewX, viewY)!;
 
-      if (!labelNames.has(closestTopic[2])) {
-        labelData.push({
+      // Use 2D search to potentially detect multiple tiles for one density
+      // center. Radius is a hyper parameter.
+      const radius = tileWidth * 0.51;
+      const closestTopics = search2DQuadTree(
+        topicTree,
+        viewX - radius,
+        viewY - radius,
+        viewX + radius,
+        viewY + radius
+      );
+
+      for (const closestTopic of closestTopics) {
+        const curLabelData: LabelData = {
           tileX: closestTopic[0] - tileWidth / 2,
           tileY: closestTopic[1] + tileWidth / 2,
           tileCenterX: closestTopic[0],
@@ -791,10 +797,25 @@ export class Embedding {
           pointX: viewX,
           pointY: viewY,
           name: closestTopic[2]
-        });
-        labelNames.add(closestTopic[2]);
+        };
+
+        if (labelDataCounter.has(curLabelData.name)) {
+          labelDataCounter.set(
+            curLabelData.name,
+            labelDataCounter.get(curLabelData.name)! + point[2]
+          );
+        } else {
+          labelDataCounter.set(curLabelData.name, point[2]);
+          labelDataMap.set(curLabelData.name, curLabelData);
+        }
       }
     }
+
+    // Sort the label data by their accumulated density scores
+    const sortedLabelData = [...labelDataCounter]
+      .sort((a, b) => b[1] - a[1])
+      .map(pair => labelDataMap.get(pair[0])!)
+      .slice(0, maxLabels === -1 ? labelDataMap.size : maxLabels);
 
     const drawnLabels: DrawnLabel[] = [];
     const drawnTiles: Rect[] = [];
@@ -804,7 +825,7 @@ export class Embedding {
     const vPadding = 4;
     const hPadding = 4;
 
-    for (const label of labelData) {
+    for (const label of sortedLabelData) {
       const twoLine = label.name.length > 12;
       let line1 = label.name.slice(0, Math.floor(label.name.length / 2));
       let line2 = label.name.slice(Math.floor(label.name.length / 2));
@@ -902,7 +923,7 @@ export class Embedding {
 
       // (4) Prioritize a safer direction first if there is another (future)
       // tile connecting to the current tile's left or right
-      for (const futureLabel of labelData) {
+      for (const futureLabel of sortedLabelData) {
         if (futureLabel.tileY === label.tileY) {
           const xDiff = futureLabel.tileX - label.tileX;
           if (xDiff === tileWidth) {
@@ -1284,3 +1305,36 @@ export class Embedding {
     this.highlightPoint(point);
   };
 }
+
+/**
+ * Search all data points in the given bounding box
+ * @param quadtree Quadtree
+ * @param xmin min x
+ * @param ymin min y
+ * @param xmax max x
+ * @param ymax max y
+ * @returns Array of points in this regin
+ */
+const search2DQuadTree = (
+  quadtree: d3.Quadtree<TopicData>,
+  xmin: number,
+  ymin: number,
+  xmax: number,
+  ymax: number
+) => {
+  const results: TopicData[] = [];
+  quadtree.visit((node, x1, y1, x2, y2) => {
+    if (!node.length) {
+      let leaf: d3.QuadtreeLeaf<TopicData> | undefined =
+        node as d3.QuadtreeLeaf<TopicData>;
+      do {
+        const d = leaf.data;
+        if (d[0] >= xmin && d[0] < xmax && d[1] >= ymin && d[1] < ymax) {
+          results.push(d);
+        }
+      } while ((leaf = leaf.next));
+    }
+    return x1 >= xmax || y1 >= ymax || x2 < xmin || y2 < ymin;
+  });
+  return results;
+};
