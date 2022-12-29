@@ -2,8 +2,24 @@
  * Custom types for DiffusionDB-Vis
  */
 
-export interface LabelLayout extends Rect {
+export interface DrawnLabel extends Rect {
   direction: Direction;
+  /**
+   * Density center point's x coordinate.
+   */
+  pointX: number;
+  /**
+   * Density center point's y coordinate.
+   */
+  pointY: number;
+  /**
+   * Topic tile's top left point's x coordinate.
+   */
+  tileX: number;
+  /**
+   * Topic tile's top left point's y coordinate.
+   */
+  tileY: number;
 }
 
 export enum Direction {

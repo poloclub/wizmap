@@ -12,7 +12,7 @@ import type {
   TopicData,
   TopicDataJSON,
   Rect,
-  LabelLayout
+  DrawnLabel
 } from '../my-types';
 import { Direction } from '../my-types';
 import {
@@ -784,32 +784,24 @@ export class Embedding {
 
       if (!labelNames.has(closestTopic[2])) {
         labelData.push({
-          x: closestTopic[0] - tileWidth / 2,
-          y: closestTopic[1] + tileWidth / 2,
-          px: viewX,
-          py: viewY,
+          tileX: closestTopic[0] - tileWidth / 2,
+          tileY: closestTopic[1] + tileWidth / 2,
+          tileCenterX: closestTopic[0],
+          tileCenterY: closestTopic[1],
+          pointX: viewX,
+          pointY: viewY,
           name: closestTopic[2]
         });
         labelNames.add(closestTopic[2]);
       }
     }
 
-    // group
-    //   .selectAll('rect.topic-tile')
-    //   .data(labelData)
-    //   .join('rect')
-    //   .attr('class', 'topic-tile')
-    //   .attr('x', d => this.xScale(d.x))
-    //   .attr('y', d => this.yScale(d.y))
-    //   .attr('width', tileScreenWidth)
-    //   .attr('height', tileScreenWidth)
-    //   .style('fill', 'none')
-    //   .style('stroke', config.colors['gray-700']);
+    const drawnLabels: DrawnLabel[] = [];
+    const drawnTiles: Rect[] = [];
 
-    const drawnLabels: LabelLayout[] = [];
     const fontSize = round(14 / this.curZoomTransform.k, 0);
     const textHeight = fontSize * 1.1;
-    const vPadding = 5;
+    const vPadding = 4;
     const hPadding = 4;
 
     for (const label of labelData) {
@@ -837,7 +829,9 @@ export class Embedding {
       let fitDirection: Direction | null = null;
 
       // Semi-greedy algorithm: (1) prioritize left and right over top and
-      // bottom; (2) pick the opposite direction as the closest neighbor
+      // bottom; (2) pick the opposite direction as the closest neighbor.
+      // We also use this iteration to check if this topic tile would overlaps
+      // with previous labels.
       const directions = [
         Direction.left,
         Direction.right,
@@ -848,13 +842,31 @@ export class Embedding {
       let closestDistance = Infinity;
       let closestDirection = Direction.right;
 
+      let tileIntersects = false;
+      const curTileRect: Rect = {
+        x: this.xScale(label.tileX),
+        y: this.yScale(label.tileY),
+        width: tileScreenWidth,
+        height: tileScreenWidth
+      };
+
       for (const drawnLabel of drawnLabels) {
-        const xDiff = Math.abs(drawnLabel.x - label.px);
-        const yDiff = Math.abs(drawnLabel.y - label.py);
+        if (rectsIntersect(curTileRect, drawnLabel)) {
+          tileIntersects = true;
+          break;
+        }
+
+        const xDiff = Math.abs(drawnLabel.x - label.tileCenterX);
+        const yDiff = Math.abs(drawnLabel.y - label.tileCenterY);
         if (Math.min(xDiff, yDiff) < closestDistance) {
           closestDistance = Math.min(xDiff, yDiff);
           closestDirection = drawnLabel.direction;
         }
+      }
+
+      // Do now show this label if it overlaps
+      if (tileIntersects) {
+        continue;
       }
 
       switch (closestDirection) {
@@ -890,23 +902,33 @@ export class Embedding {
         // Compute the bounding box for this current layout
         switch (direction) {
           case Direction.top:
-            curRect.x = this.xScale(label.px) - textWidth / 2;
-            curRect.y = this.yScale(label.py) - curTextHeight - vPadding;
+            curRect.x = this.xScale(label.tileCenterX) - textWidth / 2;
+            curRect.y =
+              this.yScale(label.tileCenterY) -
+              tileScreenWidth / 2 -
+              curTextHeight -
+              vPadding;
             break;
 
           case Direction.bottom:
-            curRect.x = this.xScale(label.px) - textWidth / 2;
-            curRect.y = this.yScale(label.py) + vPadding;
+            curRect.x = this.xScale(label.tileCenterX) - textWidth / 2;
+            curRect.y =
+              this.yScale(label.tileCenterY) + tileScreenWidth / 2 + vPadding;
             break;
 
           case Direction.left:
-            curRect.x = this.xScale(label.px) - textWidth - hPadding;
-            curRect.y = this.yScale(label.py) - curTextHeight / 2;
+            curRect.x =
+              this.xScale(label.tileCenterX) -
+              tileScreenWidth / 2 -
+              textWidth -
+              hPadding;
+            curRect.y = this.yScale(label.tileCenterY) - curTextHeight / 2;
             break;
 
           case Direction.right:
-            curRect.x = this.xScale(label.px) + hPadding;
-            curRect.y = this.yScale(label.py) - curTextHeight / 2;
+            curRect.x =
+              this.xScale(label.tileCenterX) + tileScreenWidth / 2 + hPadding;
+            curRect.y = this.yScale(label.tileCenterY) - curTextHeight / 2;
             break;
 
           default:
@@ -923,7 +945,16 @@ export class Embedding {
           }
         }
 
-        // The current directio does not overlap with any existing rects
+        // Compare the current direction with existing tile squares to see if
+        // there is any overlapping
+        for (const drawnTile of drawnTiles) {
+          if (rectsIntersect(curRect, drawnTile)) {
+            fit = false;
+            break;
+          }
+        }
+
+        // The current direction does not overlap with any existing rects
         if (fit) {
           fitRect = curRect;
           fitDirection = direction;
@@ -933,29 +964,46 @@ export class Embedding {
 
       // Draw this label if we find a location for it
       if (fit && fitRect && fitDirection) {
-        const drawnLabel = structuredClone(fitRect) as LabelLayout;
-        drawnLabel.direction = fitDirection;
-        drawnLabels.push(drawnLabel);
+        const drawnLabel: DrawnLabel = {
+          x: fitRect.x,
+          y: fitRect.y,
+          width: fitRect.width,
+          height: fitRect.height,
+          direction: fitDirection,
+          pointX: label.pointX,
+          pointY: label.pointY,
+          tileX: label.tileX,
+          tileY: label.tileY
+        };
+        const drawnTile: Rect = {
+          x: this.xScale(label.tileX),
+          y: this.yScale(label.tileY),
+          width: tileScreenWidth,
+          height: tileScreenWidth
+        };
 
-        let x = this.xScale(label.px);
-        let y = this.yScale(label.py);
+        drawnLabels.push(drawnLabel);
+        drawnTiles.push(drawnTile);
+
+        let x = this.xScale(label.tileCenterX);
+        let y = this.yScale(label.tileCenterY);
 
         switch (fitDirection) {
           case Direction.top: {
-            y -= vPadding + (twoLine ? textHeight : 0);
+            y -= vPadding + tileScreenWidth / 2 + (twoLine ? textHeight : 0);
             break;
           }
           case Direction.bottom: {
-            y += vPadding;
+            y += vPadding + tileScreenWidth / 2;
             break;
           }
           case Direction.left: {
-            x -= hPadding;
+            x -= hPadding + tileScreenWidth / 2;
             y -= twoLine ? textHeight : 0;
             break;
           }
           case Direction.right: {
-            x += hPadding;
+            x += hPadding + tileScreenWidth / 2;
             y -= twoLine ? textHeight : 0;
             break;
           }
@@ -970,7 +1018,10 @@ export class Embedding {
             .append('text')
             .attr('class', 'topic-label')
             .classed(fitDirection, true)
-            .style('font-size', `${fontSize}px`);
+            .style('font-size', `${fontSize}px`)
+            .attr('paint-order', 'stroke')
+            .style('stroke', 'white')
+            .style('stroke-width', 2);
 
           text.append('tspan').attr('x', x).attr('y', y).text(line1);
           text
@@ -1001,13 +1052,29 @@ export class Embedding {
       }
     }
 
+    // Draw the high density center
+    // group
+    //   .selectAll('circle.topic-center')
+    //   .data(drawnLabels)
+    //   .join('circle')
+    //   .attr('cx', d => this.xScale(d.pointX))
+    //   .attr('cy', d => this.yScale(d.pointY))
+    //   .attr('r', 2);
+
+    // Draw the topic region
     group
-      .selectAll('circle.topic-center')
-      .data(polygonCenters)
-      .join('circle')
-      .attr('cx', d => d[0])
-      .attr('cy', d => d[1])
-      .attr('r', 2);
+      .selectAll('rect.topic-tile')
+      .data(drawnLabels)
+      .join('rect')
+      .attr('class', 'topic-tile')
+      .attr('x', d => this.xScale(d.tileX))
+      .attr('y', d => this.yScale(d.tileY))
+      .attr('rx', 3)
+      .attr('ry', 3)
+      .attr('width', tileScreenWidth)
+      .attr('height', tileScreenWidth)
+      .style('fill', 'none')
+      .style('stroke', config.colors['gray-800']);
   };
 
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
