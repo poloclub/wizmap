@@ -11,8 +11,10 @@ import type {
   LevelTileMap,
   TopicData,
   TopicDataJSON,
-  Rect
+  Rect,
+  LabelLayout
 } from '../my-types';
+import { Direction } from '../my-types';
 import {
   downloadJSON,
   splitStreamTransform,
@@ -804,18 +806,11 @@ export class Embedding {
     //   .style('fill', 'none')
     //   .style('stroke', config.colors['gray-700']);
 
-    const drawnLabels: Rect[] = [];
+    const drawnLabels: LabelLayout[] = [];
     const fontSize = round(14 / this.curZoomTransform.k, 0);
     const textHeight = fontSize * 1.1;
     const vPadding = 5;
     const hPadding = 4;
-
-    enum Layout {
-      top = 'top',
-      bottom = 'bottom',
-      left = 'left',
-      right = 'right'
-    }
 
     for (const label of labelData) {
       const twoLine = label.name.length > 12;
@@ -839,11 +834,51 @@ export class Embedding {
       // Try 4 different layout
       let fit = true;
       let fitRect: Rect | null = null;
-      let fitLayout: Layout | null = null;
+      let fitDirection: Direction | null = null;
 
-      const layouts = [Layout.left, Layout.right, Layout.bottom, Layout.top];
+      // Semi-greedy algorithm: (1) prioritize left and right over top and
+      // bottom; (2) pick the opposite direction as the closest neighbor
+      const directions = [
+        Direction.left,
+        Direction.right,
+        Direction.bottom,
+        Direction.top
+      ];
 
-      for (const layout of layouts) {
+      let closestDistance = Infinity;
+      let closestDirection = Direction.right;
+
+      for (const drawnLabel of drawnLabels) {
+        const xDiff = Math.abs(drawnLabel.x - label.px);
+        const yDiff = Math.abs(drawnLabel.y - label.py);
+        if (Math.min(xDiff, yDiff) < closestDistance) {
+          closestDistance = Math.min(xDiff, yDiff);
+          closestDirection = drawnLabel.direction;
+        }
+      }
+
+      switch (closestDirection) {
+        case Direction.left: {
+          directions[0] = Direction.right;
+          directions[1] = Direction.left;
+          break;
+        }
+        case Direction.top: {
+          directions[0] = Direction.bottom;
+          directions[2] = Direction.left;
+          break;
+        }
+        case Direction.bottom: {
+          directions[0] = Direction.top;
+          directions[3] = Direction.left;
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      for (const direction of directions) {
         fit = true;
         const curRect: Rect = {
           x: 0,
@@ -853,33 +888,33 @@ export class Embedding {
         };
 
         // Compute the bounding box for this current layout
-        switch (layout) {
-          case Layout.top:
+        switch (direction) {
+          case Direction.top:
             curRect.x = this.xScale(label.px) - textWidth / 2;
             curRect.y = this.yScale(label.py) - curTextHeight - vPadding;
             break;
 
-          case Layout.bottom:
+          case Direction.bottom:
             curRect.x = this.xScale(label.px) - textWidth / 2;
             curRect.y = this.yScale(label.py) + vPadding;
             break;
 
-          case Layout.left:
+          case Direction.left:
             curRect.x = this.xScale(label.px) - textWidth - hPadding;
             curRect.y = this.yScale(label.py) - curTextHeight / 2;
             break;
 
-          case Layout.right:
+          case Direction.right:
             curRect.x = this.xScale(label.px) + hPadding;
             curRect.y = this.yScale(label.py) - curTextHeight / 2;
             break;
 
           default:
-            console.error('Unknown layout value.');
+            console.error('Unknown direction value.');
             break;
         }
 
-        // Compare the current layout with existing labels to see if there is
+        // Compare the current direction with existing labels to see if there is
         // any overlapping
         for (const drawnLabel of drawnLabels) {
           if (rectsIntersect(curRect, drawnLabel)) {
@@ -888,35 +923,38 @@ export class Embedding {
           }
         }
 
-        // The current layout does not overlap with any existing rects
+        // The current directio does not overlap with any existing rects
         if (fit) {
           fitRect = curRect;
-          fitLayout = layout;
+          fitDirection = direction;
           break;
         }
       }
 
       // Draw this label if we find a location for it
-      if (fit && fitRect && fitLayout) {
-        drawnLabels.push(fitRect);
+      if (fit && fitRect && fitDirection) {
+        const drawnLabel = structuredClone(fitRect) as LabelLayout;
+        drawnLabel.direction = fitDirection;
+        drawnLabels.push(drawnLabel);
+
         let x = this.xScale(label.px);
         let y = this.yScale(label.py);
 
-        switch (fitLayout) {
-          case Layout.top: {
+        switch (fitDirection) {
+          case Direction.top: {
             y -= vPadding + (twoLine ? textHeight : 0);
             break;
           }
-          case Layout.bottom: {
+          case Direction.bottom: {
             y += vPadding;
             break;
           }
-          case Layout.left: {
+          case Direction.left: {
             x -= hPadding;
             y -= twoLine ? textHeight : 0;
             break;
           }
-          case Layout.right: {
+          case Direction.right: {
             x += hPadding;
             y -= twoLine ? textHeight : 0;
             break;
@@ -931,7 +969,7 @@ export class Embedding {
           const text = group
             .append('text')
             .attr('class', 'topic-label')
-            .classed(fitLayout.toString(), true)
+            .classed(fitDirection, true)
             .style('font-size', `${fontSize}px`);
 
           text.append('tspan').attr('x', x).attr('y', y).text(line1);
@@ -947,19 +985,19 @@ export class Embedding {
             .attr('class', 'topic-label')
             .attr('x', x)
             .attr('y', y)
-            .classed(fitLayout.toString(), true)
+            .classed(fitDirection, true)
             .style('font-size', `${fontSize}px`)
             .text(label.name);
         }
 
-        group
-          .append('rect')
-          .attr('x', fitRect.x)
-          .attr('y', fitRect.y)
-          .attr('width', fitRect.width)
-          .attr('height', fitRect.height)
-          .style('fill', 'none')
-          .style('stroke', 'orange');
+        // group
+        //   .append('rect')
+        //   .attr('x', fitRect.x)
+        //   .attr('y', fitRect.y)
+        //   .attr('width', fitRect.width)
+        //   .attr('height', fitRect.height)
+        //   .style('fill', 'none')
+        //   .style('stroke', 'orange');
       }
     }
 

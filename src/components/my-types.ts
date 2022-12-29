@@ -2,6 +2,17 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export interface LabelLayout extends Rect {
+  direction: Direction;
+}
+
+export enum Direction {
+  top = 'top',
+  bottom = 'bottom',
+  left = 'left',
+  right = 'right'
+}
+
 export interface TopicDataJSON {
   extent: [[number, number], [number, number]];
   data: TopicDataMap;
