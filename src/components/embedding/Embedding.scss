@@ -88,3 +88,27 @@
   dominant-baseline: middle;
   alignment-baseline: middle;
 }
+
+:global(.top-svg .topic-label.top tspan) {
+  text-anchor: middle;
+  dominant-baseline: auto;
+  alignment-baseline: auto;
+}
+
+:global(.top-svg .topic-label.bottom tspan) {
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  alignment-baseline: hanging;
+}
+
+:global(.top-svg .topic-label.left tspan) {
+  text-anchor: end;
+  dominant-baseline: hanging;
+  alignment-baseline: hanging;
+}
+
+:global(.top-svg .topic-label.right tspan) {
+  text-anchor: start;
+  dominant-baseline: hanging;
+  alignment-baseline: hanging;
+}

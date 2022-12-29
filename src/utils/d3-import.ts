@@ -31,7 +31,16 @@ import {
   interpolateRgbBasis
 } from 'd3-interpolate';
 
-import { max, maxIndex, min, minIndex, extent, sum, bin } from 'd3-array';
+import {
+  max,
+  maxIndex,
+  min,
+  minIndex,
+  extent,
+  sum,
+  bin,
+  shuffle
+} from 'd3-array';
 
 import { timeout } from 'd3-timer';
 
@@ -112,6 +121,7 @@ export default {
   extent,
   sum,
   bin,
+  shuffle,
   timeout,
   transition,
   easeLinear,

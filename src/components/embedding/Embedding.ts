@@ -32,6 +32,7 @@ const DATA_SIZE = '60k';
 const DEBUG = true;
 const SCATTER_DOT_RADIUS = 1;
 const IDEAL_TILE_WIDTH = 35;
+const LABEL_SPLIT = '-';
 
 let pointMouseleaveTimer: number | null = null;
 let pointMouseenterTimer: number | null = null;
@@ -772,17 +773,23 @@ export class Embedding {
 
     // Find closest topic label for each high density point
     const labelData = [];
+    const labelNames = new Set<string>();
+
     for (const point of polygonCenters) {
       const viewX = this.xScale.invert(point[0]);
       const viewY = this.yScale.invert(point[1]);
       const closestTopic = topicTree.find(viewX, viewY)!;
-      labelData.push({
-        x: closestTopic[0] - tileWidth / 2,
-        y: closestTopic[1] + tileWidth / 2,
-        px: viewX,
-        py: viewY,
-        name: closestTopic[2]
-      });
+
+      if (!labelNames.has(closestTopic[2])) {
+        labelData.push({
+          x: closestTopic[0] - tileWidth / 2,
+          y: closestTopic[1] + tileWidth / 2,
+          px: viewX,
+          py: viewY,
+          name: closestTopic[2]
+        });
+        labelNames.add(closestTopic[2]);
+      }
     }
 
     // group
@@ -799,7 +806,7 @@ export class Embedding {
 
     const drawnLabels: Rect[] = [];
     const fontSize = round(14 / this.curZoomTransform.k, 0);
-    const textHeight = fontSize * 1.2;
+    const textHeight = fontSize * 1.1;
     const vPadding = 5;
     const hPadding = 4;
 
@@ -811,46 +818,60 @@ export class Embedding {
     }
 
     for (const label of labelData) {
-      const textWidth = getLatoTextWidth(label.name, fontSize);
+      const twoLine = label.name.length > 12;
+      let line1 = label.name.slice(0, Math.floor(label.name.length / 2));
+      let line2 = label.name.slice(Math.floor(label.name.length / 2));
+
+      if (twoLine && label.name.split(LABEL_SPLIT).length >= 4) {
+        const words = label.name.split(LABEL_SPLIT);
+        line1 = words.slice(0, 2).join('-') + '-';
+        line2 = words.slice(2).join('-');
+      }
+
+      const textWidth = twoLine
+        ? Math.max(
+            getLatoTextWidth(line1, fontSize),
+            getLatoTextWidth(line2, fontSize)
+          )
+        : getLatoTextWidth(label.name, fontSize);
+      const curTextHeight = twoLine ? textHeight * 1.8 : textHeight;
 
       // Try 4 different layout
       let fit = true;
       let fitRect: Rect | null = null;
       let fitLayout: Layout | null = null;
 
-      for (const layout of [
-        Layout.top,
-        Layout.bottom,
-        Layout.left,
-        Layout.right
-      ]) {
+      const layouts = [Layout.left, Layout.right, Layout.bottom, Layout.top];
+
+      for (const layout of layouts) {
+        fit = true;
         const curRect: Rect = {
           x: 0,
           y: 0,
           width: textWidth,
-          height: textHeight
+          height: curTextHeight
         };
 
         // Compute the bounding box for this current layout
         switch (layout) {
           case Layout.top:
             curRect.x = this.xScale(label.px) - textWidth / 2;
-            curRect.y = this.yScale(label.py) - textHeight - vPadding;
+            curRect.y = this.yScale(label.py) - curTextHeight - vPadding;
             break;
 
           case Layout.bottom:
             curRect.x = this.xScale(label.px) - textWidth / 2;
-            curRect.y = this.yScale(label.py) + textHeight + vPadding;
+            curRect.y = this.yScale(label.py) + vPadding;
             break;
 
           case Layout.left:
             curRect.x = this.xScale(label.px) - textWidth - hPadding;
-            curRect.y = this.yScale(label.py) - textHeight / 2;
+            curRect.y = this.yScale(label.py) - curTextHeight / 2;
             break;
 
           case Layout.right:
-            curRect.x = this.xScale(label.px) + textWidth + hPadding;
-            curRect.y = this.yScale(label.py) - textHeight / 2;
+            curRect.x = this.xScale(label.px) + hPadding;
+            curRect.y = this.yScale(label.py) - curTextHeight / 2;
             break;
 
           default:
@@ -868,7 +889,6 @@ export class Embedding {
         }
 
         // The current layout does not overlap with any existing rects
-        console.log(fit);
         if (fit) {
           fitRect = curRect;
           fitLayout = layout;
@@ -884,7 +904,7 @@ export class Embedding {
 
         switch (fitLayout) {
           case Layout.top: {
-            y -= vPadding;
+            y -= vPadding + (twoLine ? textHeight : 0);
             break;
           }
           case Layout.bottom: {
@@ -893,10 +913,12 @@ export class Embedding {
           }
           case Layout.left: {
             x -= hPadding;
+            y -= twoLine ? textHeight : 0;
             break;
           }
           case Layout.right: {
             x += hPadding;
+            y -= twoLine ? textHeight : 0;
             break;
           }
           default: {
@@ -905,33 +927,41 @@ export class Embedding {
           }
         }
 
+        if (twoLine) {
+          const text = group
+            .append('text')
+            .attr('class', 'topic-label')
+            .classed(fitLayout.toString(), true)
+            .style('font-size', `${fontSize}px`);
+
+          text.append('tspan').attr('x', x).attr('y', y).text(line1);
+          text
+            .append('tspan')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('dy', '0.95em')
+            .text(line2);
+        } else {
+          group
+            .append('text')
+            .attr('class', 'topic-label')
+            .attr('x', x)
+            .attr('y', y)
+            .classed(fitLayout.toString(), true)
+            .style('font-size', `${fontSize}px`)
+            .text(label.name);
+        }
+
         group
-          .append('text')
-          .attr('class', 'topic-label')
-          .attr('x', x)
-          .attr('y', y)
-          .classed(fitLayout.toString(), true)
-          .style('font-size', `${fontSize}px`)
-          .text(label.name);
-        // .style('text-anchor')
+          .append('rect')
+          .attr('x', fitRect.x)
+          .attr('y', fitRect.y)
+          .attr('width', fitRect.width)
+          .attr('height', fitRect.height)
+          .style('fill', 'none')
+          .style('stroke', 'orange');
       }
     }
-
-    const rect1: Rect = {
-      x: 311,
-      y: 320,
-      width: 139,
-      height: 12
-    };
-
-    const rect2: Rect = {
-      x: 401,
-      y: 321,
-      width: 120,
-      height: 12
-    };
-
-    console.log(rectsIntersect(rect1, rect2));
 
     group
       .selectAll('circle.topic-center')
