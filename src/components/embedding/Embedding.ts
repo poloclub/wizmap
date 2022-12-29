@@ -828,10 +828,8 @@ export class Embedding {
       let fitRect: Rect | null = null;
       let fitDirection: Direction | null = null;
 
-      // Semi-greedy algorithm: (1) prioritize left and right over top and
-      // bottom; (2) pick the opposite direction as the closest neighbor.
-      // We also use this iteration to check if this topic tile would overlaps
-      // with previous labels.
+      // Simple greedy heuristic:
+      // (1) Prioritize left and right over top and bottom;
       const directions = [
         Direction.left,
         Direction.right,
@@ -839,9 +837,16 @@ export class Embedding {
         Direction.top
       ];
 
-      let closestDistance = Infinity;
-      let closestDirection = Direction.right;
+      // (2) Prioritize right if the tile is on the right half
+      if (label.tileCenterX >= (treeExtent[0][0] + treeExtent[1][0]) / 2) {
+        directions[0] = Direction.right;
+        directions[1] = Direction.left;
+      }
 
+      // (3) pick the opposite direction as the connected neighbor tile.
+      // We also use this iteration to check if this topic tile would overlaps
+      // with previous labels.
+      let neighborDirection: Direction | null = null;
       let tileIntersects = false;
       const curTileRect: Rect = {
         x: this.xScale(label.tileX),
@@ -856,11 +861,10 @@ export class Embedding {
           break;
         }
 
-        const xDiff = Math.abs(drawnLabel.x - label.tileCenterX);
-        const yDiff = Math.abs(drawnLabel.y - label.tileCenterY);
-        if (Math.min(xDiff, yDiff) < closestDistance) {
-          closestDistance = Math.min(xDiff, yDiff);
-          closestDirection = drawnLabel.direction;
+        const xDiff = Math.abs(drawnLabel.tileX - label.tileX);
+        const yDiff = Math.abs(drawnLabel.tileY - label.tileY);
+        if (xDiff + yDiff <= tileWidth) {
+          neighborDirection = drawnLabel.direction;
         }
       }
 
@@ -869,20 +873,25 @@ export class Embedding {
         continue;
       }
 
-      switch (closestDirection) {
+      switch (neighborDirection) {
         case Direction.left: {
-          directions[0] = Direction.right;
-          directions[1] = Direction.left;
+          directions.splice(directions.indexOf(Direction.right), 1);
+          directions.unshift(Direction.right);
+          break;
+        }
+        case Direction.right: {
+          directions.splice(directions.indexOf(Direction.left), 1);
+          directions.unshift(Direction.left);
           break;
         }
         case Direction.top: {
-          directions[0] = Direction.bottom;
-          directions[2] = Direction.left;
+          directions.splice(directions.indexOf(Direction.bottom), 1);
+          directions.unshift(Direction.bottom);
           break;
         }
         case Direction.bottom: {
-          directions[0] = Direction.top;
-          directions[3] = Direction.left;
+          directions.splice(directions.indexOf(Direction.top), 1);
+          directions.unshift(Direction.top);
           break;
         }
         default: {
