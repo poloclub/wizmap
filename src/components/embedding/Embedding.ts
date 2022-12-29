@@ -829,6 +829,7 @@ export class Embedding {
       let fitDirection: Direction | null = null;
 
       // Simple greedy heuristic:
+      // https://en.wikipedia.org/wiki/Automatic_label_placement
       // (1) Prioritize left and right over top and bottom;
       const directions = [
         Direction.left,
@@ -843,7 +844,7 @@ export class Embedding {
         directions[1] = Direction.left;
       }
 
-      // (3) pick the opposite direction as the connected neighbor tile.
+      // (3) pick the opposite direction as the connected drawn neighbor's tile.
       // We also use this iteration to check if this topic tile would overlaps
       // with previous labels.
       let neighborDirection: Direction | null = null;
@@ -896,6 +897,23 @@ export class Embedding {
         }
         default: {
           break;
+        }
+      }
+
+      // (4) Prioritize a safer direction first if there is another (future)
+      // tile connecting to the current tile's left or right
+      for (const futureLabel of labelData) {
+        if (futureLabel.tileY === label.tileY) {
+          const xDiff = futureLabel.tileX - label.tileX;
+          if (xDiff === tileWidth) {
+            // There is a future tile on the right, prioritize left
+            directions.splice(directions.indexOf(Direction.left), 1);
+            directions.unshift(Direction.left);
+          } else if (xDiff === -tileWidth) {
+            // There is a future tile on the left, prioritize right
+            directions.splice(directions.indexOf(Direction.right), 1);
+            directions.unshift(Direction.right);
+          }
         }
       }
 
