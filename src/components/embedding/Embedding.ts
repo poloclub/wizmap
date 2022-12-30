@@ -1154,6 +1154,22 @@ export class Embedding {
           .style('stroke', config.colors['gray-800'])
           .style('stroke-width', 1.6 / this.curZoomTransform.k);
 
+        const directionIndicator = this.getTileIndicatorPath(
+          fitDirection,
+          label.tileX,
+          label.tileY,
+          tileScreenWidth
+        );
+
+        labelGroup
+          .append('path')
+          .attr('class', 'direction-indicator')
+          .attr('transform-origin', 'center')
+          .attr('transform', directionIndicator.transform)
+          .attr('d', directionIndicator.path)
+          .style('fill', config.colors['gray-800'])
+          .style('stroke', 'none');
+
         // group
         //   .append('rect')
         //   .attr('x', fitRect.x)
@@ -1180,6 +1196,65 @@ export class Embedding {
       this.component.querySelector('input#slider-label-num') as HTMLInputElement
     ).value = `${this.curLabelNum}`;
     this.updateEmbedding();
+  };
+
+  /**
+   * Get the path for a tile's direction indicator.
+   * @param direction Label direction
+   * @param tileX Tile's top left x
+   * @param tileY Tile's top left y
+   * @param tileScreenWidth Tile's width in the screen coordinate
+   */
+  getTileIndicatorPath = (
+    direction: Direction,
+    tileX: number,
+    tileY: number,
+    tileScreenWidth: number
+  ) => {
+    const pathGenerator = d3.arc();
+    const pathArgs: d3.DefaultArcObject = {
+      innerRadius: 0,
+      outerRadius: 3 / this.curZoomTransform.k,
+      startAngle: -Math.PI / 2,
+      endAngle: Math.PI / 2
+    };
+    let tx = this.xScale(tileX) + tileScreenWidth / 2;
+    let ty = this.yScale(tileY);
+
+    switch (direction) {
+      case Direction.left: {
+        pathArgs.startAngle = -Math.PI;
+        pathArgs.endAngle = 0;
+        tx = this.xScale(tileX);
+        ty = this.yScale(tileY) + tileScreenWidth / 2;
+        break;
+      }
+
+      case Direction.right: {
+        pathArgs.startAngle = 0;
+        pathArgs.endAngle = Math.PI;
+        tx = this.xScale(tileX) + tileScreenWidth;
+        ty = this.yScale(tileY) + tileScreenWidth / 2;
+        break;
+      }
+
+      case Direction.bottom: {
+        pathArgs.startAngle = Math.PI / 2;
+        pathArgs.endAngle = (Math.PI * 3) / 2;
+        tx = this.xScale(tileX) + tileScreenWidth / 2;
+        ty = this.yScale(tileY) + tileScreenWidth;
+        break;
+      }
+
+      default: {
+        break;
+      }
+    }
+
+    return {
+      path: pathGenerator(pathArgs),
+      transform: `translate(${tx}, ${ty})`
+    };
   };
 
   labelNumSliderChanged = (e: InputEvent) => {
