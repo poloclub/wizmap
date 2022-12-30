@@ -329,7 +329,7 @@ export class Embedding {
 
     // Show topic labels once we have contours and topic data
     Promise.all([gridPromise, topicPromise]).then(() => {
-      this.showTopicLabels(10);
+      this.showTopicLabels(20);
     });
 
     // Read the tile data for the topic map
@@ -779,7 +779,7 @@ export class Embedding {
 
       // Use 2D search to potentially detect multiple tiles for one density
       // center. Radius is a hyper parameter.
-      const radius = tileWidth * 0.51;
+      const radius = tileWidth * 0.5;
       const closestTopics = search2DQuadTree(
         topicTree,
         viewX - radius,
