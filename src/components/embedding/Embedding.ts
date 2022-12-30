@@ -62,8 +62,10 @@ export class Embedding {
   colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
   hoverPoint: PromptPoint | null = null;
 
+  // Zooming
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
   curZoomTransform: d3.ZoomTransform = d3.zoomIdentity;
+  curZoomLevel = 1;
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -76,16 +78,17 @@ export class Embedding {
   gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
-
   contours: d3.ContourMultiPolygon[] | null = null;
+
+  // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
     number,
     d3.Quadtree<TopicData>
   >();
-
-  // Display labels
   maxLabelNum = 0;
   curLabelNum = 0;
+  userMaxLabelNum = 20;
+  initializedTiles = new Map<number, [number, number, number, number]>();
 
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
@@ -337,7 +340,7 @@ export class Embedding {
 
     // Show topic labels once we have contours and topic data
     Promise.all([gridPromise, topicPromise]).then(() => {
-      this.showTopicLabels(20);
+      this.layoutTopicLabels(this.userMaxLabelNum);
 
       // Initialize the slider value
       setTimeout(() => {
@@ -754,7 +757,7 @@ export class Embedding {
   /**
    * Show the topic labels at different zoom scales.
    */
-  showTopicLabels = (maxLabels = -1) => {
+  layoutTopicLabels = (maxLabels: number | null = null) => {
     if (this.topicLevelTrees.size <= 1) return;
     if (this.contours === null) return;
 
@@ -779,6 +782,9 @@ export class Embedding {
         polygonCenters.push([centerX, centerY, contour.value]);
       }
     }
+
+    // Compute the current view extent based on the zoom
+    const curZoomBox = this.getCurZoomBox();
 
     // Choose the topic tree level based on the current zoom level
     const idealTreeLevel = this.getIdealTopicTreeLevel()!;
@@ -833,18 +839,19 @@ export class Embedding {
     // Sort the label data by their accumulated density scores
     const sortedLabelData = [...labelDataCounter]
       .sort((a, b) => b[1] - a[1])
-      .map(pair => labelDataMap.get(pair[0])!)
-      .slice(0, maxLabels === -1 ? labelDataMap.size : maxLabels);
-    this.maxLabelNum = labelDataMap.size;
-    this.updateEmbedding();
+      .map(pair => labelDataMap.get(pair[0])!);
 
     const drawnLabels: DrawnLabel[] = [];
     const drawnTiles: Rect[] = [];
 
-    const fontSize = round(14 / this.curZoomTransform.k, 0);
+    const fontSize = 14 / this.curZoomTransform.k;
     const textHeight = fontSize * 1.1;
-    const vPadding = 4;
-    const hPadding = 4;
+    const vPadding = 6.4 / this.curZoomTransform.k;
+    const hPadding = 6.4 / this.curZoomTransform.k;
+
+    // Count the number of labels that are shown
+    let shownLabelNum = 0;
+    let inViewLabelNum = 0;
 
     for (const label of sortedLabelData) {
       const twoLine = label.name.length > 12;
@@ -1054,8 +1061,31 @@ export class Embedding {
         drawnLabels.push(drawnLabel);
         drawnTiles.push(drawnTile);
 
+        const labelID = drawnLabels.length;
         let x = this.xScale(label.tileCenterX);
         let y = this.yScale(label.tileCenterY);
+
+        // Check if this label and tile rect intersects with the view extent
+        let toHide =
+          !rectsIntersect(fitRect, curZoomBox) &&
+          !rectsIntersect(drawnTile, curZoomBox);
+
+        if (!toHide) {
+          inViewLabelNum += 1;
+          if (maxLabels !== null) {
+            // We have shown enough labels
+            if (shownLabelNum >= maxLabels) {
+              toHide = true;
+            } else {
+              shownLabelNum += 1;
+            }
+          }
+        }
+
+        const labelGroup = group
+          .append('g')
+          .attr('class', `label-group zoom-${idealTreeLevel} label-${labelID}`)
+          .classed('hidden', toHide);
 
         switch (fitDirection) {
           case Direction.top: {
@@ -1083,24 +1113,24 @@ export class Embedding {
         }
 
         if (twoLine) {
-          const text = group
+          const text = labelGroup
             .append('text')
             .attr('class', 'topic-label')
             .classed(fitDirection, true)
             .style('font-size', `${fontSize}px`)
             .attr('paint-order', 'stroke')
             .style('stroke', 'white')
-            .style('stroke-width', 2);
+            .style('stroke-width', 3.2 / this.curZoomTransform.k);
 
           text.append('tspan').attr('x', x).attr('y', y).text(line1);
           text
             .append('tspan')
             .attr('x', x)
             .attr('y', y)
-            .attr('dy', '0.95em')
+            .attr('dy', '0.96em')
             .text(line2);
         } else {
-          group
+          labelGroup
             .append('text')
             .attr('class', 'topic-label')
             .attr('x', x)
@@ -1109,6 +1139,20 @@ export class Embedding {
             .style('font-size', `${fontSize}px`)
             .text(label.name);
         }
+
+        // Draw the topic region
+        labelGroup
+          .append('rect')
+          .attr('class', 'topic-tile')
+          .attr('x', this.xScale(label.tileX))
+          .attr('y', this.yScale(label.tileY))
+          .attr('rx', 4 / this.curZoomTransform.k)
+          .attr('ry', 4 / this.curZoomTransform.k)
+          .attr('width', tileScreenWidth)
+          .attr('height', tileScreenWidth)
+          .style('fill', 'none')
+          .style('stroke', config.colors['gray-800'])
+          .style('stroke-width', 1.6 / this.curZoomTransform.k);
 
         // group
         //   .append('rect')
@@ -1130,28 +1174,18 @@ export class Embedding {
     //   .attr('cy', d => this.yScale(d.pointY))
     //   .attr('r', 2);
 
-    // Draw the topic region
-    group
-      .selectAll('rect.topic-tile')
-      .data(drawnLabels)
-      .join('rect')
-      .attr('class', 'topic-tile')
-      .attr('x', d => this.xScale(d.tileX))
-      .attr('y', d => this.yScale(d.tileY))
-      .attr('rx', 3)
-      .attr('ry', 3)
-      .attr('width', tileScreenWidth)
-      .attr('height', tileScreenWidth)
-      .style('fill', 'none')
-      .style('stroke', config.colors['gray-800']);
-
-    this.curLabelNum = drawnLabels.length;
+    this.maxLabelNum = inViewLabelNum;
+    this.curLabelNum = shownLabelNum;
+    (
+      this.component.querySelector('input#slider-label-num') as HTMLInputElement
+    ).value = `${this.curLabelNum}`;
     this.updateEmbedding();
   };
 
   labelNumSliderChanged = (e: InputEvent) => {
     const newValue = parseInt((e.currentTarget as HTMLInputElement).value);
-    this.showTopicLabels(newValue);
+    this.userMaxLabelNum = newValue;
+    this.layoutTopicLabels(newValue);
   };
 
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
@@ -1191,6 +1225,9 @@ export class Embedding {
     this.pointBackCtx.scale(transform.k, transform.k);
     // this.drawScatterBackCanvas();
     this.pointBackCtx.restore();
+
+    // Adjust the label size based on the zooming scales
+    this.layoutTopicLabels(this.userMaxLabelNum);
   };
 
   /**
@@ -1332,6 +1369,24 @@ export class Embedding {
     const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);
     const point = this.colorPointMap.get(hex);
     this.highlightPoint(point);
+  };
+
+  /**
+   * Get the current zoom viewing box
+   * @returns Current zoom view box
+   */
+  getCurZoomBox = () => {
+    const box: Rect = {
+      x: this.curZoomTransform.invertX(0),
+      y: this.curZoomTransform.invertY(0),
+      width:
+        this.curZoomTransform.invertX(this.svgFullSize.width) -
+        this.curZoomTransform.invertX(0),
+      height:
+        this.curZoomTransform.invertY(this.svgFullSize.height) -
+        this.curZoomTransform.invertY(0)
+    };
+    return box;
   };
 }
 

@@ -114,6 +114,19 @@
   alignment-baseline: hanging;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:global(.top-svg .label-group.hidden) {
+  display: none;
+}
+
 .svg-icon {
   display: flex;
   justify-content: center;
