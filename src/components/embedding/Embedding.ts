@@ -68,6 +68,7 @@ export class Embedding {
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
   component: HTMLElement;
+  updateEmbedding: () => void;
 
   // Data
   prompts: string[] = [];
@@ -82,6 +83,10 @@ export class Embedding {
     d3.Quadtree<TopicData>
   >();
 
+  // Display labels
+  maxLabelNum = 0;
+  curLabelNum = 0;
+
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
   tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
@@ -93,13 +98,16 @@ export class Embedding {
    */
   constructor({
     component,
-    tooltipStore
+    tooltipStore,
+    updateEmbedding
   }: {
     component: HTMLElement;
     tooltipStore: Writable<TooltipStoreValue>;
+    updateEmbedding: () => void;
   }) {
     this.component = component;
     this.tooltipStore = tooltipStore;
+    this.updateEmbedding = updateEmbedding;
 
     // Initialize the SVG
     this.svg = d3.select(this.component).select('.embedding-svg');
@@ -330,6 +338,15 @@ export class Embedding {
     // Show topic labels once we have contours and topic data
     Promise.all([gridPromise, topicPromise]).then(() => {
       this.showTopicLabels(20);
+
+      // Initialize the slider value
+      setTimeout(() => {
+        (
+          this.component.querySelector(
+            'input#slider-label-num'
+          ) as HTMLInputElement
+        ).value = `${this.curLabelNum}`;
+      }, 500);
     });
 
     // Read the tile data for the topic map
@@ -743,6 +760,8 @@ export class Embedding {
 
     // Fin near labels for high density regions
     const group = this.topSvg.select('g.top-content g.topics');
+    group.selectAll('*').remove();
+
     const polygonCenters = [];
     for (let i = this.contours.length - 1; i >= 0; i--) {
       const contour = this.contours[i];
@@ -816,6 +835,8 @@ export class Embedding {
       .sort((a, b) => b[1] - a[1])
       .map(pair => labelDataMap.get(pair[0])!)
       .slice(0, maxLabels === -1 ? labelDataMap.size : maxLabels);
+    this.maxLabelNum = labelDataMap.size;
+    this.updateEmbedding();
 
     const drawnLabels: DrawnLabel[] = [];
     const drawnTiles: Rect[] = [];
@@ -1123,6 +1144,14 @@ export class Embedding {
       .attr('height', tileScreenWidth)
       .style('fill', 'none')
       .style('stroke', config.colors['gray-800']);
+
+    this.curLabelNum = drawnLabels.length;
+    this.updateEmbedding();
+  };
+
+  labelNumSliderChanged = (e: InputEvent) => {
+    const newValue = parseInt((e.currentTarget as HTMLInputElement).value);
+    this.showTopicLabels(newValue);
   };
 
   zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {

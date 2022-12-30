@@ -164,15 +164,15 @@
   z-index: 2;
   top: 0px;
   right: 0px;
-  width: 200px;
+  width: 185px;
   background-color: change-color($color: white, $alpha: 0.9);
 
   $border: 1px solid $gray-border;
-  border-bottom: $border;
-  border-left: $border;
+  // border-bottom: $border;
+  // border-left: $border;
   // border-right: $border;
-  border-bottom-left-radius: $border-radius;
-  border-top-right-radius: $border-radius;
+  box-shadow: $shadow-border-light;
+  border-radius: $border-radius;
 
   padding: $panel-v-padding $panel-h-padding;
 
@@ -191,6 +191,7 @@
     justify-content: center;
     font-size: $font-d1;
     padding: 5px 0;
+    font-weight: 600;
   }
 
   .splitter {

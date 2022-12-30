@@ -18,14 +18,18 @@
     mounted = true;
   });
 
+  const updateEmbedding = () => {
+    embedding = embedding;
+  };
+
   /**
    * Initialize the embedding view.
    */
   const initView = () => {
     initialized = true;
 
-    if (component) {
-      embedding = new Embedding({ component, tooltipStore });
+    if (component && tooltipStore) {
+      embedding = new Embedding({ component, tooltipStore, updateEmbedding });
     }
   };
 
@@ -51,8 +55,8 @@
 
     <div class="control-item">
       <div class="control-row">
-        <label for="slider-label-num">Num of Labels</label>
-        <span>20</span>
+        <label for="slider-label-num">Number of Labels</label>
+        <span>{embedding ? `${embedding.curLabelNum}` : '1'}</span>
       </div>
       <input
         type="range"
@@ -60,7 +64,9 @@
         id="slider-label-num"
         name="label-num"
         min="0"
-        max="25"
+        max={embedding ? `${embedding.maxLabelNum}` : '1'}
+        on:input={e =>
+          embedding ? embedding.labelNumSliderChanged(e) : () => {}}
       />
     </div>
 
