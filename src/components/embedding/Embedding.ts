@@ -89,6 +89,7 @@ export class Embedding {
   curLabelNum = 0;
   userMaxLabelNum = 20;
   initializedTiles = new Map<number, [number, number, number, number]>();
+  lastLabelTreeLevel: number | null = null;
 
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
@@ -762,8 +763,7 @@ export class Embedding {
     if (this.contours === null) return;
 
     // Fin near labels for high density regions
-    const group = this.topSvg.select('g.top-content g.topics');
-    group.selectAll('*').remove();
+    const topicGroup = this.topSvg.select('g.top-content g.topics');
 
     const polygonCenters = [];
     for (let i = this.contours.length - 1; i >= 0; i--) {
@@ -793,6 +793,43 @@ export class Embedding {
     const tileWidth =
       (treeExtent[1][0] - treeExtent[0][1]) / Math.pow(2, idealTreeLevel);
     const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+
+    // Show animation when we shift zoom level
+    const trans = d3
+      .transition('removal')
+      .duration(400)
+      .ease(d3.easeCubicInOut);
+
+    const group = topicGroup
+      .selectAll('g.topics-content')
+      .data([idealTreeLevel], d => d as number)
+      .join(
+        enter =>
+          enter
+            .append('g')
+            .attr('class', d => `topics-content zoom-${d}`)
+            .style('opacity', 0)
+            .call(enter => enter.transition(trans).style('opacity', 1)),
+        update => {
+          update.selectAll('*').remove();
+          return update;
+        },
+        exit =>
+          exit.call(exit => {
+            if (this.lastLabelTreeLevel !== idealTreeLevel) {
+              return exit
+                .transition(trans)
+                .style('opacity', 0)
+                .on('end', () => {
+                  exit.remove();
+                });
+            } else {
+              return exit;
+            }
+          })
+      );
+
+    this.lastLabelTreeLevel = idealTreeLevel;
 
     // Find closest topic labels for each high density point
     const labelDataMap = new Map<string, LabelData>();
