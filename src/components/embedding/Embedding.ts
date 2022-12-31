@@ -797,21 +797,27 @@ export class Embedding {
     // Show animation when we shift zoom level
     const trans = d3
       .transition('removal')
-      .duration(400)
+      .duration(500)
       .ease(d3.easeCubicInOut);
 
     const group = topicGroup
       .selectAll('g.topics-content')
       .data([idealTreeLevel], d => d as number)
       .join(
-        enter =>
-          enter
+        enter => {
+          const newGroup = enter
             .append('g')
             .attr('class', d => `topics-content zoom-${d}`)
             .style('opacity', 0)
-            .call(enter => enter.transition(trans).style('opacity', 1)),
+            .call(enter => enter.transition(trans).style('opacity', 1));
+
+          if (!enter.empty()) {
+            this.lastLabelNames = new Map();
+          }
+
+          return newGroup;
+        },
         update => {
-          // update.selectAll('*').remove();
           return update;
         },
         exit =>
@@ -1204,7 +1210,10 @@ export class Embedding {
     idealTreeLevel: number,
     fontSize: number
   ) => {
-    const trans = d3.transition('label').duration(300).ease(d3.easeCubicInOut);
+    const transAdditionRemoval = d3
+      .transition('label-addition-removal')
+      .duration(300)
+      .ease(d3.easeCubicInOut);
 
     const enterFunc = (
       enter: d3.Selection<
@@ -1222,7 +1231,10 @@ export class Embedding {
 
       // Animation for individual group addition
       if (this.lastLabelNames.size > 0) {
-        labelGroup.style('opacity', 0).transition(trans).style('opacity', 1);
+        labelGroup
+          .style('opacity', 0)
+          .transition(transAdditionRemoval)
+          .style('opacity', 1);
       }
 
       // Draw the text label
@@ -1315,7 +1327,9 @@ export class Embedding {
           // If direction is changed, apply animation
           if (newClass !== oldClass) {
             selection
-              .transition(trans)
+              .transition('update')
+              .duration(300)
+              .ease(d3.easeCubicInOut)
               .attr('transform', `translate(${d.labelX}, ${d.labelY})`);
           } else {
             selection.attr('transform', `translate(${d.labelX}, ${d.labelY})`);
@@ -1351,7 +1365,7 @@ export class Embedding {
       // Animation for individual group removal
       if (this.lastLabelNames.size > 0) {
         exit
-          .transition(trans)
+          .transition(transAdditionRemoval)
           .style('opacity', 0)
           .on('end', () => {
             exit.remove();
