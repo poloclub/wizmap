@@ -84,6 +84,7 @@ export class Embedding {
   tileData: LevelTileMap | null = null;
   randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
   contours: d3.ContourMultiPolygon[] | null = null;
+  contoursInitialized = false;
 
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
@@ -705,6 +706,7 @@ export class Embedding {
       this.svgFullSize.height / (y1 - y0)
     );
 
+    // Trigger the first zoom
     this.topSvg
       .transition()
       .duration(300)
@@ -713,7 +715,10 @@ export class Embedding {
           this.svgSize.width / 2,
           this.svgSize.height / 2
         ])
-      );
+      )
+      .on('end', () => {
+        this.contoursInitialized = true;
+      });
 
     // Double click to reset zoom to the initial viewpoint
     this.topSvg.on('dblclick', () => {

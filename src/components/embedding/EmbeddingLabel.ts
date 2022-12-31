@@ -66,14 +66,16 @@ export function drawLabels(
 
     text
       .append('tspan')
+      .attr('class', 'line-1')
       .attr('x', 0)
       .attr('y', 0)
       .text(d => (d.lines.length > 1 ? d.lines[0] : ''));
     text
       .append('tspan')
+      .attr('class', 'line-2')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('dy', '0.96em')
+      .attr('dy', 0.96 * fontSize)
       .text(d => (d.lines.length > 1 ? d.lines[1] : ''));
 
     // Draw the topic region
@@ -138,7 +140,11 @@ export function drawLabels(
         const selection = d3.select(g[i]);
         const oldClass = selection.attr('class');
         const newClass = `topic-label ${d.direction}`;
-        selection.attr('class', newClass);
+
+        selection
+          .attr('class', newClass)
+          .select('.line-2')
+          .attr('dy', 0.96 * fontSize);
 
         // If direction is changed, apply animation
         if (newClass !== oldClass) {
@@ -245,7 +251,7 @@ export function layoutTopicLabels(
   const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
 
   // Show animation when we shift zoom level
-  const trans = d3.transition('removal').duration(500).ease(d3.easeCubicInOut);
+  const trans = d3.transition('removal').duration(450).ease(d3.easeCubicInOut);
 
   const group = topicGroup
     .selectAll('g.topics-content')
@@ -569,11 +575,12 @@ export function layoutTopicLabels(
       if (!drawnLabel.toHide) {
         inViewLabelNum += 1;
         if (maxLabels !== null) {
-          // We have shown enough labels stop showing this label
-          // We only stop showing a label if we didn't draw it last time
+          // We have shown enough labels, stop showing this label if we haven't
+          // drawn it last time. Edge case: we stop showing extra labels during
+          // the initial zoom triggered by drawContours()
           if (
             shownLabelNum >= maxLabels &&
-            !this.lastLabelNames.has(label.name)
+            (!this.contoursInitialized || !this.lastLabelNames.has(label.name))
           ) {
             drawnLabel.toHide = true;
           } else {
