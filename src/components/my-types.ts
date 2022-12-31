@@ -35,12 +35,17 @@ export interface DrawnLabel extends Rect {
   tileY: number;
 
   /**
-   * Whether to hide this label
+   * Whether to hide this label.
    */
   toHide: boolean;
 
   /**
-   * Label lines
+   * Label name.
+   */
+  name: string;
+
+  /**
+   * Label lines.
    */
   lines: string[];
 
@@ -53,11 +58,6 @@ export interface DrawnLabel extends Rect {
    * Label element's y coordinate.
    */
   labelY: number;
-
-  /**
-   * Unique identifier for this label.
-   */
-  labelID: number;
 }
 
 export enum Direction {

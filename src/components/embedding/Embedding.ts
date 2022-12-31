@@ -88,7 +88,7 @@ export class Embedding {
   maxLabelNum = 0;
   curLabelNum = 0;
   userMaxLabelNum = 20;
-  initializedTiles = new Map<number, [number, number, number, number]>();
+  lastLabelNames: Map<string, Direction> = new Map();
   lastLabelTreeLevel: number | null = null;
 
   // Stores
@@ -811,7 +811,7 @@ export class Embedding {
             .style('opacity', 0)
             .call(enter => enter.transition(trans).style('opacity', 1)),
         update => {
-          update.selectAll('*').remove();
+          // update.selectAll('*').remove();
           return update;
         },
         exit =>
@@ -1003,6 +1003,14 @@ export class Embedding {
         }
       }
 
+      // (5) Highest priority: prioritize previous shown direction to avoid
+      // labels moving around
+      if (this.lastLabelNames.has(label.name)) {
+        const lastDirection = this.lastLabelNames.get(label.name)!;
+        directions.splice(directions.indexOf(lastDirection), 1);
+        directions.unshift(lastDirection);
+      }
+
       for (const direction of directions) {
         fit = true;
         const curRect: Rect = {
@@ -1088,10 +1096,10 @@ export class Embedding {
           tileX: label.tileX,
           tileY: label.tileY,
           toHide: false,
+          name: label.name,
           lines: twoLine ? [line1, line2] : [label.name],
           labelX: this.xScale(label.tileCenterX),
-          labelY: this.yScale(label.tileCenterY),
-          labelID: drawnLabels.length
+          labelY: this.yScale(label.tileCenterY)
         };
         const drawnTile: Rect = {
           x: this.xScale(label.tileX),
@@ -1108,8 +1116,12 @@ export class Embedding {
         if (!drawnLabel.toHide) {
           inViewLabelNum += 1;
           if (maxLabels !== null) {
-            // We have shown enough labels
-            if (shownLabelNum >= maxLabels) {
+            // We have shown enough labels stop showing this label
+            // We only stop showing a label if we didn't draw it last time
+            if (
+              shownLabelNum >= maxLabels &&
+              !this.lastLabelNames.has(label.name)
+            ) {
               drawnLabel.toHide = true;
             } else {
               shownLabelNum += 1;
@@ -1157,6 +1169,12 @@ export class Embedding {
       fontSize
     );
 
+    // Track the labels we have shown
+    this.lastLabelNames = new Map();
+    drawnLabels
+      .filter(d => !d.toHide)
+      .forEach(d => this.lastLabelNames.set(d.name, d.direction));
+
     this.maxLabelNum = inViewLabelNum;
     this.curLabelNum = shownLabelNum;
     (
@@ -1186,6 +1204,8 @@ export class Embedding {
     idealTreeLevel: number,
     fontSize: number
   ) => {
+    const trans = d3.transition('label').duration(300).ease(d3.easeCubicInOut);
+
     const enterFunc = (
       enter: d3.Selection<
         d3.EnterElement,
@@ -1197,11 +1217,13 @@ export class Embedding {
       // Add the group element
       const labelGroup = enter
         .append('g')
-        .attr(
-          'class',
-          d => `label-group zoom-${idealTreeLevel} label-${d.labelID}`
-        )
+        .attr('class', `label-group zoom-${idealTreeLevel}`)
         .classed('hidden', d => d.toHide);
+
+      // Animation for individual group addition
+      if (this.lastLabelNames.size > 0) {
+        labelGroup.style('opacity', 0).transition(trans).style('opacity', 1);
+      }
 
       // Draw the text label
       const text = labelGroup
@@ -1277,6 +1299,44 @@ export class Embedding {
         number
       >
     ) => {
+      const labelGroup = update.classed('hidden', d => d.toHide);
+
+      // Update text location
+      labelGroup
+        .select('text')
+        .style('stroke-width', 3.2 / this.curZoomTransform.k)
+        .style('font-size', `${fontSize}px`)
+        .each((d, i, g) => {
+          const selection = d3.select(g[i]);
+          const oldClass = selection.attr('class');
+          const newClass = `topic-label ${d.direction}`;
+          selection.attr('class', newClass);
+
+          // If direction is changed, apply animation
+          if (newClass !== oldClass) {
+            selection
+              .transition(trans)
+              .attr('transform', `translate(${d.labelX}, ${d.labelY})`);
+          } else {
+            selection.attr('transform', `translate(${d.labelX}, ${d.labelY})`);
+          }
+        });
+
+      // Update the tile region
+      labelGroup
+        .select('rect.topic-tile')
+        .attr('x', d => this.xScale(d.tileX))
+        .attr('y', d => this.yScale(d.tileY))
+        .attr('rx', 4 / this.curZoomTransform.k)
+        .attr('ry', 4 / this.curZoomTransform.k)
+        .attr('width', tileScreenWidth)
+        .attr('height', tileScreenWidth)
+        .style('stroke-width', 1.6 / this.curZoomTransform.k);
+
+      // Update the dot orientation
+      labelGroup
+        .select<SVGPathElement>('path.direction-indicator')
+        .each((d, i, g) => this.addTileIndicatorPath(d, i, g, tileScreenWidth));
       return update;
     };
 
@@ -1288,12 +1348,21 @@ export class Embedding {
         number
       >
     ) => {
-      return exit;
+      // Animation for individual group removal
+      if (this.lastLabelNames.size > 0) {
+        exit
+          .transition(trans)
+          .style('opacity', 0)
+          .on('end', () => {
+            exit.remove();
+          });
+      }
+      return exit.remove();
     };
 
     const labelGroups = group
       .selectAll('g.label-group')
-      .data(drawnLabels, d => (d as DrawnLabel).labelID)
+      .data(drawnLabels, d => (d as DrawnLabel).name)
       .join(
         enter => enterFunc(enter),
         update => updateFunc(update),
@@ -1367,6 +1436,7 @@ export class Embedding {
   labelNumSliderChanged = (e: InputEvent) => {
     const newValue = parseInt((e.currentTarget as HTMLInputElement).value);
     this.userMaxLabelNum = newValue;
+    this.lastLabelNames = new Map();
     this.layoutTopicLabels(newValue);
   };
 
