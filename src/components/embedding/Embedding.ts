@@ -1207,8 +1207,7 @@ export class Embedding {
       const text = labelGroup
         .append('text')
         .attr('class', d => `topic-label ${d.direction}`)
-        .attr('x', d => (d.lines.length > 1 ? null : d.labelX))
-        .attr('y', d => (d.lines.length > 1 ? null : d.labelY))
+        .attr('transform', d => `translate(${d.labelX}, ${d.labelY})`)
         .style('font-size', `${fontSize}px`)
         .text(d => (d.lines.length > 1 ? null : d.lines[0]))
         .attr('paint-order', 'stroke')
@@ -1217,13 +1216,13 @@ export class Embedding {
 
       text
         .append('tspan')
-        .attr('x', d => d.labelX)
-        .attr('y', d => d.labelY)
+        .attr('x', 0)
+        .attr('y', 0)
         .text(d => (d.lines.length > 1 ? d.lines[0] : ''));
       text
         .append('tspan')
-        .attr('x', d => d.labelX)
-        .attr('y', d => d.labelY)
+        .attr('x', 0)
+        .attr('y', 0)
         .attr('dy', '0.96em')
         .text(d => (d.lines.length > 1 ? d.lines[1] : ''));
 

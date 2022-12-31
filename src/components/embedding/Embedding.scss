@@ -64,6 +64,7 @@
   user-select: none;
   -webkit-user-select: none;
   line-height: 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 :global(.top-svg .topic-label.top) {
