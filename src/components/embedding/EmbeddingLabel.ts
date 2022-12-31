@@ -26,10 +26,15 @@ export function drawLabels(
   idealTreeLevel: number,
   fontSize: number
 ) {
-  const transAdditionRemoval = d3
-    .transition('label-addition-removal')
+  const transAddition = d3
+    .transition('label-addition')
     .duration(300)
     .ease(d3.easeCubicInOut);
+
+  const transRemoval = d3
+    .transition('label-removal')
+    .duration(100)
+    .ease(d3.easeLinear);
 
   const enterFunc = (
     enter: d3.Selection<
@@ -49,7 +54,7 @@ export function drawLabels(
     if (this.lastLabelNames.size > 0) {
       labelGroup
         .style('opacity', 0)
-        .transition(transAdditionRemoval)
+        .transition(transAddition)
         .style('opacity', 1);
     }
 
@@ -129,7 +134,22 @@ export function drawLabels(
       number
     >
   ) => {
-    const labelGroup = update.classed('hidden', d => d.toHide);
+    // Animate to hide labels
+    const labelGroup = update.each((d, i, g) => {
+      const selection = d3.select(g[i]);
+      const lastToHide = selection.classed('hidden');
+      if (!lastToHide && d.toHide && this.contoursInitialized) {
+        selection
+          .style('opacity', 1)
+          .transition(transRemoval)
+          .style('opacity', 0)
+          .on('end', () => {
+            selection.classed('hidden', d.toHide);
+          });
+      } else {
+        selection.classed('hidden', d.toHide);
+      }
+    });
 
     // Update text location
     labelGroup
@@ -185,15 +205,17 @@ export function drawLabels(
     >
   ) => {
     // Animation for individual group removal
-    if (this.lastLabelNames.size > 0) {
+    if (this.lastLabelNames.size > 0 && this.contoursInitialized) {
       exit
-        .transition(transAdditionRemoval)
+        .transition(transRemoval)
         .style('opacity', 0)
         .on('end', () => {
           exit.remove();
         });
+      return exit;
+    } else {
+      return exit.remove();
     }
-    return exit.remove();
   };
 
   const labelGroups = group
@@ -251,7 +273,7 @@ export function layoutTopicLabels(
   const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
 
   // Show animation when we shift zoom level
-  const trans = d3.transition('removal').duration(450).ease(d3.easeCubicInOut);
+  const trans = d3.transition('removal').duration(400).ease(d3.easeCubicInOut);
 
   const group = topicGroup
     .selectAll('g.topics-content')
