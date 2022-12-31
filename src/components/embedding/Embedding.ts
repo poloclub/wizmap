@@ -1086,7 +1086,12 @@ export class Embedding {
           pointX: label.pointX,
           pointY: label.pointY,
           tileX: label.tileX,
-          tileY: label.tileY
+          tileY: label.tileY,
+          toHide: false,
+          lines: twoLine ? [line1, line2] : [label.name],
+          labelX: this.xScale(label.tileCenterX),
+          labelY: this.yScale(label.tileCenterY),
+          labelID: drawnLabels.length
         };
         const drawnTile: Rect = {
           x: this.xScale(label.tileX),
@@ -1095,52 +1100,41 @@ export class Embedding {
           height: tileScreenWidth
         };
 
-        drawnLabels.push(drawnLabel);
-        drawnTiles.push(drawnTile);
-
-        const labelID = drawnLabels.length;
-        let x = this.xScale(label.tileCenterX);
-        let y = this.yScale(label.tileCenterY);
-
         // Check if this label and tile rect intersects with the view extent
-        let toHide =
+        drawnLabel.toHide =
           !rectsIntersect(fitRect, curZoomBox) &&
           !rectsIntersect(drawnTile, curZoomBox);
 
-        if (!toHide) {
+        if (!drawnLabel.toHide) {
           inViewLabelNum += 1;
           if (maxLabels !== null) {
             // We have shown enough labels
             if (shownLabelNum >= maxLabels) {
-              toHide = true;
+              drawnLabel.toHide = true;
             } else {
               shownLabelNum += 1;
             }
           }
         }
 
-        const labelGroup = group
-          .append('g')
-          .attr('class', `label-group zoom-${idealTreeLevel} label-${labelID}`)
-          .classed('hidden', toHide);
-
         switch (fitDirection) {
           case Direction.top: {
-            y -= vPadding + tileScreenWidth / 2 + (twoLine ? textHeight : 0);
+            drawnLabel.labelY -=
+              vPadding + tileScreenWidth / 2 + (twoLine ? textHeight : 0);
             break;
           }
           case Direction.bottom: {
-            y += vPadding + tileScreenWidth / 2;
+            drawnLabel.labelY += vPadding + tileScreenWidth / 2;
             break;
           }
           case Direction.left: {
-            x -= hPadding + tileScreenWidth / 2;
-            y -= twoLine ? textHeight : 0;
+            drawnLabel.labelX -= hPadding + tileScreenWidth / 2;
+            drawnLabel.labelY -= twoLine ? textHeight : 0;
             break;
           }
           case Direction.right: {
-            x += hPadding + tileScreenWidth / 2;
-            y -= twoLine ? textHeight : 0;
+            drawnLabel.labelX += hPadding + tileScreenWidth / 2;
+            drawnLabel.labelY -= twoLine ? textHeight : 0;
             break;
           }
           default: {
@@ -1149,83 +1143,19 @@ export class Embedding {
           }
         }
 
-        if (twoLine) {
-          const text = labelGroup
-            .append('text')
-            .attr('class', 'topic-label')
-            .classed(fitDirection, true)
-            .style('font-size', `${fontSize}px`)
-            .attr('paint-order', 'stroke')
-            .style('stroke', 'white')
-            .style('stroke-width', 3.2 / this.curZoomTransform.k);
-
-          text.append('tspan').attr('x', x).attr('y', y).text(line1);
-          text
-            .append('tspan')
-            .attr('x', x)
-            .attr('y', y)
-            .attr('dy', '0.96em')
-            .text(line2);
-        } else {
-          labelGroup
-            .append('text')
-            .attr('class', 'topic-label')
-            .attr('x', x)
-            .attr('y', y)
-            .classed(fitDirection, true)
-            .style('font-size', `${fontSize}px`)
-            .text(label.name);
-        }
-
-        // Draw the topic region
-        labelGroup
-          .append('rect')
-          .attr('class', 'topic-tile')
-          .attr('x', this.xScale(label.tileX))
-          .attr('y', this.yScale(label.tileY))
-          .attr('rx', 4 / this.curZoomTransform.k)
-          .attr('ry', 4 / this.curZoomTransform.k)
-          .attr('width', tileScreenWidth)
-          .attr('height', tileScreenWidth)
-          .style('fill', 'none')
-          .style('stroke', config.colors['gray-800'])
-          .style('stroke-width', 1.6 / this.curZoomTransform.k);
-
-        const directionIndicator = this.getTileIndicatorPath(
-          fitDirection,
-          label.tileX,
-          label.tileY,
-          tileScreenWidth
-        );
-
-        labelGroup
-          .append('path')
-          .attr('class', 'direction-indicator')
-          .attr('transform-origin', 'center')
-          .attr('transform', directionIndicator.transform)
-          .attr('d', directionIndicator.path)
-          .style('fill', config.colors['gray-800'])
-          .style('stroke', 'none');
-
-        // group
-        //   .append('rect')
-        //   .attr('x', fitRect.x)
-        //   .attr('y', fitRect.y)
-        //   .attr('width', fitRect.width)
-        //   .attr('height', fitRect.height)
-        //   .style('fill', 'none')
-        //   .style('stroke', 'orange');
+        drawnLabels.push(drawnLabel);
+        drawnTiles.push(drawnTile);
       }
     }
 
-    // Draw the high density center
-    // group
-    //   .selectAll('circle.topic-center')
-    //   .data(drawnLabels)
-    //   .join('circle')
-    //   .attr('cx', d => this.xScale(d.pointX))
-    //   .attr('cy', d => this.yScale(d.pointY))
-    //   .attr('r', 2);
+    // Draw the labels
+    this.drawLabels(
+      group,
+      drawnLabels,
+      tileScreenWidth,
+      idealTreeLevel,
+      fontSize
+    );
 
     this.maxLabelNum = inViewLabelNum;
     this.curLabelNum = shownLabelNum;
@@ -1236,16 +1166,156 @@ export class Embedding {
   };
 
   /**
-   * Get the path for a tile's direction indicator.
-   * @param direction Label direction
-   * @param tileX Tile's top left x
-   * @param tileY Tile's top left y
-   * @param tileScreenWidth Tile's width in the screen coordinate
+   * Draw the labels using computed layouts
+   * @param group Container group of current zoom level
+   * @param drawnLabels Array of labels to draw
+   * @param tileScreenWidth Tile width in the screen coordinate
+   * @param idealTreeLevel Ideal tree level
+   * @param fontSize Font size
+   * @returns Drawn label selections
    */
-  getTileIndicatorPath = (
-    direction: Direction,
-    tileX: number,
-    tileY: number,
+  drawLabels = (
+    group: d3.Selection<
+      d3.BaseType | SVGGElement,
+      number,
+      d3.BaseType,
+      unknown
+    >,
+    drawnLabels: DrawnLabel[],
+    tileScreenWidth: number,
+    idealTreeLevel: number,
+    fontSize: number
+  ) => {
+    const enterFunc = (
+      enter: d3.Selection<
+        d3.EnterElement,
+        DrawnLabel,
+        d3.BaseType | SVGGElement,
+        number
+      >
+    ) => {
+      // Add the group element
+      const labelGroup = enter
+        .append('g')
+        .attr(
+          'class',
+          d => `label-group zoom-${idealTreeLevel} label-${d.labelID}`
+        )
+        .classed('hidden', d => d.toHide);
+
+      // Draw the text label
+      const text = labelGroup
+        .append('text')
+        .attr('class', d => `topic-label ${d.direction}`)
+        .attr('x', d => (d.lines.length > 1 ? null : d.labelX))
+        .attr('y', d => (d.lines.length > 1 ? null : d.labelY))
+        .style('font-size', `${fontSize}px`)
+        .text(d => (d.lines.length > 1 ? null : d.lines[0]))
+        .attr('paint-order', 'stroke')
+        .style('stroke', '#fff')
+        .style('stroke-width', 3.2 / this.curZoomTransform.k);
+
+      text
+        .append('tspan')
+        .attr('x', d => d.labelX)
+        .attr('y', d => d.labelY)
+        .text(d => (d.lines.length > 1 ? d.lines[0] : ''));
+      text
+        .append('tspan')
+        .attr('x', d => d.labelX)
+        .attr('y', d => d.labelY)
+        .attr('dy', '0.96em')
+        .text(d => (d.lines.length > 1 ? d.lines[1] : ''));
+
+      // Draw the topic region
+      labelGroup
+        .append('rect')
+        .attr('class', 'topic-tile')
+        .attr('x', d => this.xScale(d.tileX))
+        .attr('y', d => this.yScale(d.tileY))
+        .attr('rx', 4 / this.curZoomTransform.k)
+        .attr('ry', 4 / this.curZoomTransform.k)
+        .attr('width', tileScreenWidth)
+        .attr('height', tileScreenWidth)
+        .style('fill', 'none')
+        .style('stroke', config.colors['gray-800'])
+        .style('stroke-width', 1.6 / this.curZoomTransform.k);
+
+      // Add a dot to indicate the label direction
+      labelGroup
+        .append('path')
+        .attr('class', 'direction-indicator')
+        .attr('transform-origin', 'center')
+        .style('fill', config.colors['gray-800'])
+        .style('stroke', 'none')
+        .each((d, i, g) => this.addTileIndicatorPath(d, i, g, tileScreenWidth));
+
+      // // For debugging: show the label bounding box
+      // labelGroup
+      //   .append('rect')
+      //   .attr('x', d => d.x)
+      //   .attr('y', d => d.y)
+      //   .attr('width', d => d.width)
+      //   .attr('height', d => d.height)
+      //   .style('fill', 'none')
+      //   .style('stroke', 'orange');
+
+      // // For debugging: draw the high density center
+      // labelGroup
+      //   .append('circle')
+      //   .attr('cx', d => this.xScale(d.pointX))
+      //   .attr('cy', d => this.yScale(d.pointY))
+      //   .attr('r', 2);
+
+      return labelGroup;
+    };
+
+    const updateFunc = (
+      update: d3.Selection<
+        d3.BaseType,
+        DrawnLabel,
+        d3.BaseType | SVGGElement,
+        number
+      >
+    ) => {
+      return update;
+    };
+
+    const exitFunc = (
+      exit: d3.Selection<
+        d3.BaseType,
+        DrawnLabel,
+        d3.BaseType | SVGGElement,
+        number
+      >
+    ) => {
+      return exit;
+    };
+
+    const labelGroups = group
+      .selectAll('g.label-group')
+      .data(drawnLabels, d => (d as DrawnLabel).labelID)
+      .join(
+        enter => enterFunc(enter),
+        update => updateFunc(update),
+        exit => exitFunc(exit)
+      );
+
+    return labelGroups;
+  };
+
+  /**
+   * Add direction indicator path
+   * @param d Datum
+   * @param i Datum index
+   * @param g Nodes
+   * @param tileScreenWidth Tile width in the screen coordinate
+   * @returns This path element
+   */
+  addTileIndicatorPath = (
+    d: DrawnLabel,
+    i: number,
+    g: SVGPathElement[] | ArrayLike<SVGPathElement>,
     tileScreenWidth: number
   ) => {
     const pathGenerator = d3.arc();
@@ -1255,31 +1325,33 @@ export class Embedding {
       startAngle: -Math.PI / 2,
       endAngle: Math.PI / 2
     };
-    let tx = this.xScale(tileX) + tileScreenWidth / 2;
-    let ty = this.yScale(tileY);
+    const selection = d3.select(g[i]);
 
-    switch (direction) {
+    let tx = this.xScale(d.tileX) + tileScreenWidth / 2;
+    let ty = this.yScale(d.tileY);
+
+    switch (d.direction) {
       case Direction.left: {
         pathArgs.startAngle = -Math.PI;
         pathArgs.endAngle = 0;
-        tx = this.xScale(tileX);
-        ty = this.yScale(tileY) + tileScreenWidth / 2;
+        tx = this.xScale(d.tileX);
+        ty = this.yScale(d.tileY) + tileScreenWidth / 2;
         break;
       }
 
       case Direction.right: {
         pathArgs.startAngle = 0;
         pathArgs.endAngle = Math.PI;
-        tx = this.xScale(tileX) + tileScreenWidth;
-        ty = this.yScale(tileY) + tileScreenWidth / 2;
+        tx = this.xScale(d.tileX) + tileScreenWidth;
+        ty = this.yScale(d.tileY) + tileScreenWidth / 2;
         break;
       }
 
       case Direction.bottom: {
         pathArgs.startAngle = Math.PI / 2;
         pathArgs.endAngle = (Math.PI * 3) / 2;
-        tx = this.xScale(tileX) + tileScreenWidth / 2;
-        ty = this.yScale(tileY) + tileScreenWidth;
+        tx = this.xScale(d.tileX) + tileScreenWidth / 2;
+        ty = this.yScale(d.tileY) + tileScreenWidth;
         break;
       }
 
@@ -1288,10 +1360,9 @@ export class Embedding {
       }
     }
 
-    return {
-      path: pathGenerator(pathArgs),
-      transform: `translate(${tx}, ${ty})`
-    };
+    return selection
+      .attr('d', pathGenerator(pathArgs))
+      .attr('transform', `translate(${tx}, ${ty})`);
   };
 
   labelNumSliderChanged = (e: InputEvent) => {

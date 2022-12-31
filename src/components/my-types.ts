@@ -18,18 +18,46 @@ export interface DrawnLabel extends Rect {
    * Density center point's x coordinate.
    */
   pointX: number;
+
   /**
    * Density center point's y coordinate.
    */
   pointY: number;
+
   /**
    * Topic tile's top left point's x coordinate.
    */
   tileX: number;
+
   /**
    * Topic tile's top left point's y coordinate.
    */
   tileY: number;
+
+  /**
+   * Whether to hide this label
+   */
+  toHide: boolean;
+
+  /**
+   * Label lines
+   */
+  lines: string[];
+
+  /**
+   * Label element's x coordinate.
+   */
+  labelX: number;
+
+  /**
+   * Label element's y coordinate.
+   */
+  labelY: number;
+
+  /**
+   * Unique identifier for this label.
+   */
+  labelID: number;
 }
 
 export enum Direction {
