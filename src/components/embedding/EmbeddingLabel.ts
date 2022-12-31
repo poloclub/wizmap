@@ -247,7 +247,7 @@ export function layoutTopicLabels(
   const topicTree = this.topicLevelTrees.get(idealTreeLevel)!;
   const treeExtent = topicTree.extent()!;
   const tileWidth =
-    (treeExtent[1][0] - treeExtent[0][1]) / Math.pow(2, idealTreeLevel);
+    (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
   const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
 
   // Show animation when we shift zoom level
@@ -650,17 +650,14 @@ export function layoutTopicLabels(
 export function getIdealTopicTreeLevel(this: Embedding) {
   if (this.topicLevelTrees.size < 1) return null;
 
-  const viewWidth = Math.max(
-    this.xScale.domain()[1] - this.xScale.domain()[0],
-    this.yScale.domain()[1] - this.yScale.domain()[0]
-  );
-
   let bestLevel = -1;
   let bestDistance = Infinity;
 
   for (const level of this.topicLevelTrees.keys()) {
+    const extent = this.topicLevelTrees.get(level)!.extent()!;
+    const treeViewWidth = extent[1][0] - extent[0][0];
     const tileNum = Math.pow(2, level);
-    const tileSize = viewWidth / tileNum;
+    const tileSize = treeViewWidth / tileNum;
     const scaledTileWidth =
       Math.max(
         this.xScale(tileSize) - this.xScale(0),

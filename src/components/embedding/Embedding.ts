@@ -334,7 +334,7 @@ export class Embedding {
 
     // Read the topic label data
     const topicPromise = d3
-      .json<TopicDataJSON>('/data/umap-60k-topic-data.json')
+      .json<TopicDataJSON>('/data/umap-1m-topic-data.json')
       .then(topicData => {
         if (topicData) {
           // Create a quad tree at each level
@@ -343,7 +343,6 @@ export class Embedding {
               .quadtree<TopicData>()
               .x(d => d[0])
               .y(d => d[1])
-              .extent(topicData!.extent)
               .addAll(topicData!.data[level]);
             this.topicLevelTrees.set(parseInt(level), tree);
           }
