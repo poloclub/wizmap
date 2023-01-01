@@ -146,6 +146,12 @@ export function drawLabels(
           .on('end', () => {
             selection.classed('hidden', d.toHide);
           });
+      } else if (lastToHide && !d.toHide && this.contoursInitialized) {
+        selection
+          .style('opacity', 0)
+          .classed('hidden', d.toHide)
+          .transition(transRemoval)
+          .style('opacity', 1);
       } else {
         selection.classed('hidden', d.toHide);
       }
