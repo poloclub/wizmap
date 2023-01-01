@@ -45,6 +45,7 @@
     <svg class="top-svg" />
     <canvas class="embedding-canvas" />
     <canvas class="embedding-canvas-back" />
+    <canvas class="topic-grid-canvas" />
     <svg class="embedding-svg" />
   </div>
 

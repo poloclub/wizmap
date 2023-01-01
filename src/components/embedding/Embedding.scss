@@ -29,7 +29,7 @@
   position: absolute;
   top: 0px;
   left: 0px;
-  z-index: 1;
+  z-index: 2;
   // display: none;
 }
 
@@ -40,12 +40,19 @@
   display: none;
 }
 
+.topic-grid-canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 1;
+}
+
 .top-svg {
   position: absolute;
   top: 0px;
   left: 0px;
   border-radius: $border-radius;
-  z-index: 2;
+  z-index: 3;
 }
 
 :global(.top-svg .mouse-track-rect) {
@@ -66,6 +73,10 @@
   line-height: 1;
   will-change: transform;
   fill: black;
+}
+
+:global(.top-svg .topic-label text) {
+  text-rendering: geometricPrecision;
 }
 
 :global(.top-svg .topic-label.top) {

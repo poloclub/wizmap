@@ -62,6 +62,7 @@ export class Embedding {
   topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  topicCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointCtx: CanvasRenderingContext2D;
 
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
@@ -163,7 +164,7 @@ export class Embedding {
     // Initialize the top svg element
     this.topSvg = this.initTopSvg();
 
-    // Initialize the canvas
+    // Initialize the canvases
     this.pointCanvas = d3
       .select(this.component)
       .select<HTMLElement>('.embedding-canvas')
@@ -172,6 +173,12 @@ export class Embedding {
     this.pointCtx = (this.pointCanvas.node()! as HTMLCanvasElement).getContext(
       '2d'
     )!;
+
+    this.topicCanvas = d3
+      .select(this.component)
+      .select<HTMLElement>('.topic-grid-canvas')
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height);
 
     // Initialize the background canvas (for mouseover)
     this.pointBackCanvas = d3
@@ -786,7 +793,17 @@ export class Embedding {
 
     // Adjust the label size based on the zooming scales
     this.layoutTopicLabels(this.userMaxLabelNum);
-    this.drawTopicGrid();
+
+    const topicCtx = (this.topicCanvas.node() as HTMLCanvasElement).getContext(
+      '2d'
+    );
+    if (topicCtx) {
+      topicCtx.save();
+      topicCtx.translate(transform.x, transform.y);
+      topicCtx.scale(transform.k, transform.k);
+      this.drawTopicGrid();
+      topicCtx.restore();
+    }
   };
 
   /**

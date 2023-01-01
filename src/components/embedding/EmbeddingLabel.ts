@@ -234,7 +234,7 @@ export function drawLabels(
  * Draw topic tile grid based on the zoom level
  * @param this Embedding
  */
-export function drawTopicGrid(this: Embedding) {
+export function drawTopicGridSVG(this: Embedding) {
   const topicGroup = this.topSvg.select('g.top-content g.topics-bottom');
 
   // Choose the topic tree level based on the current zoom level
@@ -322,6 +322,125 @@ export function drawTopicGrid(this: Embedding) {
     .attr('rx', 4 / this.curZoomTransform.k)
     .attr('ry', 4 / this.curZoomTransform.k)
     .style('stroke-width', 1 / this.curZoomTransform.k);
+}
+
+/**
+ * Draw topic tile grid based on the zoom level
+ * @param this Embedding
+ */
+export function drawTopicGrid(this: Embedding) {
+  const canvas = this.topicCanvas.node() as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) return;
+
+  ctx.clearRect(0, 0, this.svgFullSize.width, this.svgFullSize.height);
+
+  // Choose the topic tree level based on the current zoom level
+  const idealTreeLevel = this.getIdealTopicTreeLevel();
+  if (idealTreeLevel === null) return;
+
+  const topicTree = this.topicLevelTrees.get(idealTreeLevel)!;
+  const treeExtent = topicTree.extent()!;
+  const tileWidth =
+    (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
+  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+
+  //  Only draw the tiles that are visible
+  const zoomBox = this.getCurZoomBox();
+  interface NamedRect extends Rect {
+    name: string;
+  }
+
+  const tiles = topicTree
+    .data()
+    .map(d => {
+      const tileRect: NamedRect = {
+        x: this.xScale(d[0] - tileWidth / 2),
+        y: this.yScale(d[1] - tileWidth / 2),
+        width: tileScreenWidth,
+        height: tileScreenWidth,
+        name: `${(d[0], d[1])}`
+      };
+      return tileRect;
+    })
+    .filter(d => rectsIntersect(d, zoomBox));
+
+  // Drw the tiles on a canvas
+  ctx.save();
+  ctx.strokeStyle = `hsla(0, 0%, 100%, ${Math.max(
+    0.1,
+    0.5 - idealTreeLevel / 30
+  )})`;
+  ctx.lineWidth = 1 / this.curZoomTransform.k;
+
+  for (const tile of tiles) {
+    ctx.moveTo(tile.x, tile.y);
+    roundRect(
+      ctx,
+      tile.x,
+      tile.y,
+      tile.width,
+      tile.height,
+      4 / this.curZoomTransform.k
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/**
+ * Draws a rounded rectangle using the current state of the canvas.
+ * Derived from: https://stackoverflow.com/a/3368118/5379444
+ * @param CanvasRenderingContext2D ctx
+ * @param x x The top left x coordinate
+ * @param y y The top left y coordinate
+ * @param width width The width of the rectangle
+ * @param height height The height of the rectangle
+ * @param r radius  The corner radius; It can also be an object
+ *  to specify different radii for corners
+ */
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  r: number | [number, number, number, number]
+) {
+  const radius = {
+    tl: 0,
+    tr: 0,
+    br: 0,
+    bl: 0
+  };
+
+  if (typeof r === 'number') {
+    radius.tl = r;
+    radius.tr = r;
+    radius.br = r;
+    radius.bl = r;
+  } else {
+    radius.tl = r[0];
+    radius.tr = r[1];
+    radius.br = r[2];
+    radius.bl = r[3];
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + width - radius.tr, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  ctx.lineTo(x + width, y + height - radius.br);
+  ctx.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - radius.br,
+    y + height
+  );
+  ctx.lineTo(x + radius.bl, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
 }
 
 /**
