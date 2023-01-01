@@ -94,7 +94,7 @@ export function drawLabels(
       .attr('width', tileScreenWidth)
       .attr('height', tileScreenWidth)
       .style('fill', 'none')
-      .style('stroke', config.colors['gray-800'])
+      .style('stroke', config.colors['gray-900'])
       .style('stroke-width', 1.6 / this.curZoomTransform.k);
 
     // Add a dot to indicate the label direction
@@ -102,7 +102,7 @@ export function drawLabels(
       .append('path')
       .attr('class', 'direction-indicator')
       .attr('transform-origin', 'center')
-      .style('fill', config.colors['gray-800'])
+      .style('fill', config.colors['gray-900'])
       .style('stroke', 'none')
       .each((d, i, g) => this.addTileIndicatorPath(d, i, g, tileScreenWidth));
 
@@ -228,6 +228,100 @@ export function drawLabels(
     );
 
   return labelGroups;
+}
+
+/**
+ * Draw topic tile grid based on the zoom level
+ * @param this Embedding
+ */
+export function drawTopicGrid(this: Embedding) {
+  const topicGroup = this.topSvg.select('g.top-content g.topics-bottom');
+
+  // Choose the topic tree level based on the current zoom level
+  const idealTreeLevel = this.getIdealTopicTreeLevel();
+  if (idealTreeLevel === null) return;
+
+  const topicTree = this.topicLevelTrees.get(idealTreeLevel)!;
+  const treeExtent = topicTree.extent()!;
+  const tileWidth =
+    (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
+  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+
+  //  Only draw the tiles that are visible
+  const zoomBox = this.getCurZoomBox();
+  interface NamedRect extends Rect {
+    name: string;
+  }
+
+  const tiles = topicTree
+    .data()
+    .map(d => {
+      const tileRect: NamedRect = {
+        x: this.xScale(d[0] - tileWidth / 2),
+        y: this.yScale(d[1] - tileWidth / 2),
+        width: tileScreenWidth,
+        height: tileScreenWidth,
+        name: `${(d[0], d[1])}`
+      };
+      return tileRect;
+    })
+    .filter(d => rectsIntersect(d, zoomBox));
+
+  // Detect if there is a zoom level of detail jump
+  const trans = d3
+    .transition('grid-removal')
+    .duration(400)
+    .ease(d3.easeCubicInOut);
+
+  const group = topicGroup
+    .selectAll('g.grid-content')
+    .data([idealTreeLevel], d => d as number)
+    .join(
+      enter => {
+        const newGroup = enter
+          .append('g')
+          .attr('class', d => `grid-content zoom-${d}`)
+          .style('opacity', 0)
+          .call(enter => enter.transition(trans).style('opacity', 1));
+
+        if (!enter.empty()) {
+          //
+        }
+
+        return newGroup;
+      },
+      update => {
+        return update;
+      },
+      exit =>
+        exit.call(exit => {
+          if (this.lastGridTreeLevel !== idealTreeLevel) {
+            return exit
+              .transition(trans)
+              .style('opacity', 0)
+              .on('end', () => {
+                exit.remove();
+              });
+          } else {
+            return exit;
+          }
+        })
+    );
+  this.lastGridTreeLevel = idealTreeLevel;
+
+  // Draw/update the grid
+  group
+    .selectAll('rect.topic-tile')
+    .data(tiles, d => (d as NamedRect).name)
+    .join('rect')
+    .attr('class', 'topic-tile')
+    .attr('x', d => d.x)
+    .attr('y', d => d.y)
+    .attr('width', tileScreenWidth)
+    .attr('height', tileScreenWidth)
+    .attr('rx', 4 / this.curZoomTransform.k)
+    .attr('ry', 4 / this.curZoomTransform.k)
+    .style('stroke-width', 1 / this.curZoomTransform.k);
 }
 
 /**
@@ -762,6 +856,16 @@ export function labelNumSliderChanged(this: Embedding, e: InputEvent) {
   this.userMaxLabelNum = newValue;
   this.lastLabelNames = new Map();
   this.layoutTopicLabels(newValue);
+}
+
+/**
+ * Show a label when mouseover a region
+ * @param this Embedding
+ * @param x Mouse x coordinate
+ * @param y Mouse y coordinate
+ */
+export function mouseoverLabel(this: Embedding, x: number, y: number) {
+  // console.log(x, y);
 }
 
 /**

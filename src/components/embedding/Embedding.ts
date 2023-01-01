@@ -30,7 +30,9 @@ import {
   layoutTopicLabels,
   addTileIndicatorPath,
   getIdealTopicTreeLevel,
-  labelNumSliderChanged
+  labelNumSliderChanged,
+  mouseoverLabel,
+  drawTopicGrid
 } from './EmbeddingLabel';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -96,6 +98,7 @@ export class Embedding {
   userMaxLabelNum = 20;
   lastLabelNames: Map<string, Direction> = new Map();
   lastLabelTreeLevel: number | null = null;
+  lastGridTreeLevel: number | null = null;
 
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
@@ -107,6 +110,8 @@ export class Embedding {
   addTileIndicatorPath = addTileIndicatorPath;
   getIdealTopicTreeLevel = getIdealTopicTreeLevel;
   labelNumSliderChanged = labelNumSliderChanged;
+  mouseoverLabel = mouseoverLabel;
+  drawTopicGrid = drawTopicGrid;
 
   /**
    *
@@ -232,7 +237,9 @@ export class Embedding {
 
     const topContent = topGroup.append('g').attr('class', 'top-content');
     topContent.append('g').attr('class', 'highlights');
+    topContent.append('g').attr('class', 'topics-bottom');
     topContent.append('g').attr('class', 'topics');
+    topContent.append('g').attr('class', 'topics-top');
     return topSvg;
   };
 
@@ -353,6 +360,7 @@ export class Embedding {
 
     // Show topic labels once we have contours and topic data
     Promise.all([gridPromise, topicPromise]).then(() => {
+      this.drawTopicGrid();
       this.layoutTopicLabels(this.userMaxLabelNum);
 
       // Initialize the slider value
@@ -778,6 +786,7 @@ export class Embedding {
 
     // Adjust the label size based on the zooming scales
     this.layoutTopicLabels(this.userMaxLabelNum);
+    this.drawTopicGrid();
   };
 
   /**
@@ -919,6 +928,9 @@ export class Embedding {
     const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);
     const point = this.colorPointMap.get(hex);
     this.highlightPoint(point);
+
+    // Show labels
+    this.mouseoverLabel(x, y);
   };
 
   /**

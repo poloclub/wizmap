@@ -65,6 +65,7 @@
   -webkit-user-select: none;
   line-height: 1;
   will-change: transform;
+  fill: black;
 }
 
 :global(.top-svg .topic-label.top) {
@@ -118,6 +119,11 @@
 
 :global(.top-svg .label-group.hidden) {
   display: none;
+}
+
+:global(.top-svg rect.topic-tile) {
+  fill: none;
+  stroke: hsla(0, 0, 100, 0.5);
 }
 
 .svg-icon {
