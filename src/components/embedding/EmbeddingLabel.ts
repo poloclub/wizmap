@@ -1,6 +1,12 @@
 import type { Embedding } from './Embedding';
 import d3 from '../../utils/d3-import';
-import type { TopicData, Rect, DrawnLabel, LabelData } from '../my-types';
+import type {
+  TopicData,
+  Rect,
+  DrawnLabel,
+  LabelData,
+  Point
+} from '../my-types';
 import { Direction } from '../my-types';
 import { timeit, rectsIntersect } from '../../utils/utils';
 import { getLatoTextWidth } from '../../utils/text-width';
@@ -8,6 +14,8 @@ import { config } from '../../config/config';
 
 const IDEAL_TILE_WIDTH = 35;
 const LABEL_SPLIT = '-';
+let labelMouseenterTimer: number | null = null;
+let labelMousleaveTimer: number | null = null;
 
 /**
  * Draw the labels using computed layouts
@@ -989,8 +997,68 @@ export function labelNumSliderChanged(this: Embedding, e: InputEvent) {
  * @param x Mouse x coordinate
  * @param y Mouse y coordinate
  */
-export function mouseoverLabel(this: Embedding, x: number, y: number) {
-  // console.log(x, y);
+export function mouseoverLabel(
+  this: Embedding,
+  x: number | null,
+  y: number | null
+) {
+  const group = this.topSvg.select('g.top-content g.topics-bottom');
+
+  // Remove the tile if x and y are null
+  if (x === null || y === null) {
+    group.selectAll('rect.highlight-tile').remove();
+    return;
+  }
+
+  // Get the coordinate in the embedding coordinate
+  const x0 = this.xScale.invert(this.curZoomTransform.invertX(x));
+  const y0 = this.yScale.invert(this.curZoomTransform.invertY(y));
+
+  // Get the corresponding tree
+  if (this.lastLabelTreeLevel === null) return;
+  const tree = this.topicLevelTrees.get(this.lastLabelTreeLevel)!;
+  const treeExtent = tree.extent()!;
+  const tileWidth =
+    (treeExtent[1][0] - treeExtent[0][0]) /
+    Math.pow(2, this.lastLabelTreeLevel);
+  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+
+  const radius = Math.sqrt(2) * tileWidth;
+  const tile = tree.find(x0, y0, radius);
+
+  // No tile near the mouse location
+  if (tile === undefined) {
+    group.selectAll('rect.highlight-tile').remove();
+    return;
+  }
+
+  const oldRect = group.select('rect.highlight-tile');
+
+  if (oldRect.empty()) {
+    // Add a new highlight rect
+    const rect = group
+      .append('rect')
+      .attr('class', 'highlight-tile')
+      .attr('x', this.xScale(tile[0]) - tileScreenWidth / 2)
+      .attr('y', this.yScale(tile[1]) - tileScreenWidth / 2)
+      .attr('width', tileScreenWidth)
+      .attr('height', tileScreenWidth)
+      .attr('rx', 4 / this.curZoomTransform.k)
+      .attr('ry', 4 / this.curZoomTransform.k)
+      .style('fill', 'none')
+      .style('stroke', 'hsla(0, 0%, 97%, 0.8)')
+      .style('stroke-width', 2.6 / this.curZoomTransform.k);
+  } else {
+    // Update the old highlight rect
+    oldRect
+      .attr('x', this.xScale(tile[0]) - tileScreenWidth / 2)
+      .attr('y', this.yScale(tile[1]) - tileScreenWidth / 2)
+      .attr('width', tileScreenWidth)
+      .attr('height', tileScreenWidth)
+      .attr('rx', 4 / this.curZoomTransform.k)
+      .attr('ry', 4 / this.curZoomTransform.k)
+      .style('stroke-width', 2.6 / this.curZoomTransform.k);
+  }
 }
 
 /**

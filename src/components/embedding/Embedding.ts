@@ -13,9 +13,10 @@ import type {
   TopicDataJSON,
   Rect,
   DrawnLabel,
-  LabelData
+  LabelData,
+  Direction,
+  Point
 } from '../my-types';
-import { Direction } from '../my-types';
 import {
   downloadJSON,
   splitStreamTransform,
@@ -70,15 +71,18 @@ export class Embedding {
   colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
   hoverPoint: PromptPoint | null = null;
 
+  xScale: d3.ScaleLinear<number, number, never>;
+  yScale: d3.ScaleLinear<number, number, never>;
+  component: HTMLElement;
+  updateEmbedding: () => void;
+
   // Zooming
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
   curZoomTransform: d3.ZoomTransform = d3.zoomIdentity;
   curZoomLevel = 1;
 
-  xScale: d3.ScaleLinear<number, number, never>;
-  yScale: d3.ScaleLinear<number, number, never>;
-  component: HTMLElement;
-  updateEmbedding: () => void;
+  // Interactions
+  lastMouseClientPosition: Point | null = null;
 
   // Data
   prompts: string[] = [];
@@ -232,7 +236,10 @@ export class Embedding {
       .select<HTMLElement>('.top-svg')
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height)
-      .on('mousemove', e => this.mousemoveHandler(e as MouseEvent));
+      .on('mousemove', e => this.mousemoveHandler(e as MouseEvent))
+      .on('mouseleave', () => {
+        this.mouseoverLabel(null, null);
+      });
 
     const topGroup = topSvg.append('g').attr('class', 'top-group');
 
@@ -791,9 +798,10 @@ export class Embedding {
     // this.drawScatterBackCanvas();
     this.pointBackCtx.restore();
 
-    // Adjust the label size based on the zooming scales
+    // Adjust the label size based on the zoom level
     this.layoutTopicLabels(this.userMaxLabelNum);
 
+    // Adjust the canvas grid based on the zoom level
     const topicCtx = (this.topicCanvas.node() as HTMLCanvasElement).getContext(
       '2d'
     );
@@ -803,6 +811,14 @@ export class Embedding {
       topicCtx.scale(transform.k, transform.k);
       this.drawTopicGrid();
       topicCtx.restore();
+    }
+
+    // Adjust the highlighted tile
+    if (this.lastMouseClientPosition) {
+      this.mouseoverLabel(
+        this.lastMouseClientPosition.x,
+        this.lastMouseClientPosition.y
+      );
     }
   };
 
@@ -940,6 +956,7 @@ export class Embedding {
     // We need to use color picking to figure out which point is hovered over
     const x = e.offsetX;
     const y = e.offsetY;
+    this.lastMouseClientPosition = { x: x, y: y };
 
     const pixel = this.pointBackCtx.getImageData(x, y, 1, 1);
     const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);

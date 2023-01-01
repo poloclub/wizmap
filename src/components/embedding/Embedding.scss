@@ -67,9 +67,7 @@
 :global(.top-svg .topic-label) {
   text-anchor: middle;
   font-family: 'Lato';
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
+  pointer-events: none;
   line-height: 1;
   will-change: transform;
   fill: black;
@@ -135,6 +133,10 @@
 :global(.top-svg rect.topic-tile) {
   fill: none;
   stroke: hsla(0, 0, 100, 0.5);
+}
+
+:global(.top-svg rect.highlight-tile) {
+  // stroke: hsla(0, 0%, 97%, 0.8);
 }
 
 .svg-icon {
