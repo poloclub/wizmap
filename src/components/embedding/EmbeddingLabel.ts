@@ -14,8 +14,8 @@ import { config } from '../../config/config';
 
 const IDEAL_TILE_WIDTH = 35;
 const LABEL_SPLIT = '-';
-let labelMouseenterTimer: number | null = null;
-let labelMousleaveTimer: number | null = null;
+let labelMouseenterTimer: string | null = null;
+let labelMouseleaveTimer: number | null = null;
 
 /**
  * Draw the labels using computed layouts
@@ -101,8 +101,6 @@ export function drawLabels(
       .attr('ry', 4 / this.curZoomTransform.k)
       .attr('width', tileScreenWidth)
       .attr('height', tileScreenWidth)
-      .style('fill', 'none')
-      .style('stroke', config.colors['gray-900'])
       .style('stroke-width', 1.6 / this.curZoomTransform.k);
 
     // Add a dot to indicate the label direction
@@ -363,6 +361,7 @@ export function drawTopicGrid(this: Embedding) {
   const zoomBox = this.getCurZoomBox();
   interface NamedRect extends Rect {
     name: string;
+    label: string;
   }
 
   const tiles = topicTree
@@ -373,7 +372,8 @@ export function drawTopicGrid(this: Embedding) {
         y: this.yScale(d[1] - tileWidth / 2),
         width: tileScreenWidth,
         height: tileScreenWidth,
-        name: `${(d[0], d[1])}`
+        name: `${(d[0], d[1])}`,
+        label: d[2]
       };
       return tileRect;
     })
@@ -1002,11 +1002,35 @@ export function mouseoverLabel(
   x: number | null,
   y: number | null
 ) {
-  const group = this.topSvg.select('g.top-content g.topics-bottom');
+  const bottomGroup = this.topSvg.select('g.top-content g.topics-bottom');
+  const labelGroup = this.topSvg.select('g.top-content g.topics');
+  const topGroup = this.topSvg.select('g.top-content g.topics-top');
+
+  const oldBottomRect = bottomGroup.select('rect.highlight-tile');
+  const oldTopRect = topGroup.select('rect.highlight-tile');
+
+  const hoverDelay = 700;
+
+  const removeHighlight = () => {
+    if (labelMouseleaveTimer !== null) {
+      clearTimeout(labelMouseleaveTimer);
+      labelMouseleaveTimer = null;
+    }
+
+    // Clear the highlight and tooltip in a short delay
+    labelMouseleaveTimer = setTimeout(() => {
+      labelGroup.classed('faded', false);
+      oldTopRect.interrupt('top-fade').remove();
+      oldBottomRect.remove();
+      this.tooltipStoreValue.show = false;
+      this.tooltipStore.set(this.tooltipStoreValue);
+      labelMouseleaveTimer = null;
+    }, 50);
+  };
 
   // Remove the tile if x and y are null
   if (x === null || y === null) {
-    group.selectAll('rect.highlight-tile').remove();
+    removeHighlight();
     return;
   }
 
@@ -1028,15 +1052,15 @@ export function mouseoverLabel(
 
   // No tile near the mouse location
   if (tile === undefined) {
-    group.selectAll('rect.highlight-tile').remove();
+    if (!oldBottomRect.empty()) {
+      removeHighlight();
+    }
     return;
   }
 
-  const oldRect = group.select('rect.highlight-tile');
-
-  if (oldRect.empty()) {
-    // Add a new highlight rect
-    const rect = group
+  if (oldBottomRect.empty()) {
+    // Add a new highlight rect at the bottom layer
+    const rect = bottomGroup
       .append('rect')
       .attr('class', 'highlight-tile')
       .attr('x', this.xScale(tile[0]) - tileScreenWidth / 2)
@@ -1045,12 +1069,44 @@ export function mouseoverLabel(
       .attr('height', tileScreenWidth)
       .attr('rx', 4 / this.curZoomTransform.k)
       .attr('ry', 4 / this.curZoomTransform.k)
-      .style('fill', 'none')
-      .style('stroke', 'hsla(0, 0%, 97%, 0.8)')
       .style('stroke-width', 2.6 / this.curZoomTransform.k);
+
+    // Get the tooltip position
+    const position = rect.node()!.getBoundingClientRect();
+    const curWidth = position.width;
+    const tooltipCenterX = position.x + curWidth / 2;
+    const tooltipCenterY = position.y;
+    this.tooltipStoreValue.html = `
+          <div class='tooltip-content' style='display: flex; flex-direction:
+            column; justify-content: center;'>
+            ${tile[2]}
+          </div>
+        `;
+    this.tooltipStoreValue.x = tooltipCenterX;
+    this.tooltipStoreValue.y = tooltipCenterY;
+    this.tooltipStoreValue.show = true;
+
+    // Insert a clone to the top layer
+    const clone = rect.clone(true).remove().node()!;
+    const topRect = d3.select(
+      (topGroup.node() as HTMLElement).appendChild(clone)
+    );
+
+    labelMouseenterTimer = tile[2];
+    topRect
+      .style('opacity', 0)
+      .transition('top-fade')
+      .duration(hoverDelay)
+      .ease(d3.easeCubicInOut)
+      .on('end', () => {
+        topRect.style('opacity', 1);
+        labelGroup.classed('faded', true);
+        this.tooltipStore.set(this.tooltipStoreValue);
+        labelMouseenterTimer = null;
+      });
   } else {
     // Update the old highlight rect
-    oldRect
+    oldBottomRect
       .attr('x', this.xScale(tile[0]) - tileScreenWidth / 2)
       .attr('y', this.yScale(tile[1]) - tileScreenWidth / 2)
       .attr('width', tileScreenWidth)
@@ -1058,6 +1114,50 @@ export function mouseoverLabel(
       .attr('rx', 4 / this.curZoomTransform.k)
       .attr('ry', 4 / this.curZoomTransform.k)
       .style('stroke-width', 2.6 / this.curZoomTransform.k);
+
+    oldTopRect
+      .attr('x', this.xScale(tile[0]) - tileScreenWidth / 2)
+      .attr('y', this.yScale(tile[1]) - tileScreenWidth / 2)
+      .attr('width', tileScreenWidth)
+      .attr('height', tileScreenWidth)
+      .attr('rx', 4 / this.curZoomTransform.k)
+      .attr('ry', 4 / this.curZoomTransform.k)
+      .style('stroke-width', 2.6 / this.curZoomTransform.k);
+
+    // Get the point position
+    const position = (
+      oldBottomRect.node()! as HTMLElement
+    ).getBoundingClientRect();
+    const curWidth = position.width;
+    const tooltipCenterX = position.x + curWidth / 2;
+    const tooltipCenterY = position.y;
+    this.tooltipStoreValue.html = `
+          <div class='tooltip-content' style='display: flex; flex-direction:
+            column; justify-content: center;'>
+            ${tile[2]}
+          </div>
+        `;
+    this.tooltipStoreValue.x = tooltipCenterX;
+    this.tooltipStoreValue.y = tooltipCenterY;
+    this.tooltipStoreValue.show = true;
+
+    if (labelMouseenterTimer === null) {
+      this.tooltipStore.set(this.tooltipStoreValue);
+    } else {
+      labelMouseenterTimer = tile[2];
+      oldTopRect
+        .interrupt('top-fade')
+        .style('opacity', 0)
+        .transition('top-fade')
+        .duration(hoverDelay)
+        .ease(d3.easeCubicInOut)
+        .on('end', () => {
+          oldTopRect.style('opacity', 1);
+          labelGroup.classed('faded', true);
+          this.tooltipStore.set(this.tooltipStoreValue);
+          labelMouseenterTimer = null;
+        });
+    }
   }
 }
 

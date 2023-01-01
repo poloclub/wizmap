@@ -130,13 +130,37 @@
   display: none;
 }
 
-:global(.top-svg rect.topic-tile) {
-  fill: none;
-  stroke: hsla(0, 0, 100, 0.5);
+:global(.top-svg g.topics) {
+  transition: opacity 300ms ease-in-out;
+
+  :global(.topic-tile) {
+    transition: stroke 300ms ease-in-out;
+    fill: none;
+    stroke: $gray-900;
+  }
 }
 
-:global(.top-svg rect.highlight-tile) {
-  // stroke: hsla(0, 0%, 97%, 0.8);
+:global(.top-svg g.topics.faded) {
+  opacity: 0.2;
+
+  :global(.topic-tile) {
+    stroke: $gray-200;
+  }
+}
+
+:global(.top-svg g.topics-bottom) {
+  :global(.highlight-tile) {
+    fill: none;
+    stroke: hsla(0, 0%, 97%, 0.8);
+  }
+}
+
+:global(.top-svg g.topics-top) {
+  :global(.highlight-tile) {
+    fill: none;
+    stroke: $gray-800;
+    transition: opacity 100ms linear;
+  }
 }
 
 .svg-icon {
