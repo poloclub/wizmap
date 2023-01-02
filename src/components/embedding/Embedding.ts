@@ -48,6 +48,8 @@ const SCATTER_DOT_RADIUS = 1;
 let pointMouseleaveTimer: number | null = null;
 let pointMouseenterTimer: number | null = null;
 
+type HoverMode = 'point' | 'label' | 'none';
+
 /**
  * Class for the Embedding view
  */
@@ -83,6 +85,12 @@ export class Embedding {
 
   // Interactions
   lastMouseClientPosition: Point | null = null;
+
+  // User settings
+  hoverMode: HoverMode = 'label';
+  showContour = true;
+  showGrid = true;
+  showPoint = false;
 
   // Data
   prompts: string[] = [];
@@ -983,5 +991,39 @@ export class Embedding {
         this.curZoomTransform.invertY(0)
     };
     return box;
+  };
+
+  /**
+   * User chooses a new hover mode
+   * @param mode New mode ('point', 'label', or 'none')
+   */
+  hoverModeChanged = (mode: string) => {
+    this.hoverMode = mode as HoverMode;
+  };
+
+  /**
+   * Handle user changing the display setting
+   * @param checkbox Checkbox name
+   * @param checked Whether this checkbox is checked
+   */
+  displayCheckboxChanged = (checkbox: string, checked: boolean) => {
+    switch (checkbox) {
+      case 'contour': {
+        this.showContour = checked;
+        break;
+      }
+      case 'point': {
+        this.showPoint = checked;
+        break;
+      }
+      case 'grid': {
+        this.showGrid = checked;
+        break;
+      }
+      default: {
+        console.error('Unknown checkbox name', checkbox);
+        break;
+      }
+    }
   };
 }

@@ -10,7 +10,8 @@
   let mounted = false;
   let initialized = false;
   let embedding: Embedding | null = null;
-  let showControl = false;
+  let showControl = true;
+  let selectedHoverMode = 'label';
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
 
@@ -20,6 +21,18 @@
 
   const updateEmbedding = () => {
     embedding = embedding;
+  };
+
+  const hoverModeClicked = (mode: string) => {
+    if (selectedHoverMode !== mode) {
+      embedding?.hoverModeChanged(mode);
+    }
+    selectedHoverMode = mode;
+  };
+
+  const displayCheckboxChanged = (e: InputEvent, checkbox: string) => {
+    const newValue = (e.target as HTMLInputElement).checked;
+    embedding?.displayCheckboxChanged(checkbox, newValue);
   };
 
   /**
@@ -55,8 +68,51 @@
     <div class="splitter" />
 
     <div class="control-item">
+      <div class="item-header">Display</div>
+
       <div class="control-row">
-        <label for="slider-label-num">Number of Labels</label>
+        <label for="checkbox-contour">Density Contour</label>
+        <input
+          type="checkbox"
+          class="checkbox"
+          id="checkbox-contour"
+          name="checkbox-contour"
+          checked
+          on:input={e => displayCheckboxChanged(e, 'contour')}
+        />
+      </div>
+
+      <div class="control-row">
+        <label for="checkbox-grid">Label Grid</label>
+        <input
+          type="checkbox"
+          class="checkbox"
+          id="checkbox-grid"
+          name="checkbox-grid"
+          checked
+          on:input={e => displayCheckboxChanged(e, 'grid')}
+        />
+      </div>
+
+      <div class="control-row">
+        <label for="checkbox-point">Data Points</label>
+        <input
+          type="checkbox"
+          class="checkbox"
+          id="checkbox-point"
+          name="checkbox-point"
+          on:input={e => displayCheckboxChanged(e, 'point')}
+        />
+      </div>
+    </div>
+
+    <div class="splitter" />
+
+    <div class="control-item">
+      <div class="control-row">
+        <label class="item-header" for="slider-label-num"
+          >Number of Labels</label
+        >
         <span>{embedding ? `${embedding.curLabelNum}` : '1'}</span>
       </div>
       <input
@@ -74,14 +130,36 @@
     <div class="splitter" />
 
     <div class="control-item">
-      <div class="control-row">
-        <label for="checkbox-point">Show Points</label>
-        <input
-          type="checkbox"
-          class="checkbox"
-          id="checkbox-point"
-          name="checkbox-point"
-        />
+      <div class="item-header">Mouse Hover Mode</div>
+
+      <div class="segmented-control">
+        <div
+          class="segmented-control-option"
+          class:selected={selectedHoverMode === 'label'}
+          on:click={() => {
+            hoverModeClicked('label');
+          }}
+        >
+          Label
+        </div>
+        <div
+          class="segmented-control-option"
+          class:selected={selectedHoverMode === 'point'}
+          on:click={() => {
+            hoverModeClicked('point');
+          }}
+        >
+          Point
+        </div>
+        <div
+          class="segmented-control-option"
+          class:selected={selectedHoverMode === 'none'}
+          on:click={() => {
+            hoverModeClicked('none');
+          }}
+        >
+          None
+        </div>
       </div>
     </div>
   </div>
