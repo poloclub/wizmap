@@ -14,7 +14,7 @@ export type EmbeddingWorkerMessage =
       command: 'finishLoadData';
       payload: {
         isFirstBatch: boolean;
-        points: UMAPPointStreamData[];
+        points: UMAPPointStreamData[] | null;
       };
     };
 

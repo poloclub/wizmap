@@ -10,7 +10,7 @@
   let mounted = false;
   let initialized = false;
   let embedding: Embedding | null = null;
-  let showControl = true;
+  let showControl = false;
   let selectedHoverMode = 'label';
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;

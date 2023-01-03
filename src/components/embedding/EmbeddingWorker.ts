@@ -80,7 +80,7 @@ const pointStreamFinished = () => {
     command: 'finishLoadData',
     payload: {
       isFirstBatch: false,
-      points: dataPoints
+      points: null
     }
   };
   postMessage(result);

@@ -165,12 +165,9 @@ export class Embedding {
     embeddingWorker.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
       if (e.data.command === 'finishLoadData') {
         if (e.data.payload.isFirstBatch) {
-          console.log(
-            'Finish loading first batch',
-            e.data.payload.points.length
-          );
+          console.log('Finish loading first batch');
         } else {
-          console.log('Finished loading all', e.data.payload.points.length);
+          console.log('Finished loading all');
         }
       }
     };

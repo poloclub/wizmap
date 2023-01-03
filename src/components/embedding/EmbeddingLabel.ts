@@ -510,8 +510,9 @@ export function layoutTopicLabels(
         const newGroup = enter
           .append('g')
           .attr('class', d => `topics-content zoom-${d}`)
-          .style('opacity', 0)
-          .call(enter => enter.transition(trans).style('opacity', 1));
+          .style('opacity', 0);
+
+        newGroup.transition(trans).style('opacity', 1);
 
         if (!enter.empty()) {
           this.lastLabelNames = new Map();
@@ -522,19 +523,18 @@ export function layoutTopicLabels(
       update => {
         return update;
       },
-      exit =>
-        exit.call(exit => {
-          if (this.lastLabelTreeLevel !== idealTreeLevel) {
-            return exit
-              .transition(trans)
-              .style('opacity', 0)
-              .on('end', () => {
-                exit.remove();
-              });
-          } else {
-            return exit;
-          }
-        })
+      exit => {
+        if (this.lastLabelTreeLevel !== idealTreeLevel) {
+          return exit
+            .transition(trans)
+            .style('opacity', 0)
+            .on('end', () => {
+              exit.remove();
+            });
+        } else {
+          return exit;
+        }
+      }
     );
 
   this.lastLabelTreeLevel = idealTreeLevel;
@@ -1009,7 +1009,7 @@ export function mouseoverLabel(
   const oldBottomRect = bottomGroup.select('rect.highlight-tile');
   const oldTopRect = topGroup.select('rect.highlight-tile');
 
-  const hoverDelay = 700;
+  const hoverDelay = 70000;
 
   const removeHighlight = () => {
     if (labelMouseleaveTimer !== null) {
