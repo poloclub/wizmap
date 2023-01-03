@@ -257,7 +257,7 @@ export function drawTopicGridSVG(this: Embedding) {
   const treeExtent = topicTree.extent()!;
   const tileWidth =
     (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
-  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+  const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
 
   //  Only draw the tiles that are visible
   const zoomBox = this.getCurZoomBox();
@@ -355,7 +355,7 @@ export function drawTopicGrid(this: Embedding) {
   const treeExtent = topicTree.extent()!;
   const tileWidth =
     (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
-  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+  const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
 
   //  Only draw the tiles that are visible
   const zoomBox = this.getCurZoomBox();
@@ -497,7 +497,7 @@ export function layoutTopicLabels(
   const treeExtent = topicTree.extent()!;
   const tileWidth =
     (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
-  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+  const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
 
   // Show animation when we shift zoom level
   const trans = d3.transition('removal').duration(400).ease(d3.easeCubicInOut);
@@ -1045,7 +1045,7 @@ export function mouseoverLabel(
   const tileWidth =
     (treeExtent[1][0] - treeExtent[0][0]) /
     Math.pow(2, this.lastLabelTreeLevel);
-  const tileScreenWidth = this.xScale(tileWidth) - this.xScale(0);
+  const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
 
   const radius = Math.sqrt(2) * tileWidth;
   const tile = tree.find(x0, y0, radius);

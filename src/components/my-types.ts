@@ -2,6 +2,22 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export type EmbeddingWorkerMessage =
+  | {
+      command: 'startLoadData';
+      /** JSON data url */
+      payload: {
+        url: string;
+      };
+    }
+  | {
+      command: 'finishLoadData';
+      payload: {
+        isFirstBatch: boolean;
+        points: UMAPPointStreamData[];
+      };
+    };
+
 export interface LabelData {
   tileX: number;
   tileY: number;

@@ -16,5 +16,7 @@ gh-page
 lite
 
 umap-1m.json
-umap-60k-level-topics.json
+umap-60k-topic-data.json
 umap-60k.ndjson
+umap-1m-topic-data.json
+umap-1m.ndjson

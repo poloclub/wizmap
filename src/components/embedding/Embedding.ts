@@ -15,7 +15,8 @@ import type {
   DrawnLabel,
   LabelData,
   Direction,
-  Point
+  Point,
+  EmbeddingWorkerMessage
 } from '../my-types';
 import {
   downloadJSON,
@@ -40,6 +41,7 @@ import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
 import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
+import EmbeddingWorker from './EmbeddingWorker?worker';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
@@ -117,6 +119,8 @@ export class Embedding {
   tooltipStore: Writable<TooltipStoreValue>;
   tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
 
+  // Web workers
+
   // Methods implemented in other files
   drawLabels = drawLabels;
   layoutTopicLabels = layoutTopicLabels;
@@ -143,6 +147,33 @@ export class Embedding {
     this.component = component;
     this.tooltipStore = tooltipStore;
     this.updateEmbedding = updateEmbedding;
+
+    // Initialize the web worker to load data
+    const embeddingWorker = new EmbeddingWorker();
+    const url = `/data/umap-${'1m'}.ndjson`;
+    // const url =
+    // 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev/umap-1m.ndjson';
+    // const url =
+    //   'https://huggingface.co/datasets/xiaohk/embedding/resolve/main/umap-1m.ndjson';
+
+    const message: EmbeddingWorkerMessage = {
+      command: 'startLoadData',
+      payload: { url: url }
+    };
+    embeddingWorker.postMessage(message);
+
+    embeddingWorker.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
+      if (e.data.command === 'finishLoadData') {
+        if (e.data.payload.isFirstBatch) {
+          console.log(
+            'Finish loading first batch',
+            e.data.payload.points.length
+          );
+        } else {
+          console.log('Finished loading all', e.data.payload.points.length);
+        }
+      }
+    };
 
     // Initialize the SVG
     this.svg = d3.select(this.component).select('.embedding-svg');
@@ -200,7 +231,7 @@ export class Embedding {
       .attr('height', this.svgFullSize.height);
     this.pointBackCtx = (
       this.pointBackCanvas.node()! as HTMLCanvasElement
-    ).getContext('2d')!;
+    ).getContext('2d', { willReadFrequently: true })!;
     this.pointBackCtx.imageSmoothingEnabled = false;
 
     // Register zoom
@@ -328,30 +359,30 @@ export class Embedding {
     // this.drawScatter();
 
     // Read the data point through streaming
-    fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
-      const reader = response?.body
-        ?.pipeThrough(new TextDecoderStream())
-        ?.pipeThrough(splitStreamTransform('\n'))
-        ?.pipeThrough(parseJSONTransform())
-        ?.getReader();
+    // fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
+    //   const reader = response?.body
+    //     ?.pipeThrough(new TextDecoderStream())
+    //     ?.pipeThrough(splitStreamTransform('\n'))
+    //     ?.pipeThrough(parseJSONTransform())
+    //     ?.getReader();
 
-      while (true && reader !== undefined) {
-        const result = await reader.read();
-        const point = result.value as UMAPPointStreamData;
-        const done = result.done;
+    //   while (true && reader !== undefined) {
+    //     const result = await reader.read();
+    //     const point = result.value as UMAPPointStreamData;
+    //     const done = result.done;
 
-        if (done) {
-          console.log('Finished streaming');
-          break;
-        } else {
-          this.processPointStream(point);
-        }
-      }
-    });
+    //     if (done) {
+    //       console.info('Finished streaming');
+    //       break;
+    //     } else {
+    //       this.processPointStream(point);
+    //     }
+    //   }
+    // });
 
     // Read the grid data for contour background
     const gridPromise = d3
-      .json<GridData>('/data/umap-60k-grid.json')
+      .json<GridData>('/data/umap-1m-grid.json')
       .then(gridData => {
         if (gridData) {
           this.gridData = gridData;
@@ -455,32 +486,6 @@ export class Embedding {
     umapGroup.append('g').attr('class', 'quad-group');
     umapGroup.append('g').attr('class', 'tile-group');
     umapGroup.append('g').attr('class', 'scatter-group');
-  };
-
-  drawTopicTiles = () => {
-    const tileGroup = this.svg.select('g.tile-group');
-
-    // Color each rectangle based on their level
-    const levelColors = window.structuredClone(d3.schemePastel1) as string[];
-    levelColors.reverse();
-
-    const curData = this.tileData!['6'];
-    console.log(curData);
-
-    // Draw the rectangles
-    tileGroup
-      .selectAll('.tile-rect')
-      .data(curData)
-      .join('rect')
-      .attr('class', 'tile-rect')
-      .attr('x', d => this.xScale(d.p[0]))
-      .attr('y', d => this.yScale(d.p[3]))
-      .attr('width', d => this.yScale(d.p[1]) - this.yScale(d.p[3]))
-      .attr('height', d => this.xScale(d.p[2]) - this.xScale(d.p[0]))
-      .style('fill', levelColors[0])
-      .style('stroke', 'var(--md-gray-400)')
-      .style('stroke-width', 0.4)
-      .style('opacity', 0.5);
   };
 
   /**
