@@ -41,7 +41,6 @@ import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
 import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
-// import EmbeddingWorker from './EmbeddingWorker?worker';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
@@ -149,9 +148,9 @@ export class Embedding {
     this.updateEmbedding = updateEmbedding;
 
     // Initialize the web worker to load data
-    // const embeddingWorker = new EmbeddingWorker();
     const embeddingWorker = new Worker(
-      new URL('./EmbeddingWorker.js', import.meta.url)
+      new URL('./EmbeddingWorker.ts', import.meta.url),
+      { type: 'module' }
     );
     const url = `/data/umap-${'1m'}.ndjson`;
     // const url =
