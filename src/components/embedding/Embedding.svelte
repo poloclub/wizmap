@@ -71,7 +71,6 @@
       <div class="item-header">Display</div>
 
       <div class="control-row">
-        <label for="checkbox-contour">Density Contour</label>
         <input
           type="checkbox"
           class="checkbox"
@@ -80,10 +79,10 @@
           checked
           on:input={e => displayCheckboxChanged(e, 'contour')}
         />
+        <label for="checkbox-contour">Density Contour</label>
       </div>
 
       <div class="control-row">
-        <label for="checkbox-grid">Label Grid</label>
         <input
           type="checkbox"
           class="checkbox"
@@ -92,10 +91,10 @@
           checked
           on:input={e => displayCheckboxChanged(e, 'grid')}
         />
+        <label for="checkbox-grid">Label Grid</label>
       </div>
 
       <div class="control-row">
-        <label for="checkbox-point">Data Points</label>
         <input
           type="checkbox"
           class="checkbox"
@@ -103,6 +102,7 @@
           name="checkbox-point"
           on:input={e => displayCheckboxChanged(e, 'point')}
         />
+        <label for="checkbox-point">Data Points</label>
       </div>
     </div>
 
@@ -139,6 +139,9 @@
           on:click={() => {
             hoverModeClicked('label');
           }}
+          on:keypress={() => {
+            hoverModeClicked('label');
+          }}
         >
           Label
         </div>
@@ -146,6 +149,9 @@
           class="segmented-control-option"
           class:selected={selectedHoverMode === 'point'}
           on:click={() => {
+            hoverModeClicked('point');
+          }}
+          on:keypress={() => {
             hoverModeClicked('point');
           }}
         >
@@ -157,6 +163,9 @@
           on:click={() => {
             hoverModeClicked('none');
           }}
+          on:keypress={() => {
+            hoverModeClicked('none');
+          }}
         >
           None
         </div>
@@ -166,12 +175,14 @@
 
   <div
     class="setting-icon"
-    class:activated={showControl}
     on:click={() => {
       showControl = !showControl;
     }}
+    on:keypress={() => {
+      showControl = !showControl;
+    }}
   >
-    <div class="icon-wrapper svg-icon">
+    <div class="icon-wrapper svg-icon" class:activated={showControl}>
       {@html iconGear}
     </div>
   </div>
