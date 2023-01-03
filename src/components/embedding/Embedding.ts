@@ -315,48 +315,41 @@ export class Embedding {
    * Load the UMAP data from json.
    */
   initData = async () => {
-    // Read point data in bulk
-    const result = await d3.json<PromptUMAPData>(
-      `/data/umap-${DATA_SIZE}.json`
-    );
-    if (result !== undefined) {
-      for (let i = 0; i < result.xs.length; i++) {
-        // Collect prompts
-        this.prompts.push(result.prompts[i]);
-        this.promptPoints.push({
-          x: result.xs[i],
-          y: result.ys[i],
-          id: i,
-          visible: true
-        });
-      }
+    // Read the grid data for contour background
+    // Await the data to load to get the range for x and y
+    const gridData = await d3.json<GridData>('/data/umap-1m-grid.json');
+
+    if (gridData === undefined) {
+      throw Error('Fail to load grid data.');
     }
-    console.log(this.promptPoints);
+    this.gridData = gridData;
 
     // Initialize the data scales
-    const xRange = d3.extent(this.promptPoints, d => d.x) as [number, number];
-    const yRange = d3.extent(this.promptPoints, d => d.y) as [number, number];
+    const xRange = this.gridData.xRange;
+    const yRange = this.gridData.yRange;
 
     // Force the plot to be a square
     let xLength = xRange[1] - xRange[0];
     let yLength = yRange[1] - yRange[0];
 
-    if (xLength < yLength) {
-      // Leave some padding
-      yRange[0] -= yLength / 50;
-      yRange[1] += yLength / 50;
-      yLength = yRange[1] - yRange[0];
+    if (!this.gridData.padded) {
+      // Add padding for the data
+      if (xLength < yLength) {
+        yRange[0] -= yLength / 50;
+        yRange[1] += yLength / 50;
+        yLength = yRange[1] - yRange[0];
 
-      xRange[0] -= (yLength - xLength) / 2;
-      xRange[1] += (yLength - xLength) / 2;
-    } else {
-      // Leave some padding
-      xRange[0] -= xLength / 50;
-      xRange[1] += xLength / 50;
-      xLength = xRange[1] - xRange[0];
+        xRange[0] -= (yLength - xLength) / 2;
+        xRange[1] += (yLength - xLength) / 2;
+      } else {
+        // Add padding for the data
+        xRange[0] -= xLength / 50;
+        xRange[1] += xLength / 50;
+        xLength = xRange[1] - xRange[0];
 
-      yRange[0] -= (xLength - yLength) / 2;
-      yRange[1] += (xLength - yLength) / 2;
+        yRange[0] -= (xLength - yLength) / 2;
+        yRange[1] += (xLength - yLength) / 2;
+      }
     }
 
     this.xScale = d3
@@ -368,44 +361,31 @@ export class Embedding {
       .domain(yRange)
       .range([this.svgSize.height, 0]);
 
+    this.contours = this.drawContour();
+
+    // Read point data in bulk
+    // const result = await d3.json<PromptUMAPData>(
+    //   `/data/umap-${DATA_SIZE}.json`
+    // );
+    // if (result !== undefined) {
+    //   for (let i = 0; i < result.xs.length; i++) {
+    //     // Collect prompts
+    //     this.prompts.push(result.prompts[i]);
+    //     this.promptPoints.push({
+    //       x: result.xs[i],
+    //       y: result.ys[i],
+    //       id: i,
+    //       visible: true
+    //     });
+    //   }
+    // }
+    // console.log(this.promptPoints);
+
     // Randomly sample the points before drawing
     this.sampleVisiblePoints(6000);
+
     // this.drawScatterCanvas();
     // this.drawScatter();
-
-    // Read the data point through streaming
-    // fetch(`/data/umap-${DATA_SIZE}.ndjson`).then(async response => {
-    //   const reader = response?.body
-    //     ?.pipeThrough(new TextDecoderStream())
-    //     ?.pipeThrough(splitStreamTransform('\n'))
-    //     ?.pipeThrough(parseJSONTransform())
-    //     ?.getReader();
-
-    //   while (true && reader !== undefined) {
-    //     const result = await reader.read();
-    //     const point = result.value as UMAPPointStreamData;
-    //     const done = result.done;
-
-    //     if (done) {
-    //       console.info('Finished streaming');
-    //       break;
-    //     } else {
-    //       this.processPointStream(point);
-    //     }
-    //   }
-    // });
-
-    // Read the grid data for contour background
-    const gridPromise = d3
-      .json<GridData>('/data/umap-1m-grid.json')
-      .then(gridData => {
-        if (gridData) {
-          this.gridData = gridData;
-          this.contours = this.drawContour();
-        } else {
-          console.error('Fail to read grid data');
-        }
-      });
 
     // Read the topic label data
     const topicPromise = d3
@@ -427,7 +407,7 @@ export class Embedding {
       });
 
     // Show topic labels once we have contours and topic data
-    Promise.all([gridPromise, topicPromise]).then(() => {
+    Promise.all([topicPromise]).then(() => {
       this.drawTopicGrid();
       this.layoutTopicLabels(this.userMaxLabelNum);
 
@@ -440,14 +420,6 @@ export class Embedding {
         ).value = `${this.curLabelNum}`;
       }, 500);
     });
-
-    // Read the tile data for the topic map
-    // d3.json<LevelTileMap>('/data/umap-60k-level-topics.json').then(tileData => {
-    //   if (tileData) {    //     this.tileData = tileData;
-    //     const tileGroup = this.svg.select<SVGGElement>('.tile-group');
-    //     // this.drawTopicTiles(tileGroup);
-    //   }
-    // });
   };
 
   /**
@@ -651,11 +623,6 @@ export class Embedding {
     }
 
     const contourGroup = this.svg.select<SVGGElement>('.contour-group');
-    contourGroup
-      .append('circle')
-      .attr('cx', 200)
-      .attr('cy', 200)
-      .attr('r', 100);
 
     const gridData1D: number[] = [];
     for (const row of this.gridData.grid) {
@@ -851,14 +818,6 @@ export class Embedding {
         this.lastMouseClientPosition.y
       );
     }
-  };
-
-  /**
-   * Process the umap point reading stream
-   * @param point Point (x, y, prompt)
-   */
-  processPointStream = (point: UMAPPointStreamData) => {
-    // pass
   };
 
   /**

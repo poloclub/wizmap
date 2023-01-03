@@ -909,6 +909,8 @@ export function mouseoverLabel(
   x: number | null,
   y: number | null
 ) {
+  if (this.hoverMode !== 'label') return;
+
   const bottomGroup = this.topSvg.select('g.top-content g.topics-bottom');
   const labelGroup = this.topSvg.select('g.top-content g.topics');
   const topGroup = this.topSvg.select('g.top-content g.topics-top');

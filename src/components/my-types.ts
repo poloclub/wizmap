@@ -152,6 +152,8 @@ export interface GridData {
   grid: number[][];
   xRange: number[];
   yRange: number[];
+  padded: boolean;
+  sampleSize: number;
 }
 
 export interface PromptPoint extends Point {

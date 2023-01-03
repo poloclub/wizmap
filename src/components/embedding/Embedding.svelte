@@ -16,9 +16,9 @@
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
     showPoint: false,
-    showGrid: true,
-    showLabel: true,
-    hover: 'label'
+    showGrid: false,
+    showLabel: false,
+    hover: 'none'
   };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
