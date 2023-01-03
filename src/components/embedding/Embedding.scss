@@ -20,6 +20,16 @@
   border-radius: $border-radius;
 }
 
+:global(.embedding-svg .contour-group) {
+  transition: opacity, 300ms ease-in-out;
+  opacity: 1;
+}
+
+:global(.embedding-svg .contour-group.hidden) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 :global(.prompt-point) {
   fill: $gray-700;
   opacity: 0.4;
@@ -41,9 +51,15 @@
 
 .topic-grid-canvas {
   position: absolute;
+  transition: opacity, 200ms ease-in-out;
   top: 0px;
   left: 0px;
   z-index: 1;
+}
+
+:global(.topic-grid-canvas.hidden) {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .top-svg {
@@ -183,27 +199,31 @@
   top: 6px;
   right: 12px;
   z-index: 5;
-
-  width: 26px;
-  height: 26px;
-  padding: 4px;
   border-radius: $border-radius;
+  background-color: change-color($color: $gray-50, $alpha: 0.6);
 
-  fill: $gray-700;
-  color: $gray-700;
-  background-color: change-color($color: $gray-400, $alpha: 0);
-  transition: background-color 100ms $ease-cubic-in-out;
+  .svg-icon {
+    width: 26px;
+    height: 26px;
+    padding: 4px;
+    border-radius: $border-radius;
 
-  &.activated {
-    background-color: change-color($color: $gray-400, $alpha: 0.2);
-  }
+    fill: $gray-700;
+    color: $gray-700;
+    background-color: change-color($color: $gray-400, $alpha: 0);
+    transition: background-color 100ms $ease-cubic-in-out;
 
-  &:hover {
-    background-color: change-color($color: $gray-400, $alpha: 0.2);
-  }
+    &.activated {
+      background-color: change-color($color: $gray-400, $alpha: 0.2);
+    }
 
-  &:active {
-    background-color: change-color($color: $gray-400, $alpha: 0.4);
+    &:hover {
+      background-color: change-color($color: $gray-400, $alpha: 0.2);
+    }
+
+    &:active {
+      background-color: change-color($color: $gray-400, $alpha: 0.4);
+    }
   }
 }
 

@@ -46,7 +46,7 @@
     }
   };
 
-  $: mounted && component && tooltipStore && initView();
+  $: mounted && !initialized && component && tooltipStore && initView();
 </script>
 
 <style lang="scss">
@@ -165,12 +165,14 @@
   </div>
 
   <div
-    class="setting-icon svg-icon"
+    class="setting-icon"
     class:activated={showControl}
     on:click={() => {
       showControl = !showControl;
     }}
   >
-    {@html iconGear}
+    <div class="icon-wrapper svg-icon">
+      {@html iconGear}
+    </div>
   </div>
 </div>

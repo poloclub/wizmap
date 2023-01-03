@@ -1012,14 +1012,35 @@ export class Embedding {
     switch (checkbox) {
       case 'contour': {
         this.showContour = checked;
+        this.svg.select('g.contour-group').classed('hidden', !this.showContour);
         break;
       }
       case 'point': {
         this.showPoint = checked;
+
         break;
       }
       case 'grid': {
         this.showGrid = checked;
+        d3.select(this.component)
+          .select('canvas.topic-grid-canvas')
+          .classed('hidden', !this.showGrid);
+
+        if (this.showGrid) {
+          const topicCtx = (
+            this.topicCanvas.node() as HTMLCanvasElement
+          ).getContext('2d');
+          if (topicCtx) {
+            topicCtx.save();
+            topicCtx.translate(
+              this.curZoomTransform.x,
+              this.curZoomTransform.y
+            );
+            topicCtx.scale(this.curZoomTransform.k, this.curZoomTransform.k);
+            this.drawTopicGrid();
+            topicCtx.restore();
+          }
+        }
         break;
       }
       default: {
