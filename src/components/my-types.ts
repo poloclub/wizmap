@@ -2,6 +2,14 @@
  * Custom types for DiffusionDB-Vis
  */
 
+export type EmbeddingInitSetting = {
+  showContour: boolean;
+  showPoint: boolean;
+  showGrid: boolean;
+  showLabel: boolean;
+  hover: 'point' | 'label' | 'none';
+};
+
 export type EmbeddingWorkerMessage =
   | {
       command: 'startLoadData';

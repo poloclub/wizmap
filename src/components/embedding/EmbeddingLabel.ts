@@ -108,8 +108,6 @@ export function drawLabels(
       .append('path')
       .attr('class', 'direction-indicator')
       .attr('transform-origin', 'center')
-      .style('fill', config.colors['gray-900'])
-      .style('stroke', 'none')
       .each((d, i, g) => this.addTileIndicatorPath(d, i, g, tileScreenWidth));
 
     // // For debugging: show the label bounding box
@@ -374,6 +372,7 @@ export function layoutTopicLabels(
 ) {
   if (this.topicLevelTrees.size <= 1) return;
   if (this.contours === null) return;
+  if (!this.showLabel) return;
 
   // Fin near labels for high density regions
   const topicGroup = this.topSvg.select('g.top-content g.topics');
@@ -917,7 +916,7 @@ export function mouseoverLabel(
   const oldBottomRect = bottomGroup.select('rect.highlight-tile');
   const oldTopRect = topGroup.select('rect.highlight-tile');
 
-  const hoverDelay = 700;
+  const hoverDelay = this.showLabel ? 700 : 300;
 
   const removeHighlight = () => {
     if (labelMouseleaveTimer !== null) {
@@ -947,12 +946,11 @@ export function mouseoverLabel(
   const y0 = this.yScale.invert(this.curZoomTransform.invertY(y));
 
   // Get the corresponding tree
-  if (this.lastLabelTreeLevel === null) return;
-  const tree = this.topicLevelTrees.get(this.lastLabelTreeLevel)!;
+  const idealTreeLevel = this.getIdealTopicTreeLevel()!;
+  const tree = this.topicLevelTrees.get(idealTreeLevel)!;
   const treeExtent = tree.extent()!;
   const tileWidth =
-    (treeExtent[1][0] - treeExtent[0][0]) /
-    Math.pow(2, this.lastLabelTreeLevel);
+    (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
   const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
 
   const radius = Math.sqrt(2) * tileWidth;

@@ -16,7 +16,8 @@ import type {
   LabelData,
   Direction,
   Point,
-  EmbeddingWorkerMessage
+  EmbeddingWorkerMessage,
+  EmbeddingInitSetting
 } from '../my-types';
 import {
   downloadJSON,
@@ -89,9 +90,10 @@ export class Embedding {
 
   // User settings
   hoverMode: HoverMode = 'label';
-  showContour = true;
-  showGrid = true;
-  showPoint = false;
+  showContour: boolean;
+  showGrid: boolean;
+  showPoint: boolean;
+  showLabel: boolean;
 
   // Data
   prompts: string[] = [];
@@ -137,15 +139,24 @@ export class Embedding {
   constructor({
     component,
     tooltipStore,
-    updateEmbedding
+    updateEmbedding,
+    defaultSetting
   }: {
     component: HTMLElement;
     tooltipStore: Writable<TooltipStoreValue>;
     updateEmbedding: () => void;
+    defaultSetting: EmbeddingInitSetting;
   }) {
     this.component = component;
     this.tooltipStore = tooltipStore;
     this.updateEmbedding = updateEmbedding;
+
+    // Init some properties based on the default setting
+    this.hoverMode = defaultSetting.hover;
+    this.showContour = defaultSetting.showContour;
+    this.showGrid = defaultSetting.showGrid;
+    this.showPoint = defaultSetting.showPoint;
+    this.showLabel = defaultSetting.showLabel;
 
     // Initialize the web worker to load data
     const embeddingWorker = new Worker(
@@ -220,7 +231,8 @@ export class Embedding {
       .select(this.component)
       .select<HTMLElement>('.topic-grid-canvas')
       .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height);
+      .attr('height', this.svgFullSize.height)
+      .classed('hidden', !this.showGrid);
 
     // Initialize the background canvas (for mouseover)
     this.pointBackCanvas = d3
@@ -288,9 +300,13 @@ export class Embedding {
       .attr('height', this.svgFullSize.height);
 
     const topContent = topGroup.append('g').attr('class', 'top-content');
+
     topContent.append('g').attr('class', 'highlights');
     topContent.append('g').attr('class', 'topics-bottom');
-    topContent.append('g').attr('class', 'topics');
+    topContent
+      .append('g')
+      .attr('class', 'topics')
+      .classed('hidden', !this.showLabel);
     topContent.append('g').attr('class', 'topics-top');
     return topSvg;
   };
@@ -481,7 +497,10 @@ export class Embedding {
         `translate(${this.svgPadding.left}, ${this.svgPadding.top})`
       );
 
-    umapGroup.append('g').attr('class', 'contour-group');
+    umapGroup
+      .append('g')
+      .attr('class', 'contour-group')
+      .classed('hidden', !this.showContour);
     umapGroup.append('g').attr('class', 'quad-group');
     umapGroup.append('g').attr('class', 'tile-group');
     umapGroup.append('g').attr('class', 'scatter-group');
@@ -1017,11 +1036,12 @@ export class Embedding {
         this.svg.select('g.contour-group').classed('hidden', !this.showContour);
         break;
       }
+
       case 'point': {
         this.showPoint = checked;
-
         break;
       }
+
       case 'grid': {
         this.showGrid = checked;
         d3.select(this.component)
@@ -1045,6 +1065,19 @@ export class Embedding {
         }
         break;
       }
+
+      case 'label': {
+        this.showLabel = checked;
+        this.topSvg
+          .select('g.top-content g.topics')
+          .classed('hidden', !this.showLabel);
+
+        if (this.showLabel) {
+          this.layoutTopicLabels(this.userMaxLabelNum);
+        }
+        break;
+      }
+
       default: {
         console.error('Unknown checkbox name', checkbox);
         break;

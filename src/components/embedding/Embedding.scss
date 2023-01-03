@@ -148,6 +148,10 @@
 :global(.top-svg g.topics) {
   transition: opacity 300ms ease-in-out;
 
+  :global(*) {
+    transition: initial;
+  }
+
   :global(.topic-tile) {
     transition: stroke 300ms ease-in-out;
     fill: none;
@@ -161,6 +165,20 @@
   :global(.topic-tile) {
     stroke: $gray-200;
   }
+
+  :global(.direction-indicator) {
+    opacity: 0.2;
+  }
+}
+
+:global(.top-svg .direction-indicator) {
+  transition: opacity 300ms ease-in-out;
+  stroke: none;
+  fill: $gray-900;
+}
+
+:global(.top-svg g.topics.hidden) {
+  opacity: 0;
 }
 
 :global(.top-svg g.topics-bottom) {
@@ -173,7 +191,7 @@
 :global(.top-svg g.topics-top) {
   :global(.highlight-tile) {
     fill: none;
-    stroke: $gray-800;
+    stroke: $gray-900;
     transition: opacity 100ms linear;
   }
 }
@@ -233,7 +251,8 @@
   top: 0px;
   right: 0px;
   width: 185px;
-  background-color: change-color($color: white, $alpha: 0.9);
+  background-color: change-color($color: white, $alpha: 0.95);
+  accent-color: $blue-600;
 
   $border: 1px solid $gray-border;
   // border-bottom: $border;
@@ -247,7 +266,7 @@
   font-size: $font-d2;
   line-height: 1;
   display: none;
-  gap: 8px;
+  gap: 0px;
   flex-direction: column;
 
   &.shown {
@@ -266,6 +285,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
+    margin: 8px 0px;
 
     &::after {
       content: '';
@@ -277,12 +297,15 @@
   .control-item {
     display: flex;
     flex-direction: column;
+
+    &.slider-item {
+      margin-top: 2px;
+    }
   }
 
   .control-row {
     display: flex;
     flex-direction: row;
-    // justify-content: space-between;
     gap: 5px;
   }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Embedding } from './Embedding';
   import { onMount } from 'svelte';
+  import type { EmbeddingInitSetting } from '../my-types';
   import type { Writable } from 'svelte/store';
   import type { TooltipStoreValue } from '../../stores';
   import { getTooltipStoreDefaultValue } from '../../stores';
@@ -11,7 +12,14 @@
   let initialized = false;
   let embedding: Embedding | null = null;
   let showControl = false;
-  let selectedHoverMode = 'label';
+
+  const defaultSetting: EmbeddingInitSetting = {
+    showContour: true,
+    showPoint: false,
+    showGrid: true,
+    showLabel: true,
+    hover: 'label'
+  };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
 
@@ -24,10 +32,13 @@
   };
 
   const hoverModeClicked = (mode: string) => {
-    if (selectedHoverMode !== mode) {
+    if (defaultSetting.hover !== mode) {
       embedding?.hoverModeChanged(mode);
     }
-    selectedHoverMode = mode;
+
+    if (mode === 'point' || mode === 'label' || mode === 'none') {
+      defaultSetting.hover = mode;
+    }
   };
 
   const displayCheckboxChanged = (e: InputEvent, checkbox: string) => {
@@ -42,7 +53,12 @@
     initialized = true;
 
     if (component && tooltipStore) {
-      embedding = new Embedding({ component, tooltipStore, updateEmbedding });
+      embedding = new Embedding({
+        component,
+        tooltipStore,
+        updateEmbedding,
+        defaultSetting
+      });
     }
   };
 
@@ -76,7 +92,7 @@
           class="checkbox"
           id="checkbox-contour"
           name="checkbox-contour"
-          checked
+          bind:checked={defaultSetting.showContour}
           on:input={e => displayCheckboxChanged(e, 'contour')}
         />
         <label for="checkbox-contour">Density Contour</label>
@@ -86,40 +102,59 @@
         <input
           type="checkbox"
           class="checkbox"
-          id="checkbox-grid"
-          name="checkbox-grid"
-          checked
-          on:input={e => displayCheckboxChanged(e, 'grid')}
+          id="checkbox-point"
+          name="checkbox-point"
+          bind:checked={defaultSetting.showPoint}
+          on:input={e => displayCheckboxChanged(e, 'point')}
         />
-        <label for="checkbox-grid">Label Grid</label>
+        <label for="checkbox-point">Data Points</label>
       </div>
 
       <div class="control-row">
         <input
           type="checkbox"
           class="checkbox"
-          id="checkbox-point"
-          name="checkbox-point"
-          on:input={e => displayCheckboxChanged(e, 'point')}
+          id="checkbox-grid"
+          name="checkbox-grid"
+          bind:checked={defaultSetting.showGrid}
+          on:input={e => displayCheckboxChanged(e, 'grid')}
         />
-        <label for="checkbox-point">Data Points</label>
+        <label for="checkbox-grid">Label Grid</label>
       </div>
     </div>
 
     <div class="splitter" />
 
     <div class="control-item">
+      <div class="item-header">Automatic Labeling</div>
+
       <div class="control-row">
-        <label class="item-header" for="slider-label-num"
+        <input
+          type="checkbox"
+          class="checkbox"
+          id="checkbox-label"
+          name="checkbox-label"
+          bind:checked={defaultSetting.showLabel}
+          on:input={e => displayCheckboxChanged(e, 'label')}
+        />
+        <label for="checkbox-label">High Density Region</label>
+      </div>
+    </div>
+
+    <div class="control-item slider-item">
+      <div class="control-row">
+        <label class="slider-label" for="slider-label-num"
           >Number of Labels</label
         >
         <span>{embedding ? `${embedding.curLabelNum}` : '1'}</span>
       </div>
+
       <input
         type="range"
         class="slider"
         id="slider-label-num"
         name="label-num"
+        disabled={!defaultSetting.showLabel}
         min="0"
         max={embedding ? `${embedding.maxLabelNum}` : '1'}
         on:input={e =>
@@ -135,7 +170,7 @@
       <div class="segmented-control">
         <div
           class="segmented-control-option"
-          class:selected={selectedHoverMode === 'label'}
+          class:selected={defaultSetting.hover === 'label'}
           on:click={() => {
             hoverModeClicked('label');
           }}
@@ -147,7 +182,7 @@
         </div>
         <div
           class="segmented-control-option"
-          class:selected={selectedHoverMode === 'point'}
+          class:selected={defaultSetting.hover === 'point'}
           on:click={() => {
             hoverModeClicked('point');
           }}
@@ -159,7 +194,7 @@
         </div>
         <div
           class="segmented-control-option"
-          class:selected={selectedHoverMode === 'none'}
+          class:selected={defaultSetting.hover === 'none'}
           on:click={() => {
             hoverModeClicked('none');
           }}
