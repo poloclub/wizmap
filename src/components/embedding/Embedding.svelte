@@ -14,11 +14,11 @@
   let showControl = false;
 
   const defaultSetting: EmbeddingInitSetting = {
-    showContour: true,
-    showPoint: true,
-    showGrid: false,
+    showContour: false,
+    showPoint: false,
+    showGrid: true,
     showLabel: false,
-    hover: 'point'
+    hover: 'none'
   };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
@@ -74,7 +74,8 @@
     <svg class="top-svg" />
     <canvas class="embedding-canvas" />
     <canvas class="embedding-canvas-back" />
-    <canvas class="topic-grid-canvas" />
+    <canvas class="topic-grid-canvas top" />
+    <canvas class="topic-grid-canvas bottom" />
     <svg class="embedding-svg" />
   </div>
 

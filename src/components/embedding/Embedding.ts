@@ -51,7 +51,6 @@ import type { TooltipStoreValue } from '../../stores';
 import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
 
-const DATA_SIZE = '60k';
 const DEBUG = config.debug;
 
 type HoverMode = 'point' | 'label' | 'none';
@@ -71,7 +70,7 @@ export class Embedding {
   topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
-  topicCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  topicCanvases: d3.Selection<HTMLElement, unknown, null, undefined>[];
   pointCtx: CanvasRenderingContext2D;
 
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
@@ -117,7 +116,7 @@ export class Embedding {
   userMaxLabelNum = 20;
   lastLabelNames: Map<string, Direction> = new Map();
   lastLabelTreeLevel: number | null = null;
-  lastGridTreeLevel: number | null = null;
+  lastGridTreeLevels: number[] = [];
 
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
@@ -238,12 +237,17 @@ export class Embedding {
       '2d'
     )!;
 
-    this.topicCanvas = d3
-      .select(this.component)
-      .select<HTMLElement>('.topic-grid-canvas')
-      .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height)
-      .classed('hidden', !this.showGrid);
+    this.topicCanvases = [];
+    for (const pos of ['top', 'bottom']) {
+      this.topicCanvases.push(
+        d3
+          .select(this.component)
+          .select<HTMLElement>(`.topic-grid-canvas.${pos}`)
+          .attr('width', this.svgFullSize.width)
+          .attr('height', this.svgFullSize.height)
+          .classed('hidden', !this.showGrid)
+      );
+    }
 
     // Initialize the background canvas (for mouseover)
     this.pointBackCanvas = d3
@@ -378,30 +382,6 @@ export class Embedding {
 
     this.contours = this.drawContour();
 
-    // Read point data in bulk
-    // const result = await d3.json<PromptUMAPData>(
-    //   `/data/umap-${DATA_SIZE}.json`
-    // );
-    // if (result !== undefined) {
-    //   for (let i = 0; i < result.xs.length; i++) {
-    //     // Collect prompts
-    //     this.prompts.push(result.prompts[i]);
-    //     this.promptPoints.push({
-    //       x: result.xs[i],
-    //       y: result.ys[i],
-    //       id: i,
-    //       visible: true
-    //     });
-    //   }
-    // }
-    // console.log(this.promptPoints);
-
-    // Randomly sample the points before drawing
-    // this.sampleVisiblePoints(6000);
-
-    // this.drawScatterCanvas();
-    // this.drawScatter();
-
     // Read the topic label data
     const topicPromise = d3
       .json<TopicDataJSON>('/data/umap-1m-topic-data.json')
@@ -486,7 +466,6 @@ export class Embedding {
         nodes.push(curNode);
       }
     });
-    console.log(nodes);
 
     // Draw the rectangles
     rectGroup
@@ -671,6 +650,7 @@ export class Embedding {
     // Transform the visible canvas elements
     if (this.showPoint) {
       this.pointCtx.save();
+      this.pointCtx.setTransform(1, 0, 0, 1, 0, 0);
       this.pointCtx.clearRect(
         0,
         0,
@@ -690,16 +670,25 @@ export class Embedding {
 
     // Adjust the canvas grid based on the zoom level
     if (this.showGrid) {
-      const topicCtx = (
-        this.topicCanvas.node() as HTMLCanvasElement
-      ).getContext('2d');
-      if (topicCtx) {
+      const topicCtxs = this.topicCanvases.map(
+        c => (c.node() as HTMLCanvasElement).getContext('2d')!
+      );
+
+      for (const topicCtx of topicCtxs) {
         topicCtx.save();
+        topicCtx.setTransform(1, 0, 0, 1, 0, 0);
+        topicCtx.clearRect(
+          0,
+          0,
+          this.svgFullSize.width,
+          this.svgFullSize.height
+        );
         topicCtx.translate(transform.x, transform.y);
         topicCtx.scale(transform.k, transform.k);
-        this.drawTopicGrid();
-        topicCtx.restore();
       }
+
+      this.drawTopicGrid();
+      topicCtxs.forEach(c => c.restore());
     }
 
     // Adjust the highlighted tile
@@ -716,6 +705,7 @@ export class Embedding {
     // Transform the background canvas elements
     if (this.showPoint) {
       this.pointBackCtx.save();
+      this.pointBackCtx.setTransform(1, 0, 0, 1, 0, 0);
       this.pointBackCtx.clearRect(
         0,
         0,
@@ -798,25 +788,33 @@ export class Embedding {
 
       case 'grid': {
         this.showGrid = checked;
-        d3.select(this.component)
-          .select('canvas.topic-grid-canvas')
-          .classed('hidden', !this.showGrid);
+        this.topicCanvases.forEach(c => c.classed('hidden', !this.showGrid));
 
         if (this.showGrid) {
-          const topicCtx = (
-            this.topicCanvas.node() as HTMLCanvasElement
-          ).getContext('2d');
-          if (topicCtx) {
+          const topicCtxs = this.topicCanvases.map(
+            c => (c.node() as HTMLCanvasElement).getContext('2d')!
+          );
+
+          for (const topicCtx of topicCtxs) {
             topicCtx.save();
+            topicCtx.setTransform(1, 0, 0, 1, 0, 0);
+            topicCtx.clearRect(
+              0,
+              0,
+              this.svgFullSize.width,
+              this.svgFullSize.height
+            );
             topicCtx.translate(
               this.curZoomTransform.x,
               this.curZoomTransform.y
             );
             topicCtx.scale(this.curZoomTransform.k, this.curZoomTransform.k);
-            this.drawTopicGrid();
-            topicCtx.restore();
           }
+
+          this.drawTopicGrid();
+          topicCtxs.forEach(c => c.restore());
         }
+
         break;
       }
 

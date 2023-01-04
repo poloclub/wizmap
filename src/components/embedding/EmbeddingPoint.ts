@@ -222,6 +222,7 @@ export function syncPointData(this: Embedding, points: UMAPPointStreamData[]) {
 
   // Transform the point canvas elements
   this.pointCtx.save();
+  this.pointCtx.setTransform(1, 0, 0, 1, 0, 0);
   this.pointCtx.clearRect(
     0,
     0,
@@ -235,6 +236,7 @@ export function syncPointData(this: Embedding, points: UMAPPointStreamData[]) {
 
   // Transform the background canvas elements
   this.pointBackCtx.save();
+  this.pointBackCtx.setTransform(1, 0, 0, 1, 0, 0);
   this.pointBackCtx.clearRect(
     0,
     0,

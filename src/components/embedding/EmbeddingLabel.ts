@@ -251,67 +251,111 @@ export function drawLabels(
  * @param this Embedding
  */
 export function drawTopicGrid(this: Embedding) {
-  const canvas = this.topicCanvas.node() as HTMLCanvasElement;
-  const ctx = canvas.getContext('2d');
-
-  if (ctx === null) return;
   if (!this.showGrid) return;
-
-  ctx.clearRect(0, 0, this.svgFullSize.width, this.svgFullSize.height);
 
   // Choose the topic tree level based on the current zoom level
   const idealTreeLevel = this.getIdealTopicTreeLevel();
   if (idealTreeLevel === null) return;
 
-  const topicTree = this.topicLevelTrees.get(idealTreeLevel)!;
-  const treeExtent = topicTree.extent()!;
-  const tileWidth =
-    (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, idealTreeLevel);
-  const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
+  // Crossfade two canvas elements if tree level changes
+  if (this.lastGridTreeLevels.length > 0) {
+    const lastLevel =
+      this.lastGridTreeLevels[this.lastGridTreeLevels.length - 1];
 
-  //  Only draw the tiles that are visible
-  const zoomBox = this.getCurZoomBox();
-  interface NamedRect extends Rect {
-    name: string;
-    label: string;
+    // Tree level changes
+    if (idealTreeLevel !== lastLevel) {
+      // Fade the last canvas
+      this.topicCanvases[lastLevel % 2]
+        .classed('faded', true)
+        .on('transitionend', () => {
+          if (this.lastGridTreeLevels[0] === lastLevel) {
+            // No need to draw this faded canvas
+            this.lastGridTreeLevels.shift();
+          }
+        });
+
+      // Show the current canvas
+      this.topicCanvases[idealTreeLevel % 2].classed('faded', false);
+
+      // Track this new level
+      this.lastGridTreeLevels.push(idealTreeLevel);
+
+      // The stack only tracks two levels
+      if (this.lastGridTreeLevels.length > 2) {
+        this.lastGridTreeLevels.shift();
+      }
+    }
   }
 
-  const tiles = topicTree
-    .data()
-    .map(d => {
-      const tileRect: NamedRect = {
-        x: this.xScale(d[0] - tileWidth / 2),
-        y: this.yScale(d[1] - tileWidth / 2),
-        width: tileScreenWidth,
-        height: tileScreenWidth,
-        name: `${(d[0], d[1])}`,
-        label: d[2]
-      };
-      return tileRect;
-    })
-    .filter(d => rectsIntersect(d, zoomBox));
-
-  // Drw the tiles on a canvas
-  ctx.save();
-  ctx.strokeStyle = `hsla(0, 0%, 100%, ${Math.max(
-    0.1,
-    0.5 - idealTreeLevel / 30
-  )})`;
-  ctx.lineWidth = 1 / this.curZoomTransform.k;
-
-  for (const tile of tiles) {
-    ctx.moveTo(tile.x, tile.y);
-    roundRect(
-      ctx,
-      tile.x,
-      tile.y,
-      tile.width,
-      tile.height,
-      4 / this.curZoomTransform.k
-    );
-    ctx.stroke();
+  if (this.lastGridTreeLevels.length === 0) {
+    this.lastGridTreeLevels.push(idealTreeLevel);
   }
-  ctx.restore();
+
+  for (const treeLevel of this.lastGridTreeLevels) {
+    const canvas = this.topicCanvases[
+      treeLevel % 2
+    ].node() as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d');
+    if (ctx === null) return;
+
+    const topicTree = this.topicLevelTrees.get(treeLevel)!;
+    const treeExtent = topicTree.extent()!;
+    const tileWidth =
+      (treeExtent[1][0] - treeExtent[0][0]) / Math.pow(2, treeLevel);
+    const tileScreenWidth = Math.abs(this.xScale(tileWidth) - this.xScale(0));
+
+    //  Only draw the tiles that are visible
+    const zoomBox = this.getCurZoomBox();
+    interface NamedRect extends Rect {
+      name: string;
+      label: string;
+    }
+
+    const tiles = topicTree
+      .data()
+      .map(d => {
+        const tileRect: NamedRect = {
+          x: this.xScale(d[0] - tileWidth / 2),
+          y: this.yScale(d[1] - tileWidth / 2),
+          width: tileScreenWidth,
+          height: tileScreenWidth,
+          name: `${(d[0], d[1])}`,
+          label: d[2]
+        };
+        return tileRect;
+      })
+      .filter(d => rectsIntersect(d, zoomBox));
+
+    // Drw the tiles on a canvas
+    ctx.save();
+
+    // Use white stroke on contour background
+    if (this.showContour) {
+      ctx.strokeStyle = `hsla(0, 0%, 100%, ${Math.max(
+        0.1,
+        0.5 - idealTreeLevel / 30
+      )})`;
+      ctx.lineWidth = 1 / this.curZoomTransform.k;
+    } else {
+      // Dark stroke if there is no contour background
+      ctx.strokeStyle = 'hsla(0, 0%, 60%)';
+      ctx.lineWidth = 1 / this.curZoomTransform.k;
+    }
+
+    for (const tile of tiles) {
+      ctx.moveTo(tile.x, tile.y);
+      roundRect(
+        ctx,
+        tile.x,
+        tile.y,
+        tile.width,
+        tile.height,
+        4 / this.curZoomTransform.k
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 /**

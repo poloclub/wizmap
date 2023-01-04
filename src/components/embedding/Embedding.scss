@@ -60,10 +60,15 @@
 
 .topic-grid-canvas {
   position: absolute;
-  transition: opacity, 200ms ease-in-out;
+  transition: opacity, 300ms ease-in-out;
   top: 0px;
   left: 0px;
   z-index: 1;
+}
+
+:global(.topic-grid-canvas.faded) {
+  opacity: 0;
+  pointer-events: none;
 }
 
 :global(.topic-grid-canvas.hidden) {
