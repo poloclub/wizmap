@@ -292,5 +292,6 @@ const colors = {
 export const config = {
   colors,
   layout,
-  time
+  time,
+  debug: true
 };

@@ -6,32 +6,10 @@ import { config } from '../../config/config';
 
 const SCATTER_DOT_RADIUS = 1;
 const TAU = 2 * Math.PI;
+const DEBUG = config.debug;
 
 let pointMouseleaveTimer: number | null = null;
 let pointMouseenterTimer: number | null = null;
-
-/**
- * Draw a scatter plot for the UMAP on a canvas.
- */
-export function drawScatterCanvas(this: Embedding) {
-  for (const point of this.promptPoints) {
-    const x = this.xScale(point.x);
-    const y = this.yScale(point.y);
-
-    this.pointCtx.beginPath();
-    this.pointCtx.arc(x, y, SCATTER_DOT_RADIUS, 0, TAU);
-
-    // Fill the data point circle
-    const color = config.colors['pink-300'];
-    const modifiedColor = color.replace(
-      /hsl\((.+),(.+),(.+)\)/,
-      'hsla($1,$2,$3,0.5)'
-    );
-
-    this.pointCtx.fillStyle = modifiedColor;
-    this.pointCtx.fill();
-  }
-}
 
 /**
  * Get a unique color in hex.
@@ -51,16 +29,50 @@ export function getNextUniqueColor(this: Embedding) {
 }
 
 /**
+ * Draw a scatter plot for the UMAP on a canvas.
+ */
+export function drawScatterCanvas(this: Embedding) {
+  if (!this.showPoint) return;
+
+  const r =
+    (SCATTER_DOT_RADIUS * this.initZoomK) / Math.sqrt(this.curZoomTransform.k);
+  this.pointCtx.globalAlpha = 0.5;
+
+  for (const point of this.promptPoints) {
+    const x = this.xScale(point.x);
+    const y = this.yScale(point.y);
+
+    this.pointCtx.beginPath();
+    this.pointCtx.arc(x, y, r, 0, TAU);
+
+    // Fill the data point circle
+    const color = config.colors['pink-300'];
+    // const color = config.colors['gray-900'];
+
+    // const modifiedColor = color.replace(
+    //   /hsl\((.+),(.+),(.+)\)/,
+    //   'hsla($1,$2,$3,0.5)'
+    // );
+
+    this.pointCtx.fillStyle = color;
+    this.pointCtx.fill();
+  }
+}
+
+/**
  * Draw a hidden scatter plot for the UMAP on a background canvas. We give
  * each dot a unique color for quicker mouseover detection.
  */
 export function drawScatterBackCanvas(this: Embedding) {
+  if (!this.showPoint) return;
+
   this.colorPointMap.clear();
 
   // Trick: here we draw a slightly larger circle when user zooms out the
   // viewpoint, so that the pixel coverage is higher (smoother/better
   // mouseover picking)
-  const r = Math.max(1, 3.5 - this.curZoomTransform.k);
+  const defaultR = SCATTER_DOT_RADIUS * this.initZoomK;
+  const r = Math.max(defaultR, 3.5 * defaultR - this.curZoomTransform.k);
 
   for (const point of this.promptPoints) {
     this.pointBackCtx.beginPath();
@@ -84,8 +96,9 @@ export function highlightPoint(
   this: Embedding,
   point: PromptPoint | undefined
 ) {
-  if (point === this.hoverPoint) return;
   if (this.hoverMode !== 'point') return;
+  if (!this.showPoint) return;
+  if (point === this.hoverPoint) return;
 
   // Draw the point on the top svg
   const group = this.topSvg.select('g.top-content g.highlights');

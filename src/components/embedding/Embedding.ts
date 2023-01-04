@@ -52,7 +52,7 @@ import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
 
 const DATA_SIZE = '60k';
-const DEBUG = true;
+const DEBUG = config.debug;
 
 type HoverMode = 'point' | 'label' | 'none';
 
@@ -86,6 +86,7 @@ export class Embedding {
 
   // Zooming
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
+  initZoomK = 1;
   curZoomTransform: d3.ZoomTransform = d3.zoomIdentity;
   curZoomLevel = 1;
 
@@ -315,13 +316,13 @@ export class Embedding {
 
     const topContent = topGroup.append('g').attr('class', 'top-content');
 
-    topContent.append('g').attr('class', 'highlights');
     topContent.append('g').attr('class', 'topics-bottom');
     topContent
       .append('g')
       .attr('class', 'topics')
       .classed('hidden', !this.showLabel);
     topContent.append('g').attr('class', 'topics-top');
+    topContent.append('g').attr('class', 'highlights');
     return topSvg;
   };
 
@@ -612,7 +613,7 @@ export class Embedding {
       }
     }
 
-    const k = Math.min(
+    this.initZoomK = Math.min(
       this.svgFullSize.width / (x1 - x0),
       this.svgFullSize.height / (y1 - y0)
     );
@@ -622,7 +623,7 @@ export class Embedding {
       .transition()
       .duration(300)
       .call(selection =>
-        this.zoom?.scaleTo(selection, k, [
+        this.zoom?.scaleTo(selection, this.initZoomK, [
           this.svgSize.width / 2,
           this.svgSize.height / 2
         ])
@@ -641,7 +642,7 @@ export class Embedding {
             selection,
             d3.zoomIdentity
               .translate(this.svgSize.width / 2, this.svgSize.height / 2)
-              .scale(k)
+              .scale(this.initZoomK)
               .translate(-this.svgSize.width / 2, -this.svgSize.height / 2)
           );
         });
@@ -668,38 +669,41 @@ export class Embedding {
       .attr('transform', `${transform.toString()}`);
 
     // Transform the visible canvas elements
-    this.pointCtx.save();
-    this.pointCtx.clearRect(
-      0,
-      0,
-      this.svgFullSize.width,
-      this.svgFullSize.height
-    );
-    this.pointCtx.translate(transform.x, transform.y);
-    this.pointCtx.scale(transform.k, transform.k);
-    this.drawScatterCanvas();
-    this.pointCtx.restore();
+    if (this.showPoint) {
+      this.pointCtx.save();
+      this.pointCtx.clearRect(
+        0,
+        0,
+        this.svgFullSize.width,
+        this.svgFullSize.height
+      );
+      this.pointCtx.translate(transform.x, transform.y);
+      this.pointCtx.scale(transform.k, transform.k);
+      this.drawScatterCanvas();
+      this.pointCtx.restore();
+    }
 
-    await yieldToMain();
-
-    // === Task (2) ===
     // Adjust the label size based on the zoom level
-    this.layoutTopicLabels(this.userMaxLabelNum);
+    if (this.showLabel) {
+      this.layoutTopicLabels(this.userMaxLabelNum);
+    }
 
     // Adjust the canvas grid based on the zoom level
-    const topicCtx = (this.topicCanvas.node() as HTMLCanvasElement).getContext(
-      '2d'
-    );
-    if (topicCtx) {
-      topicCtx.save();
-      topicCtx.translate(transform.x, transform.y);
-      topicCtx.scale(transform.k, transform.k);
-      this.drawTopicGrid();
-      topicCtx.restore();
+    if (this.showGrid) {
+      const topicCtx = (
+        this.topicCanvas.node() as HTMLCanvasElement
+      ).getContext('2d');
+      if (topicCtx) {
+        topicCtx.save();
+        topicCtx.translate(transform.x, transform.y);
+        topicCtx.scale(transform.k, transform.k);
+        this.drawTopicGrid();
+        topicCtx.restore();
+      }
     }
 
     // Adjust the highlighted tile
-    if (this.lastMouseClientPosition) {
+    if (this.hoverMode === 'label' && this.lastMouseClientPosition) {
       this.mouseoverLabel(
         this.lastMouseClientPosition.x,
         this.lastMouseClientPosition.y
@@ -708,19 +712,21 @@ export class Embedding {
 
     await yieldToMain();
 
-    // === Task (3) ===
+    // === Task (2) ===
     // Transform the background canvas elements
-    this.pointBackCtx.save();
-    this.pointBackCtx.clearRect(
-      0,
-      0,
-      this.svgFullSize.width,
-      this.svgFullSize.height
-    );
-    this.pointBackCtx.translate(transform.x, transform.y);
-    this.pointBackCtx.scale(transform.k, transform.k);
-    this.drawScatterBackCanvas();
-    this.pointBackCtx.restore();
+    if (this.showPoint) {
+      this.pointBackCtx.save();
+      this.pointBackCtx.clearRect(
+        0,
+        0,
+        this.svgFullSize.width,
+        this.svgFullSize.height
+      );
+      this.pointBackCtx.translate(transform.x, transform.y);
+      this.pointBackCtx.scale(transform.k, transform.k);
+      this.drawScatterBackCanvas();
+      this.pointBackCtx.restore();
+    }
   };
 
   /**
@@ -784,6 +790,9 @@ export class Embedding {
 
       case 'point': {
         this.showPoint = checked;
+        this.pointCanvas
+          .classed('hidden', !this.showPoint)
+          .classed('faded', this.showPoint && this.showLabel);
         break;
       }
 
@@ -816,6 +825,8 @@ export class Embedding {
         this.topSvg
           .select('g.top-content g.topics')
           .classed('hidden', !this.showLabel);
+
+        this.pointCanvas.classed('faded', this.showPoint && this.showLabel);
 
         if (this.showLabel) {
           this.layoutTopicLabels(this.userMaxLabelNum);

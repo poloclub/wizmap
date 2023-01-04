@@ -1,11 +1,17 @@
 import d3 from '../../utils/d3-import';
 import type { UMAPPointStreamData, EmbeddingWorkerMessage } from '../my-types';
-import { splitStreamTransform, parseJSONTransform } from '../../utils/utils';
+import {
+  splitStreamTransform,
+  parseJSONTransform,
+  timeit
+} from '../../utils/utils';
+import { config } from '../../config/config';
 
+const DEBUG = config.debug;
 const dataPoints: UMAPPointStreamData[] = [];
-const firstBatchNotification = {
+const notification = {
   notified: false,
-  threshold: 6000
+  threshold: 5000
 };
 let tree: d3.Quadtree<UMAPPointStreamData> | null = null;
 
@@ -14,7 +20,7 @@ self.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
   if (e.data.command === 'startLoadData') {
     const url = e.data.payload.url;
     console.log('Worker: start streaming data');
-    console.time('Stream data');
+    timeit('Stream data', true);
 
     fetch(url).then(async response => {
       if (!response.ok) {
@@ -34,14 +40,14 @@ self.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
         const done = result.done;
 
         if (done) {
-          console.timeEnd('Stream data');
+          timeit('Stream data', DEBUG);
           pointStreamFinished();
           break;
         } else {
           processPointStream(point);
 
           if (dataPoints.length >= 40000) {
-            console.timeEnd('Stream data');
+            timeit('Stream data', DEBUG);
             pointStreamFinished();
             break;
           }
@@ -55,10 +61,7 @@ const processPointStream = (point: UMAPPointStreamData) => {
   dataPoints.push(point);
 
   // Notify the main thread if we have load enough data for the first batch
-  if (
-    !firstBatchNotification.notified &&
-    dataPoints.length >= firstBatchNotification.threshold
-  ) {
+  if (!notification.notified && dataPoints.length >= notification.threshold) {
     const result: EmbeddingWorkerMessage = {
       command: 'finishLoadData',
       payload: {
@@ -67,20 +70,19 @@ const processPointStream = (point: UMAPPointStreamData) => {
       }
     };
     postMessage(result);
-    firstBatchNotification.notified = true;
+    notification.notified = true;
   }
 };
 
 const pointStreamFinished = () => {
-  console.time('Construct tree');
-
+  // Construct the tree
+  timeit('Construct tree', DEBUG);
   tree = d3
     .quadtree<UMAPPointStreamData>()
     .x(d => d[0])
     .y(d => d[1])
     .addAll(dataPoints);
-
-  console.timeEnd('Construct tree');
+  timeit('Construct tree', DEBUG);
 
   const result: EmbeddingWorkerMessage = {
     command: 'finishLoadData',

@@ -92,7 +92,7 @@ export function drawLabels(
       .text(d => (d.lines.length > 1 ? d.lines[1] : ''));
 
     // Draw the topic region
-    labelGroup
+    const tileRect = labelGroup
       .append('rect')
       .attr('class', 'topic-tile')
       .attr('x', d => this.xScale(d.tileX))
@@ -102,6 +102,12 @@ export function drawLabels(
       .attr('width', tileScreenWidth)
       .attr('height', tileScreenWidth)
       .style('stroke-width', 1.6 / this.curZoomTransform.k);
+
+    // tileRect
+    //   .clone(true)
+    //   .lower()
+    //   .attr('class', 'topic-tile-back')
+    //   .style('stroke-width', 2.6 / this.curZoomTransform.k);
 
     // Add a dot to indicate the label direction
     labelGroup
@@ -793,10 +799,17 @@ export function layoutTopicLabels(
 
   this.maxLabelNum = inViewLabelNum;
   this.curLabelNum = shownLabelNum;
-  (
-    this.component.querySelector('input#slider-label-num') as HTMLInputElement
-  ).value = `${this.curLabelNum}`;
-  this.updateEmbedding();
+
+  const sliderElem = this.component.querySelector(
+    'input#slider-label-num'
+  ) as HTMLInputElement;
+  sliderElem.max = `${this.maxLabelNum}`;
+  sliderElem.value = `${this.curLabelNum}`;
+
+  const sliderCountElem = this.component.querySelector(
+    'span.slider-count'
+  ) as HTMLSpanElement;
+  sliderCountElem.innerText = `${this.curLabelNum}`;
 }
 
 /**

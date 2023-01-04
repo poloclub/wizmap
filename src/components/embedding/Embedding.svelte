@@ -15,10 +15,10 @@
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
-    showPoint: false,
+    showPoint: true,
     showGrid: false,
     showLabel: false,
-    hover: 'none'
+    hover: 'point'
   };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
@@ -146,7 +146,7 @@
         <label class="slider-label" for="slider-label-num"
           >Number of Labels</label
         >
-        <span>{embedding ? `${embedding.curLabelNum}` : '1'}</span>
+        <span class="slider-count">0</span>
       </div>
 
       <input
@@ -156,7 +156,7 @@
         name="label-num"
         disabled={!defaultSetting.showLabel}
         min="0"
-        max={embedding ? `${embedding.maxLabelNum}` : '1'}
+        max="0"
         on:input={e =>
           embedding ? embedding.labelNumSliderChanged(e) : () => {}}
       />
