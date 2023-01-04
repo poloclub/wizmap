@@ -1073,7 +1073,11 @@ export function mouseoverLabel(
       .attr('height', tileScreenWidth)
       .attr('rx', 4 / this.curZoomTransform.k)
       .attr('ry', 4 / this.curZoomTransform.k)
-      .style('stroke-width', 2.6 / this.curZoomTransform.k);
+      .style('stroke-width', 2.6 / this.curZoomTransform.k)
+      .style(
+        'stroke',
+        this.showContour ? config.gridColorLight : config.gridColorDark
+      );
 
     // Get the tooltip position
     const position = rect.node()!.getBoundingClientRect();
@@ -1091,7 +1095,7 @@ export function mouseoverLabel(
     this.tooltipStoreValue.show = true;
 
     // Insert a clone to the top layer
-    const clone = rect.clone(true).remove().node()!;
+    const clone = rect.clone(true).style('stroke', null).remove().node()!;
     const topRect = d3.select(
       (topGroup.node() as HTMLElement).appendChild(clone)
     );

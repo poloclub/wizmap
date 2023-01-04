@@ -43,12 +43,12 @@
   z-index: 2;
 }
 
-:global(.embedding-canvas.faded) {
-  opacity: 0.4;
-}
-
 :global(.embedding-canvas.hidden) {
   opacity: 0;
+}
+
+:global(.embedding-canvas.faded) {
+  opacity: 0.4;
 }
 
 .embedding-canvas-back {
@@ -214,7 +214,6 @@
 :global(.top-svg g.topics-bottom) {
   :global(.highlight-tile) {
     fill: none;
-    stroke: hsla(0, 0%, 97%, 0.8);
   }
 }
 

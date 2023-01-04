@@ -773,8 +773,10 @@ export class Embedding {
           .classed('hidden', !this.showPoint)
           .classed('faded', this.showPoint && this.showLabel);
 
-        this.redrawFrontPoints();
-        this.redrawBackPoints();
+        if (this.showPoint) {
+          this.redrawFrontPoints();
+          this.redrawBackPoints();
+        }
 
         if (this.showGrid) this.redrawTopicGrid();
         break;
