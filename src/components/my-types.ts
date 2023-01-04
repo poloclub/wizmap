@@ -157,8 +157,7 @@ export interface GridData {
 }
 
 export interface PromptPoint extends Point {
-  id: number;
-  visible: boolean;
+  prompt: string;
 }
 
 export interface PromptUMAPData {

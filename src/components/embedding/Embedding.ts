@@ -26,7 +26,8 @@ import {
   timeit,
   rgbToHex,
   round,
-  rectsIntersect
+  rectsIntersect,
+  yieldToMain
 } from '../../utils/utils';
 import {
   drawLabels,
@@ -37,6 +38,13 @@ import {
   mouseoverLabel,
   drawTopicGrid
 } from './EmbeddingLabel';
+import {
+  drawScatterCanvas,
+  drawScatterBackCanvas,
+  getNextUniqueColor,
+  highlightPoint,
+  syncPointData
+} from './EmbeddingPoint';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
@@ -45,10 +53,6 @@ import { config } from '../../config/config';
 
 const DATA_SIZE = '60k';
 const DEBUG = true;
-const SCATTER_DOT_RADIUS = 1;
-
-let pointMouseleaveTimer: number | null = null;
-let pointMouseenterTimer: number | null = null;
 
 type HoverMode = 'point' | 'label' | 'none';
 
@@ -96,11 +100,9 @@ export class Embedding {
   showLabel: boolean;
 
   // Data
-  prompts: string[] = [];
   promptPoints: PromptPoint[] = [];
   gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
-  randomUniform = d3.randomUniform.source(d3.randomLcg(0.1212))(0, 1);
   contours: d3.ContourMultiPolygon[] | null = null;
   contoursInitialized = false;
 
@@ -121,6 +123,7 @@ export class Embedding {
   tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
 
   // Web workers
+  embeddingWorker: Worker;
 
   // Methods implemented in other files
   drawLabels = drawLabels;
@@ -130,6 +133,12 @@ export class Embedding {
   labelNumSliderChanged = labelNumSliderChanged;
   mouseoverLabel = mouseoverLabel;
   drawTopicGrid = drawTopicGrid;
+
+  drawScatterCanvas = drawScatterCanvas;
+  drawScatterBackCanvas = drawScatterBackCanvas;
+  getNextUniqueColor = getNextUniqueColor;
+  highlightPoint = highlightPoint;
+  syncPointData = syncPointData;
 
   /**
    *
@@ -159,26 +168,27 @@ export class Embedding {
     this.showLabel = defaultSetting.showLabel;
 
     // Initialize the web worker to load data
-    const embeddingWorker = new Worker(
+    this.embeddingWorker = new Worker(
       new URL('./EmbeddingWorker.ts', import.meta.url),
       { type: 'module' }
     );
     const url = `/data/umap-${'1m'}.ndjson`;
     // const url =
     // 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev/umap-1m.ndjson';
-    // const url =
-    //   'https://huggingface.co/datasets/xiaohk/embedding/resolve/main/umap-1m.ndjson';
 
     const message: EmbeddingWorkerMessage = {
       command: 'startLoadData',
       payload: { url: url }
     };
-    embeddingWorker.postMessage(message);
+    this.embeddingWorker.postMessage(message);
 
-    embeddingWorker.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
+    this.embeddingWorker.onmessage = (
+      e: MessageEvent<EmbeddingWorkerMessage>
+    ) => {
       if (e.data.command === 'finishLoadData') {
-        if (e.data.payload.isFirstBatch) {
-          console.log('Finish loading first batch');
+        if (e.data.payload.isFirstBatch && e.data.payload.points) {
+          // Draw the first batch
+          this.syncPointData(e.data.payload.points);
         } else {
           console.log('Finished loading all');
         }
@@ -253,7 +263,11 @@ export class Embedding {
         [this.svgSize.width, this.svgSize.height]
       ])
       .scaleExtent([1, 8])
-      .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => this.zoomed(g));
+      .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => {
+        (async () => {
+          await this.zoomed(g);
+        })();
+      });
 
     this.topSvg.call(this.zoom).on('dblclick.zoom', null);
 
@@ -382,7 +396,7 @@ export class Embedding {
     // console.log(this.promptPoints);
 
     // Randomly sample the points before drawing
-    this.sampleVisiblePoints(6000);
+    // this.sampleVisiblePoints(6000);
 
     // this.drawScatterCanvas();
     // this.drawScatter();
@@ -420,41 +434,6 @@ export class Embedding {
         ).value = `${this.curLabelNum}`;
       }, 500);
     });
-  };
-
-  /**
-   * Randomly sample points to be visible
-   * @param size Number of points to be visible
-   */
-  sampleVisiblePoints = (size: number) => {
-    const targetSize = Math.min(size, this.promptPoints.length);
-    const threshold = targetSize / this.promptPoints.length;
-
-    // Change all points to invisible first
-    this.promptPoints.forEach(d => {
-      d.visible = false;
-    });
-
-    const samplePoints = (targetSize: number, sampledSize: number) => {
-      for (const point of this.promptPoints) {
-        if (!point.visible && this.randomUniform() <= threshold) {
-          point.visible = true;
-          sampledSize += 1;
-
-          // Exit early if we have enough points
-          if (sampledSize >= targetSize) break;
-        }
-      }
-      return sampledSize;
-    };
-
-    // Repeat sampling until we have enough points sampled
-    let sampledSize = 0;
-    while (sampledSize < targetSize) {
-      sampledSize = samplePoints(targetSize, sampledSize);
-    }
-
-    return sampledSize;
   };
 
   /**
@@ -524,93 +503,6 @@ export class Embedding {
       .style('opacity', 0.9);
 
     // downloadJSON(tree);
-  };
-
-  /**
-   * Draw a scatter plot for the UMAP.
-   */
-  drawScatter = () => {
-    const scatterGroup = this.svg.select('g.scatter-group');
-    // Draw all points
-    scatterGroup
-      .selectAll('circle.prompt-point')
-      .data(this.promptPoints)
-      .join('circle')
-      .attr('class', 'prompt-point')
-      .attr('cx', d => this.xScale(d.x))
-      .attr('cy', d => this.yScale(d.y))
-      .attr('r', 1)
-      .attr('title', d => this.prompts[d.id])
-      .style('display', d => (d.visible ? 'unset' : 'none'));
-  };
-
-  /**
-   * Draw a scatter plot for the UMAP on a canvas.
-   */
-  drawScatterCanvas = () => {
-    for (const point of this.promptPoints) {
-      if (point.visible) {
-        this.pointCtx.beginPath();
-        const x = this.xScale(point.x);
-        const y = this.yScale(point.y);
-        this.pointCtx.moveTo(x, y);
-        this.pointCtx.arc(x, y, SCATTER_DOT_RADIUS, 0, 2 * Math.PI);
-
-        // Fill the data point circle
-        const color = d3.color(config.colors['pink-300'])!;
-        color.opacity = 0.5;
-        this.pointCtx.fillStyle = color.toString();
-        this.pointCtx.fill();
-        this.pointCtx.closePath();
-      }
-    }
-  };
-
-  /**
-   * Get a unique color in hex.
-   */
-  getNextUniqueColor = () => {
-    if (this.colorPointMap.size >= 256 * 256 * 256) {
-      console.error('Unique color overflow.');
-      return '#fffff';
-    }
-
-    const rng = d3.randomInt(0, 256);
-    let hex = rgbToHex(rng(), rng(), rng());
-    while (this.colorPointMap.has(hex) || hex === '#000000') {
-      hex = rgbToHex(rng(), rng(), rng());
-    }
-    return hex;
-  };
-
-  /**
-   * Draw a hidden scatter plot for the UMAP on a background canvas. We give
-   * each dot a unique color for quicker mouseover detection.
-   */
-  drawScatterBackCanvas = () => {
-    this.colorPointMap.clear();
-
-    for (const point of this.promptPoints) {
-      if (point.visible) {
-        this.pointBackCtx.beginPath();
-        const x = this.xScale(point.x);
-        const y = this.yScale(point.y);
-        this.pointBackCtx.moveTo(x, y);
-
-        // Trick: here we draw a slightly larger circle when user zooms out the
-        // viewpoint, so that the pixel coverage is higher (smoother/better
-        // mouseover picking)
-        const r = Math.max(1, 3.5 - this.curZoomTransform.k);
-        this.pointBackCtx.arc(x, y, r, 0, 2 * Math.PI);
-
-        // Fill the data point with a unique color
-        const color = this.getNextUniqueColor();
-        this.colorPointMap.set(color, point);
-        this.pointBackCtx.fillStyle = color;
-        this.pointBackCtx.fill();
-        this.pointBackCtx.closePath();
-      }
-    }
   };
 
   /**
@@ -758,10 +650,15 @@ export class Embedding {
     return contours;
   };
 
-  zoomed = (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
+  /**
+   * Handler for each zoom event
+   * @param e Zoom event
+   */
+  zoomed = async (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
     const transform = e.transform;
     this.curZoomTransform = transform;
 
+    // === Task (1) ===
     // Transform the SVG elements
     this.svg.select('.umap-group').attr('transform', `${transform.toString()}`);
 
@@ -770,7 +667,7 @@ export class Embedding {
       .select('.top-group')
       .attr('transform', `${transform.toString()}`);
 
-    // Transform the point canvas elements
+    // Transform the visible canvas elements
     this.pointCtx.save();
     this.pointCtx.clearRect(
       0,
@@ -780,22 +677,12 @@ export class Embedding {
     );
     this.pointCtx.translate(transform.x, transform.y);
     this.pointCtx.scale(transform.k, transform.k);
-    // this.drawScatterCanvas();
+    this.drawScatterCanvas();
     this.pointCtx.restore();
 
-    // Transform the background canvas elements
-    this.pointBackCtx.save();
-    this.pointBackCtx.clearRect(
-      0,
-      0,
-      this.svgFullSize.width,
-      this.svgFullSize.height
-    );
-    this.pointBackCtx.translate(transform.x, transform.y);
-    this.pointBackCtx.scale(transform.k, transform.k);
-    // this.drawScatterBackCanvas();
-    this.pointBackCtx.restore();
+    await yieldToMain();
 
+    // === Task (2) ===
     // Adjust the label size based on the zoom level
     this.layoutTopicLabels(this.userMaxLabelNum);
 
@@ -818,123 +705,22 @@ export class Embedding {
         this.lastMouseClientPosition.y
       );
     }
-  };
 
-  /**
-   * Highlight the point where the user hovers over
-   * @param point The point that user hovers over
-   */
-  highlightPoint = (point: PromptPoint | undefined) => {
-    if (point === this.hoverPoint) return;
+    await yieldToMain();
 
-    // Draw the point on the top svg
-    const group = this.topSvg.select('g.top-content g.highlights');
-    const oldHighlightPoint = group.select('circle.highlight-point');
-
-    // Hovering empty space
-    if (point === undefined) {
-      if (!oldHighlightPoint.empty()) {
-        if (pointMouseleaveTimer !== null) {
-          clearTimeout(pointMouseleaveTimer);
-          pointMouseleaveTimer = null;
-        }
-
-        // Clear the highlight and tooltip in a short delay
-        pointMouseleaveTimer = setTimeout(() => {
-          this.hoverPoint = null;
-          oldHighlightPoint.remove();
-          this.tooltipStoreValue.show = false;
-          this.tooltipStore.set(this.tooltipStoreValue);
-          pointMouseleaveTimer = null;
-        }, 50);
-      }
-      return;
-    }
-
-    // Hovering over a point
-    this.hoverPoint = point;
-    if (pointMouseleaveTimer !== null) {
-      clearTimeout(pointMouseleaveTimer);
-      pointMouseleaveTimer = null;
-    }
-
-    // There is no point highlighted yet
-    const highlightRadius = Math.max(
-      SCATTER_DOT_RADIUS * 1.5,
-      7 / this.curZoomTransform.k
+    // === Task (3) ===
+    // Transform the background canvas elements
+    this.pointBackCtx.save();
+    this.pointBackCtx.clearRect(
+      0,
+      0,
+      this.svgFullSize.width,
+      this.svgFullSize.height
     );
-    const highlightStroke = 1.2 / this.curZoomTransform.k;
-
-    if (oldHighlightPoint.empty()) {
-      const highlightPoint = group
-        .append('circle')
-        .attr('class', 'highlight-point')
-        .attr('cx', this.xScale(point.x))
-        .attr('cy', this.yScale(point.y))
-        .attr('r', highlightRadius)
-        .style('stroke-width', highlightStroke);
-
-      // Get the point position
-      const position = highlightPoint.node()!.getBoundingClientRect();
-      const curWidth = position.width;
-      const tooltipCenterX = position.x + curWidth / 2;
-      const tooltipCenterY = position.y;
-      this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${this.prompts[point.id]}
-          </div>
-        `;
-
-      this.tooltipStoreValue.x = tooltipCenterX;
-      this.tooltipStoreValue.y = tooltipCenterY;
-      this.tooltipStoreValue.show = true;
-
-      if (pointMouseenterTimer !== null) {
-        clearTimeout(pointMouseenterTimer);
-        pointMouseenterTimer = null;
-      }
-
-      // Show the tooltip after a delay
-      pointMouseenterTimer = setTimeout(() => {
-        this.tooltipStore.set(this.tooltipStoreValue);
-        pointMouseenterTimer = null;
-      }, 300);
-    } else {
-      // There has been a highlighted point already
-      oldHighlightPoint
-        .attr('cx', this.xScale(point.x))
-        .attr('cy', this.yScale(point.y))
-        .attr('r', highlightRadius)
-        .style('stroke-width', highlightStroke);
-
-      // Get the point position
-      const position = (
-        oldHighlightPoint.node()! as HTMLElement
-      ).getBoundingClientRect();
-      const curWidth = position.width;
-      const tooltipCenterX = position.x + curWidth / 2;
-      const tooltipCenterY = position.y;
-      this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${this.prompts[point.id]}
-          </div>
-        `;
-      this.tooltipStoreValue.x = tooltipCenterX;
-      this.tooltipStoreValue.y = tooltipCenterY;
-      this.tooltipStoreValue.show = true;
-
-      if (pointMouseenterTimer !== null) {
-        clearTimeout(pointMouseenterTimer);
-        pointMouseenterTimer = setTimeout(() => {
-          this.tooltipStore.set(this.tooltipStoreValue);
-          pointMouseenterTimer = null;
-        }, 300);
-      } else {
-        this.tooltipStore.set(this.tooltipStoreValue);
-      }
-    }
+    this.pointBackCtx.translate(transform.x, transform.y);
+    this.pointBackCtx.scale(transform.k, transform.k);
+    this.drawScatterBackCanvas();
+    this.pointBackCtx.restore();
   };
 
   /**

@@ -5,7 +5,7 @@ import { splitStreamTransform, parseJSONTransform } from '../../utils/utils';
 const dataPoints: UMAPPointStreamData[] = [];
 const firstBatchNotification = {
   notified: false,
-  threshold: 10000
+  threshold: 6000
 };
 let tree: d3.Quadtree<UMAPPointStreamData> | null = null;
 
@@ -39,6 +39,12 @@ self.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
           break;
         } else {
           processPointStream(point);
+
+          if (dataPoints.length >= 40000) {
+            console.timeEnd('Stream data');
+            pointStreamFinished();
+            break;
+          }
         }
       }
     });

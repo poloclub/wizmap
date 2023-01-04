@@ -297,3 +297,51 @@ export const rectsIntersect = (rect1: Rect, rect2: Rect) => {
     bottom1 > rect2.y
   );
 };
+
+/**
+ * Get a uniformly random sample from a list.
+ * @param items Array of items to sample from
+ * @param size Target size of the sample
+ * @param seed Random seed (default to 1212)
+ * @param replace True if sample with replace
+ * @returns Sampled items
+ */
+export const getRandomSamples = <T>(
+  items: Array<T>,
+  size: number,
+  seed = 1212,
+  replace = false
+) => {
+  const targetSize = Math.min(size, items.length);
+  const threshold = targetSize / items.length;
+  const randomUniform = d3.randomUniform.source(d3.randomLcg(seed))(0, 1);
+
+  const sampledItems: Array<T> = [];
+  const sampledIndexes: Set<number> = new Set();
+
+  // Repeat sampling until we have enough points sampled
+  while (sampledItems.length < targetSize) {
+    for (const [i, item] of items.entries()) {
+      if ((replace || !sampledIndexes.has(i)) && randomUniform() <= threshold) {
+        sampledIndexes.add(i);
+        sampledItems.push(item);
+
+        // Exit early if we have enough points
+        if (sampledItems.length >= targetSize) break;
+      }
+    }
+  }
+
+  return sampledItems;
+};
+
+/**
+ * A helper function to break up a long function into multiple tasks
+ * https://web.dev/optimize-long-tasks/
+ * @returns A promise equivalent to sleep(0)
+ */
+export const yieldToMain = () => {
+  return new Promise(resolve => {
+    setTimeout(resolve, 0);
+  });
+};
