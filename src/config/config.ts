@@ -293,5 +293,7 @@ export const config = {
   colors,
   layout,
   time,
-  debug: true
+  debug: true,
+  gridColorLight: 'hsl(0, 0%, 100%)',
+  gridColorDark: 'hsl(0, 0%, 30%)'
 };

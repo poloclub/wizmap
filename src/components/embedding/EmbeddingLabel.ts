@@ -249,8 +249,12 @@ export function drawLabels(
 /**
  * Draw topic tile grid based on the zoom level
  * @param this Embedding
+ * @param strokeColor Use this argument to override grid stroke color
  */
-export function drawTopicGrid(this: Embedding) {
+export function drawTopicGrid(
+  this: Embedding,
+  strokeColor: string | null = null
+) {
   if (!this.showGrid) return;
 
   // Choose the topic tree level based on the current zoom level
@@ -330,17 +334,17 @@ export function drawTopicGrid(this: Embedding) {
     ctx.save();
 
     // Use white stroke on contour background
-    if (this.showContour) {
-      ctx.strokeStyle = `hsla(0, 0%, 100%, ${Math.max(
-        0.1,
-        0.5 - idealTreeLevel / 30
-      )})`;
-      ctx.lineWidth = 1 / this.curZoomTransform.k;
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor;
     } else {
-      // Dark stroke if there is no contour background
-      ctx.strokeStyle = 'hsla(0, 0%, 60%)';
-      ctx.lineWidth = 1 / this.curZoomTransform.k;
+      if (this.showContour) {
+        ctx.strokeStyle = config.gridColorLight;
+      } else {
+        // Dark stroke if there is no contour background
+        ctx.strokeStyle = config.gridColorDark;
+      }
     }
+    ctx.lineWidth = 1 / (4 * this.curZoomTransform.k);
 
     for (const tile of tiles) {
       ctx.moveTo(tile.x, tile.y);
@@ -356,6 +360,41 @@ export function drawTopicGrid(this: Embedding) {
     }
     ctx.restore();
   }
+}
+
+/**
+ * Draw topic grid in one animation frame
+ * @param this Embedding
+ * @param time Current time
+ * @param startTime Animation start time
+ * @param duration Animation duration (ms)
+ * @param colorScale Function map (0, 1) to a color
+ * @returns Void
+ */
+export function drawTopicGridFrame(
+  this: Embedding,
+  time: number,
+  startTime: number | null,
+  duration: number,
+  colorScale: (t: number) => string
+) {
+  const delta = time - (startTime ? startTime : time);
+  const progress = delta / duration;
+  if (progress > 1) return;
+
+  // Draw a frame
+  const curColor = colorScale(progress);
+  this.redrawTopicGrid(curColor);
+
+  // Next frame
+  requestAnimationFrame(newTime => {
+    this.drawTopicGridFrame(
+      newTime,
+      startTime ? startTime : time,
+      duration,
+      colorScale
+    );
+  });
 }
 
 /**
@@ -1124,6 +1163,29 @@ export function mouseoverLabel(
         });
     }
   }
+}
+
+/**
+ * Redraw the topic canvases (clear, transform, draw).
+ */
+export function redrawTopicGrid(
+  this: Embedding,
+  strokeColor: string | null = null
+) {
+  const topicCtxs = this.topicCanvases.map(
+    c => (c.node() as HTMLCanvasElement).getContext('2d')!
+  );
+
+  for (const topicCtx of topicCtxs) {
+    topicCtx.save();
+    topicCtx.setTransform(1, 0, 0, 1, 0, 0);
+    topicCtx.clearRect(0, 0, this.svgFullSize.width, this.svgFullSize.height);
+    topicCtx.translate(this.curZoomTransform.x, this.curZoomTransform.y);
+    topicCtx.scale(this.curZoomTransform.k, this.curZoomTransform.k);
+  }
+
+  this.drawTopicGrid(strokeColor);
+  topicCtxs.forEach(c => c.restore());
 }
 
 /**

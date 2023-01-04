@@ -36,14 +36,18 @@ import {
   getIdealTopicTreeLevel,
   labelNumSliderChanged,
   mouseoverLabel,
-  drawTopicGrid
+  drawTopicGrid,
+  redrawTopicGrid,
+  drawTopicGridFrame
 } from './EmbeddingLabel';
 import {
   drawScatterCanvas,
   drawScatterBackCanvas,
   getNextUniqueColor,
   highlightPoint,
-  syncPointData
+  syncPointData,
+  redrawFrontPoints,
+  redrawBackPoints
 } from './EmbeddingPoint';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -133,12 +137,16 @@ export class Embedding {
   labelNumSliderChanged = labelNumSliderChanged;
   mouseoverLabel = mouseoverLabel;
   drawTopicGrid = drawTopicGrid;
+  redrawTopicGrid = redrawTopicGrid;
+  drawTopicGridFrame = drawTopicGridFrame;
 
   drawScatterCanvas = drawScatterCanvas;
   drawScatterBackCanvas = drawScatterBackCanvas;
   getNextUniqueColor = getNextUniqueColor;
   highlightPoint = highlightPoint;
   syncPointData = syncPointData;
+  redrawFrontPoints = redrawFrontPoints;
+  redrawBackPoints = redrawBackPoints;
 
   /**
    *
@@ -649,18 +657,7 @@ export class Embedding {
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      this.pointCtx.save();
-      this.pointCtx.setTransform(1, 0, 0, 1, 0, 0);
-      this.pointCtx.clearRect(
-        0,
-        0,
-        this.svgFullSize.width,
-        this.svgFullSize.height
-      );
-      this.pointCtx.translate(transform.x, transform.y);
-      this.pointCtx.scale(transform.k, transform.k);
-      this.drawScatterCanvas();
-      this.pointCtx.restore();
+      this.redrawFrontPoints();
     }
 
     // Adjust the label size based on the zoom level
@@ -670,25 +667,7 @@ export class Embedding {
 
     // Adjust the canvas grid based on the zoom level
     if (this.showGrid) {
-      const topicCtxs = this.topicCanvases.map(
-        c => (c.node() as HTMLCanvasElement).getContext('2d')!
-      );
-
-      for (const topicCtx of topicCtxs) {
-        topicCtx.save();
-        topicCtx.setTransform(1, 0, 0, 1, 0, 0);
-        topicCtx.clearRect(
-          0,
-          0,
-          this.svgFullSize.width,
-          this.svgFullSize.height
-        );
-        topicCtx.translate(transform.x, transform.y);
-        topicCtx.scale(transform.k, transform.k);
-      }
-
-      this.drawTopicGrid();
-      topicCtxs.forEach(c => c.restore());
+      this.redrawTopicGrid();
     }
 
     // Adjust the highlighted tile
@@ -704,18 +683,7 @@ export class Embedding {
     // === Task (2) ===
     // Transform the background canvas elements
     if (this.showPoint) {
-      this.pointBackCtx.save();
-      this.pointBackCtx.setTransform(1, 0, 0, 1, 0, 0);
-      this.pointBackCtx.clearRect(
-        0,
-        0,
-        this.svgFullSize.width,
-        this.svgFullSize.height
-      );
-      this.pointBackCtx.translate(transform.x, transform.y);
-      this.pointBackCtx.scale(transform.k, transform.k);
-      this.drawScatterBackCanvas();
-      this.pointBackCtx.restore();
+      this.redrawBackPoints();
     }
   };
 
@@ -775,6 +743,27 @@ export class Embedding {
       case 'contour': {
         this.showContour = checked;
         this.svg.select('g.contour-group').classed('hidden', !this.showContour);
+
+        if (this.showGrid) {
+          let startColor: string;
+          let endColor: string;
+
+          if (this.showContour) {
+            // No contour -> contour | dark -> light
+            startColor = config.gridColorDark;
+            endColor = config.gridColorLight;
+          } else {
+            // Contour -> no contour | light -> dark
+            startColor = config.gridColorLight;
+            endColor = config.gridColorDark;
+          }
+
+          const duration = 300;
+          const colorScale = d3.interpolateHsl(startColor, endColor);
+          requestAnimationFrame(time => {
+            this.drawTopicGridFrame(time, null, duration, colorScale);
+          });
+        }
         break;
       }
 
@@ -783,6 +772,11 @@ export class Embedding {
         this.pointCanvas
           .classed('hidden', !this.showPoint)
           .classed('faded', this.showPoint && this.showLabel);
+
+        this.redrawFrontPoints();
+        this.redrawBackPoints();
+
+        if (this.showGrid) this.redrawTopicGrid();
         break;
       }
 
@@ -791,28 +785,7 @@ export class Embedding {
         this.topicCanvases.forEach(c => c.classed('hidden', !this.showGrid));
 
         if (this.showGrid) {
-          const topicCtxs = this.topicCanvases.map(
-            c => (c.node() as HTMLCanvasElement).getContext('2d')!
-          );
-
-          for (const topicCtx of topicCtxs) {
-            topicCtx.save();
-            topicCtx.setTransform(1, 0, 0, 1, 0, 0);
-            topicCtx.clearRect(
-              0,
-              0,
-              this.svgFullSize.width,
-              this.svgFullSize.height
-            );
-            topicCtx.translate(
-              this.curZoomTransform.x,
-              this.curZoomTransform.y
-            );
-            topicCtx.scale(this.curZoomTransform.k, this.curZoomTransform.k);
-          }
-
-          this.drawTopicGrid();
-          topicCtxs.forEach(c => c.restore());
+          this.redrawTopicGrid();
         }
 
         break;

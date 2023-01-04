@@ -220,7 +220,14 @@ export function syncPointData(this: Embedding, points: UMAPPointStreamData[]) {
     });
   }
 
-  // Transform the point canvas elements
+  this.redrawFrontPoints();
+  this.redrawBackPoints();
+}
+
+/**
+ * Redraw the point front canvas (clear, transform, draw).
+ */
+export function redrawFrontPoints(this: Embedding) {
   this.pointCtx.save();
   this.pointCtx.setTransform(1, 0, 0, 1, 0, 0);
   this.pointCtx.clearRect(
@@ -233,8 +240,12 @@ export function syncPointData(this: Embedding, points: UMAPPointStreamData[]) {
   this.pointCtx.scale(this.curZoomTransform.k, this.curZoomTransform.k);
   this.drawScatterCanvas();
   this.pointCtx.restore();
+}
 
-  // Transform the background canvas elements
+/**
+ * Redraw the point back canvas (clear, transform, draw).
+ */
+export function redrawBackPoints(this: Embedding) {
   this.pointBackCtx.save();
   this.pointBackCtx.setTransform(1, 0, 0, 1, 0, 0);
   this.pointBackCtx.clearRect(
