@@ -13,16 +13,32 @@ export type EmbeddingInitSetting = {
 export type EmbeddingWorkerMessage =
   | {
       command: 'startLoadData';
-      /** JSON data url */
       payload: {
+        /** JSON data url */
         url: string;
+        xRange: [number, number];
+        yRange: [number, number];
       };
     }
   | {
       command: 'finishLoadData';
       payload: {
         isFirstBatch: boolean;
-        points: UMAPPointStreamData[] | null;
+        points: PromptPoint[] | null;
+      };
+    }
+  | {
+      command: 'startRefillRegion';
+      payload: {
+        viewRange: [number, number, number, number];
+        refillID: number;
+      };
+    }
+  | {
+      command: 'finishRefillRegion';
+      payload: {
+        points: PromptPoint[];
+        refillID: number;
       };
     };
 
@@ -150,14 +166,15 @@ export interface QuadtreeNode {
 
 export interface GridData {
   grid: number[][];
-  xRange: number[];
-  yRange: number[];
+  xRange: [number, number];
+  yRange: [number, number];
   padded: boolean;
   sampleSize: number;
 }
 
 export interface PromptPoint extends Point {
   prompt: string;
+  id: number;
 }
 
 export interface PromptUMAPData {

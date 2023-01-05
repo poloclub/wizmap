@@ -39,7 +39,8 @@ import {
   extent,
   sum,
   bin,
-  shuffle
+  shuffle,
+  quickselect
 } from 'd3-array';
 
 import { timeout } from 'd3-timer';
@@ -122,6 +123,7 @@ export default {
   sum,
   bin,
   shuffle,
+  quickselect,
   timeout,
   transition,
   easeLinear,

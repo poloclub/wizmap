@@ -45,7 +45,6 @@ import {
   drawScatterBackCanvas,
   getNextUniqueColor,
   highlightPoint,
-  syncPointData,
   redrawFrontPoints,
   redrawBackPoints
 } from './EmbeddingPoint';
@@ -56,6 +55,7 @@ import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
 
 const DEBUG = config.debug;
+const REFILL_TIME_GAP = 300;
 
 type HoverMode = 'point' | 'label' | 'none';
 
@@ -110,6 +110,10 @@ export class Embedding {
   contours: d3.ContourMultiPolygon[] | null = null;
   contoursInitialized = false;
 
+  // Scatter plot
+  lastRefillID = 0;
+  lsatRefillTime = 0;
+
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
     number,
@@ -144,7 +148,6 @@ export class Embedding {
   drawScatterBackCanvas = drawScatterBackCanvas;
   getNextUniqueColor = getNextUniqueColor;
   highlightPoint = highlightPoint;
-  syncPointData = syncPointData;
   redrawFrontPoints = redrawFrontPoints;
   redrawBackPoints = redrawBackPoints;
 
@@ -180,27 +183,10 @@ export class Embedding {
       new URL('./EmbeddingWorker.ts', import.meta.url),
       { type: 'module' }
     );
-    const url = `/data/umap-${'1m'}.ndjson`;
-    // const url =
-    // 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev/umap-1m.ndjson';
-
-    const message: EmbeddingWorkerMessage = {
-      command: 'startLoadData',
-      payload: { url: url }
-    };
-    this.embeddingWorker.postMessage(message);
-
     this.embeddingWorker.onmessage = (
       e: MessageEvent<EmbeddingWorkerMessage>
     ) => {
-      if (e.data.command === 'finishLoadData') {
-        if (e.data.payload.isFirstBatch && e.data.payload.points) {
-          // Draw the first batch
-          this.syncPointData(e.data.payload.points);
-        } else {
-          console.log('Finished loading all');
-        }
-      }
+      this.embeddingWorkerMessageHandler(e);
     };
 
     // Initialize the SVG
@@ -280,7 +266,8 @@ export class Embedding {
         (async () => {
           await this.zoomed(g);
         })();
-      });
+      })
+      .on('end', () => this.zoomEnded());
 
     this.topSvg.call(this.zoom).on('dblclick.zoom', null);
 
@@ -378,6 +365,18 @@ export class Embedding {
         yRange[1] += (xLength - yLength) / 2;
       }
     }
+
+    // Tell the worker to start loading data
+    // (need to wait to get the xRange and yRange)
+    const url = `/data/umap-${'1m'}.ndjson`;
+    // const url =
+    //   'https://pub-596951ee767949aba9096a18685c74bd.r2.dev/umap-1m.ndjson';
+
+    const message: EmbeddingWorkerMessage = {
+      command: 'startLoadData',
+      payload: { url, xRange, yRange }
+    };
+    this.embeddingWorker.postMessage(message);
 
     this.xScale = d3
       .scaleLinear()
@@ -655,6 +654,19 @@ export class Embedding {
       .select('.top-group')
       .attr('transform', `${transform.toString()}`);
 
+    // Update the points
+    if (Date.now() - this.lsatRefillTime > REFILL_TIME_GAP) {
+      const refillMessage: EmbeddingWorkerMessage = {
+        command: 'startRefillRegion',
+        payload: {
+          refillID: ++this.lastRefillID,
+          viewRange: this.getCurViewRanges()
+        }
+      };
+      this.embeddingWorker.postMessage(refillMessage);
+      this.lsatRefillTime = Date.now();
+    }
+
     // Transform the visible canvas elements
     if (this.showPoint) {
       this.redrawFrontPoints();
@@ -688,6 +700,55 @@ export class Embedding {
   };
 
   /**
+   * Event handler for zoom ended
+   */
+  zoomEnded = () => {
+    // Update the points (the last call during zoomed() might be skipped)
+    const refillMessage: EmbeddingWorkerMessage = {
+      command: 'startRefillRegion',
+      payload: {
+        refillID: ++this.lastRefillID,
+        viewRange: this.getCurViewRanges()
+      }
+    };
+    this.embeddingWorker.postMessage(refillMessage);
+  };
+
+  /**
+   * Handle messages from the embedding worker
+   * @param e Message event
+   */
+  embeddingWorkerMessageHandler = (e: MessageEvent<EmbeddingWorkerMessage>) => {
+    switch (e.data.command) {
+      case 'finishLoadData': {
+        if (e.data.payload.isFirstBatch && e.data.payload.points) {
+          // Draw the first batch
+          this.promptPoints = e.data.payload.points;
+          this.redrawFrontPoints();
+          this.redrawBackPoints();
+        } else {
+          console.log('Finished loading all');
+        }
+        break;
+      }
+
+      case 'finishRefillRegion': {
+        if (e.data.payload.refillID === this.lastRefillID) {
+          this.promptPoints = e.data.payload.points;
+          this.redrawFrontPoints();
+          this.redrawBackPoints();
+        }
+        break;
+      }
+
+      default: {
+        console.error('Unknown message', e.data.command);
+        break;
+      }
+    }
+  };
+
+  /**
    * Event handler for mousemove
    * @param e Mouse event
    */
@@ -715,14 +776,32 @@ export class Embedding {
     const box: Rect = {
       x: this.curZoomTransform.invertX(0),
       y: this.curZoomTransform.invertY(0),
-      width:
+      width: Math.abs(
         this.curZoomTransform.invertX(this.svgFullSize.width) -
-        this.curZoomTransform.invertX(0),
-      height:
+          this.curZoomTransform.invertX(0)
+      ),
+      height: Math.abs(
         this.curZoomTransform.invertY(this.svgFullSize.height) -
-        this.curZoomTransform.invertY(0)
+          this.curZoomTransform.invertY(0)
+      )
     };
     return box;
+  };
+
+  /**
+   * Get the current view ranges [xmin, xmax, ymin, ymax] in the data coordinate
+   * @returns Current view box in the data coordinate
+   */
+  getCurViewRanges = (): [number, number, number, number] => {
+    const zoomBox = this.getCurZoomBox();
+
+    const xMin = this.xScale.invert(zoomBox.x);
+    const xMax = this.xScale.invert(zoomBox.x + zoomBox.width);
+    const yMin = this.yScale.invert(zoomBox.y + zoomBox.height);
+    const yMax = this.yScale.invert(zoomBox.y);
+
+    const result: [number, number, number, number] = [xMin, xMax, yMin, yMax];
+    return result;
   };
 
   /**

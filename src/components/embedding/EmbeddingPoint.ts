@@ -4,7 +4,8 @@ import type { UMAPPointStreamData, Point, PromptPoint } from '../my-types';
 import { timeit, rgbToHex } from '../../utils/utils';
 import { config } from '../../config/config';
 
-const SCATTER_DOT_RADIUS = 1;
+const SCATTER_DOT_RADIUS = 0.7;
+const SCATTER_BACK_DOT_RADIUS = 1;
 const TAU = 2 * Math.PI;
 const DEBUG = config.debug;
 
@@ -71,7 +72,7 @@ export function drawScatterBackCanvas(this: Embedding) {
   // Trick: here we draw a slightly larger circle when user zooms out the
   // viewpoint, so that the pixel coverage is higher (smoother/better
   // mouseover picking)
-  const defaultR = SCATTER_DOT_RADIUS * this.initZoomK;
+  const defaultR = SCATTER_BACK_DOT_RADIUS * this.initZoomK;
   const r = Math.max(defaultR, 3.5 * defaultR - this.curZoomTransform.k);
 
   for (const point of this.promptPoints) {
@@ -208,20 +209,6 @@ export function highlightPoint(
       this.tooltipStore.set(this.tooltipStoreValue);
     }
   }
-}
-
-export function syncPointData(this: Embedding, points: UMAPPointStreamData[]) {
-  this.promptPoints = [];
-  for (const point of points) {
-    this.promptPoints.push({
-      x: point[0],
-      y: point[1],
-      prompt: point[2]
-    });
-  }
-
-  this.redrawFrontPoints();
-  this.redrawBackPoints();
 }
 
 /**

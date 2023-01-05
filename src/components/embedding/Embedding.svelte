@@ -14,9 +14,9 @@
   let showControl = false;
 
   const defaultSetting: EmbeddingInitSetting = {
-    showContour: false,
-    showPoint: false,
-    showGrid: true,
+    showContour: true,
+    showPoint: true,
+    showGrid: false,
     showLabel: false,
     hover: 'none'
   };
