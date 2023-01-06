@@ -2,11 +2,6 @@
  * Types for the packing view.
  */
 
-export interface PhraseTreeJSONData {
-  n: 'root';
-  c: PhraseTreeData[];
-}
-
 export interface PhraseTreeData {
   /**
    * Name of this phrase

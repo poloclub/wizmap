@@ -19,3 +19,21 @@
   height: 100%;
   border-radius: $border-radius;
 }
+
+:global(.packing-svg) {
+  font-family: 'Lato';
+
+  :global(.circle-group-1) {
+    :global(circle) {
+      stroke: none;
+      fill: $teal-100;
+    }
+  }
+
+  :global(.circle-group-2) {
+    :global(circle) {
+      stroke: none;
+      fill: $teal-600;
+    }
+  }
+}
