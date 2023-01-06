@@ -1,0 +1,21 @@
+@import '../../define.scss';
+
+.packing-wrapper {
+  display: flex;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.packing {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.packing-svg {
+  width: 100%;
+  height: 100%;
+  border-radius: $border-radius;
+}

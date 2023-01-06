@@ -70,7 +70,7 @@ import {
 
 import { path } from 'd3-path';
 
-import { hierarchy, partition, tree } from 'd3-hierarchy';
+import { hierarchy, partition, tree, pack } from 'd3-hierarchy';
 
 import { brush } from 'd3-brush';
 
@@ -148,6 +148,7 @@ export default {
   hierarchy,
   partition,
   tree,
+  pack,
   arc,
   linkHorizontal,
   linkVertical,

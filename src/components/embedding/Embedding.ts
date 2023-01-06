@@ -1,8 +1,6 @@
 import d3 from '../../utils/d3-import';
 import type {
   PromptUMAPData,
-  Size,
-  Padding,
   PromptPoint,
   GridData,
   QuadtreeNode,
@@ -11,14 +9,13 @@ import type {
   LevelTileMap,
   TopicData,
   TopicDataJSON,
-  Rect,
   DrawnLabel,
   LabelData,
   Direction,
-  Point,
   EmbeddingWorkerMessage,
   EmbeddingInitSetting
-} from '../my-types';
+} from '../../types/embedding-types';
+import type { Size, Padding, Rect, Point } from '../../types/common-types';
 import {
   downloadJSON,
   splitStreamTransform,

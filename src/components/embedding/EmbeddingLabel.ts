@@ -2,12 +2,11 @@ import type { Embedding } from './Embedding';
 import d3 from '../../utils/d3-import';
 import type {
   TopicData,
-  Rect,
   DrawnLabel,
   LabelData,
-  Point
-} from '../my-types';
-import { Direction } from '../my-types';
+  Direction
+} from '../../types/embedding-types';
+import type { Size, Padding, Rect, Point } from '../../types/common-types';
 import { timeit, rectsIntersect } from '../../utils/utils';
 import { getLatoTextWidth } from '../../utils/text-width';
 import { config } from '../../config/config';

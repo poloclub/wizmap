@@ -1,23 +1,9 @@
 import d3 from '../../utils/d3-import';
 import type {
-  PromptUMAPData,
-  Size,
-  Padding,
   PromptPoint,
-  GridData,
-  QuadtreeNode,
-  LevelTileDataItem,
   UMAPPointStreamData,
-  LevelTileMap,
-  TopicData,
-  TopicDataJSON,
-  Rect,
-  DrawnLabel,
-  LabelData,
-  Direction,
-  Point,
   EmbeddingWorkerMessage
-} from '../my-types';
+} from '../../types/embedding-types';
 import { splitStreamTransform, parseJSONTransform } from '../../utils/utils';
 
 const dataPoints: UMAPPointStreamData[] = [];

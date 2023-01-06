@@ -1,10 +1,9 @@
 import d3 from '../../utils/d3-import';
 import type {
+  PromptPoint,
   UMAPPointStreamData,
-  EmbeddingWorkerMessage,
-  Rect,
-  PromptPoint
-} from '../my-types';
+  EmbeddingWorkerMessage
+} from '../../types/embedding-types';
 import {
   splitStreamTransform,
   parseJSONTransform,

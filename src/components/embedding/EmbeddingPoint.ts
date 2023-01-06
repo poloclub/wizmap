@@ -1,6 +1,6 @@
 import type { Embedding } from './Embedding';
 import d3 from '../../utils/d3-import';
-import type { UMAPPointStreamData, Point, PromptPoint } from '../my-types';
+import type { PromptPoint } from '../../types/embedding-types';
 import { timeit, rgbToHex } from '../../utils/utils';
 import { config } from '../../config/config';
 

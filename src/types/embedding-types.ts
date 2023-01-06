@@ -1,5 +1,7 @@
+import type { Point, Rect } from './common-types';
+
 /**
- * Custom types for DiffusionDB-Vis
+ * Types for the Embedding view
  */
 
 export type EmbeddingInitSetting = {
@@ -181,28 +183,4 @@ export interface PromptUMAPData {
   xs: number[];
   ys: number[];
   prompts: string[];
-}
-
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
-
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface Size {
-  width: number;
-  height: number;
 }

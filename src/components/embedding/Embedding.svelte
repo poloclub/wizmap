@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Embedding } from './Embedding';
   import { onMount } from 'svelte';
-  import type { EmbeddingInitSetting } from '../my-types';
+  import type { EmbeddingInitSetting } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
   import type { TooltipStoreValue } from '../../stores';
   import { getTooltipStoreDefaultValue } from '../../stores';
