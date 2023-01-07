@@ -24,13 +24,26 @@
   font-family: 'Lato';
 }
 
-:global(.packing-svg .circle-group) {
+:global(.packing-svg circle) {
+  stroke-width: 0px;
+  stroke: hsla(0, 100%, 0%, 0);
+  transition: stroke 100ms linear, stroke-width 100ms linear;
+}
+
+:global(.packing-svg circle.no-pointer) {
+  pointer-events: none;
+}
+
+:global(.packing-svg) {
   :global(text.phrase-label) {
     text-anchor: middle;
+    pointer-events: none;
   }
 
   :global(tspan) {
     dominant-baseline: middle;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   :global(text.phrase-label.hidden) {
@@ -38,24 +51,28 @@
   }
 }
 
-:global(.packing-svg .circle-group-1) {
-  :global(circle) {
-    stroke: none;
-    fill: $teal-100;
-  }
-
-  :global(text.phrase-label) {
-    fill: $gray-900;
-  }
+:global(.packing-svg text.phrase-label-1) {
+  fill: $gray-900;
 }
 
-:global(.packing-svg .circle-group-2) {
-  :global(circle) {
-    stroke: none;
-    fill: $teal-600;
-  }
+:global(.packing-svg text.phrase-label-2) {
+  fill: white;
+}
 
-  :global(text.phrase-label) {
-    fill: white;
-  }
+:global(.packing-svg .circle-group-1 circle) {
+  fill: $teal-200;
+}
+
+:global(.packing-svg .circle-group-1 circle.hovered) {
+  stroke: $teal-600;
+  stroke-width: 2px;
+}
+
+:global(.packing-svg .circle-group-2 circle) {
+  fill: $teal-700;
+}
+
+:global(.packing-svg .circle-group-2 circle.hovered) {
+  stroke: $teal-700;
+  stroke-width: 3px;
 }
