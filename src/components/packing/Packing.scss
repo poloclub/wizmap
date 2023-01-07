@@ -34,6 +34,11 @@
   pointer-events: none;
 }
 
+:global(.packing-svg rect.back-rect) {
+  stroke: none;
+  fill: hsla(0, 0%, 100%, 0);
+}
+
 :global(.packing-svg) {
   :global(text.phrase-label) {
     text-anchor: middle;

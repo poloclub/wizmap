@@ -37,6 +37,22 @@ export class Packer {
   // Circle packing
   pack: d3.HierarchyCircularNode<PhraseTreeData> | null = null;
 
+  // Zooming
+  focusNode: d3.HierarchyCircularNode<PhraseTreeData> | null = null;
+  view: d3.ZoomView | null = null;
+  circleGroups: d3.Selection<
+    SVGGElement,
+    d3.HierarchyCircularNode<PhraseTreeData>,
+    SVGGElement,
+    unknown
+  > | null = null;
+  topTextGroups: d3.Selection<
+    SVGGElement,
+    d3.HierarchyCircularNode<PhraseTreeData>,
+    SVGGElement,
+    unknown
+  > | null = null;
+
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
   tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
@@ -81,13 +97,23 @@ export class Packer {
     };
 
     // Initialize SVG layers
-    this.svg
+    const content = this.svg
       .append('g')
       .attr('class', 'content')
       .attr(
         'transform',
         `translate(${this.svgPadding.left}, ${this.svgPadding.top})`
       );
+    content
+      .append('rect')
+      .attr('class', 'back-rect')
+      .attr('width', this.svgSize.width)
+      .attr('height', this.svgSize.height)
+      .on('click', (e: MouseEvent) => {
+        if (this.pack) {
+          this.circleClickHandler(e, this.pack);
+        }
+      });
 
     // Subscribe the store
     this.tooltipStore = tooltipStore;
@@ -140,6 +166,10 @@ export class Packer {
     const content = this.svg.select('g.content');
     const circleContent = content.append('g').attr('class', 'content-circle');
     const textContent = content.append('g').attr('class', 'content-text');
+
+    // Initialize the zoom
+    this.focusNode = this.pack;
+    this.view = [this.pack.x, this.pack.y, this.pack.r * 2];
 
     /**
      * Return true if the circle should not display its text
@@ -238,27 +268,29 @@ export class Packer {
       const group = enter
         .append('g')
         .attr('class', d => `circle-group circle-group-${d.depth}`)
-        .attr('transform', d => `translate(${d.x - d.r}, ${d.y - d.r})`)
+        .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('font-size', `${FONT_SIZE}px`);
 
       group
         .append('circle')
         .attr('class', 'phrase-circle')
         .classed('no-pointer', d => d.r < 10 && d.children === undefined)
-        .attr('cx', d => d.r)
-        .attr('cy', d => d.r)
+        .attr('cx', 0)
+        .attr('cy', 0)
         .attr('r', d => d.r)
-        .on('mouseenter', (e, d) => circleMouseenterHandler(e as MouseEvent, d))
+        .on('mouseenter', (e, d) =>
+          this.circleMouseenterHandler(e as MouseEvent, d)
+        )
         .on('mouseleave', (e, d) =>
-          circleMouseleaveHandler(e as MouseEvent, d)
-        );
+          this.circleMouseleaveHandler(e as MouseEvent, d)
+        )
+        .on('click', (e, d) => this.circleClickHandler(e as MouseEvent, d));
 
       // Draw the text
       group
         .append('text')
         .attr('class', d => `phrase-label phrase-label-${d.depth}`)
         .classed('hidden', d => shouldHideText(d, true))
-        .attr('transform', d => `translate(${d.r}, ${d.r})`)
         .each((d, i, g) =>
           drawLabelInCircle({ d, i, g, hideParent: true, showHalo: false })
         );
@@ -271,7 +303,12 @@ export class Packer {
     for (const node of nodes) {
       node.data.textInfo = processName(node.data.n);
     }
-    circleContent.selectAll('g.circle-group').data(nodes).join(enterFunc);
+    this.circleGroups = circleContent
+      .selectAll<SVGGElement, d3.HierarchyCircularNode<PhraseTreeData>>(
+        'g.circle-group'
+      )
+      .data(nodes)
+      .join(enterFunc);
 
     // Draw the text of first level circles on top of all circles
     // Find all first level nodes without any text drawn and have enough space
@@ -299,9 +336,10 @@ export class Packer {
       }
     }
 
-    console.log(topLabelNodes.length);
-    textContent
-      .selectAll('g.top-text-group')
+    this.topTextGroups = textContent
+      .selectAll<SVGGElement, d3.HierarchyCircularNode<PhraseTreeData>>(
+        'g.top-text-group'
+      )
       .data(topLabelNodes)
       .join(enter => {
         const group = enter
@@ -317,38 +355,89 @@ export class Packer {
           .classed('hidden', d => shouldHideText(d, false))
           .attr('transform', d => `translate(${d.r}, ${d.r})`)
           .each((d, i, g) =>
-            drawLabelInCircle({ d, i, g, hideParent: false, showHalo: true })
+            drawLabelInCircle({ d, i, g, hideParent: true, showHalo: true })
           );
         return group;
       });
+
+    this.zoomToView(this.view);
+  };
+
+  /**
+   * Mouse enter handler
+   * @param e Mouse event
+   * @param d Datum
+   */
+  circleMouseenterHandler = (
+    e: MouseEvent,
+    d: d3.HierarchyCircularNode<PhraseTreeData>
+  ) => {
+    const element = d3.select(e.target as HTMLElement);
+    element.classed('hovered', true);
+  };
+
+  /**
+   * Mouse leave handler
+   * @param e Mouse event
+   * @param d Datum
+   */
+  circleMouseleaveHandler = (
+    e: MouseEvent,
+    d: d3.HierarchyCircularNode<PhraseTreeData>
+  ) => {
+    const element = d3.select(e.target as HTMLElement);
+    element.classed('hovered', false);
+  };
+
+  /**
+   * Apply zoom at one frame
+   * @param view [center x, center y, view width]
+   */
+  zoomToView = (view: d3.ZoomView) => {
+    this.view = view;
+
+    const scale = this.svgSize.width / view[2];
+    const x0 = view[0] - view[2] / 2;
+    const y0 = view[1] - view[2] / 2;
+
+    this.circleGroups
+      ?.attr(
+        'transform',
+        d => `translate(${(d.x - x0) * scale},${(d.y - y0) * scale})`
+      )
+      .style('font-size', `${FONT_SIZE * scale}px`)
+      .select('.phrase-circle')
+      .attr('r', d => d.r * scale);
+  };
+
+  /**
+   * Mouse leave handler
+   * @param e Mouse event
+   * @param d Datum
+   */
+  circleClickHandler = (
+    e: MouseEvent,
+    d: d3.HierarchyCircularNode<PhraseTreeData>
+  ) => {
+    if (this.focusNode === null || this.view === null) return;
+    e.stopPropagation();
+
+    // Start zooming
+    this.focusNode = d;
+    this.svg
+      .transition('zoom')
+      .duration(800)
+      .tween('zoom', () => {
+        const interpolate = d3.interpolateZoom(this.view!, [
+          this.focusNode!.x,
+          this.focusNode!.y,
+          this.focusNode!.r * 2
+        ]);
+
+        return (t: number) => this.zoomToView(interpolate(t));
+      });
   };
 }
-
-/**
- * Mouse enter handler
- * @param e Mouse event
- * @param d Datum
- */
-const circleMouseenterHandler = (
-  e: MouseEvent,
-  d: d3.HierarchyCircularNode<PhraseTreeData>
-) => {
-  const element = d3.select(e.target as HTMLElement);
-  element.classed('hovered', true);
-};
-
-/**
- * Mouse leave handler
- * @param e Mouse event
- * @param d Datum
- */
-const circleMouseleaveHandler = (
-  e: MouseEvent,
-  d: d3.HierarchyCircularNode<PhraseTreeData>
-) => {
-  const element = d3.select(e.target as HTMLElement);
-  element.classed('hovered', false);
-};
 
 /**
  * Get the size info about a phrase text
