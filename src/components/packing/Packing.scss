@@ -22,18 +22,40 @@
 
 :global(.packing-svg) {
   font-family: 'Lato';
+}
 
-  :global(.circle-group-1) {
-    :global(circle) {
-      stroke: none;
-      fill: $teal-100;
-    }
+:global(.packing-svg .circle-group) {
+  :global(text.phrase-label) {
+    text-anchor: middle;
   }
 
-  :global(.circle-group-2) {
-    :global(circle) {
-      stroke: none;
-      fill: $teal-600;
-    }
+  :global(tspan) {
+    dominant-baseline: middle;
+  }
+
+  :global(text.phrase-label.hidden) {
+    display: none;
+  }
+}
+
+:global(.packing-svg .circle-group-1) {
+  :global(circle) {
+    stroke: none;
+    fill: $teal-100;
+  }
+
+  :global(text.phrase-label) {
+    fill: $gray-900;
+  }
+}
+
+:global(.packing-svg .circle-group-2) {
+  :global(circle) {
+    stroke: none;
+    fill: $teal-600;
+  }
+
+  :global(text.phrase-label) {
+    fill: white;
   }
 }

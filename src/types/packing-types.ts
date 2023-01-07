@@ -22,4 +22,39 @@ export interface PhraseTreeData {
    * Other phrases including this phrase
    */
   c?: PhraseTreeData[];
+
+  /**
+   * Size information about the rendered phrase text
+   */
+  textInfo?: PhraseTextInfo;
+}
+
+export interface PhraseTextInfo {
+  /**
+   * True if the text is visible for this node.
+   */
+  visible: boolean;
+  infos: [PhraseTextLineInfo, PhraseTextLineInfo];
+}
+
+export interface PhraseTextLineInfo {
+  /**
+   * The width of the rendered phrase text
+   */
+  width: number;
+
+  /**
+   * The height of the rendered phrase text
+   */
+  height: number;
+
+  /**
+   * Length of the diagonal of the text box
+   */
+  diagonal: number;
+
+  /**
+   * One or two lines of this phrase
+   */
+  lines: [string] | [string, string];
 }
