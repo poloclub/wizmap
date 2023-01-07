@@ -24,16 +24,6 @@
   font-family: 'Lato';
 }
 
-:global(.packing-svg circle) {
-  stroke-width: 0px;
-  stroke: hsla(0, 100%, 0%, 0);
-  transition: stroke 100ms linear, stroke-width 100ms linear;
-}
-
-:global(.packing-svg circle.no-pointer) {
-  pointer-events: none;
-}
-
 :global(.packing-svg rect.back-rect) {
   stroke: none;
   fill: hsla(0, 0%, 100%, 0);
@@ -50,10 +40,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
-  :global(text.phrase-label.hidden) {
-    display: none;
-  }
 }
 
 :global(.packing-svg text.phrase-label-1) {
@@ -64,13 +50,27 @@
   fill: white;
 }
 
+:global(.packing-svg .circle-group) {
+  --base-stroke: 1px;
+}
+
+:global(.packing-svg .circle-group.no-pointer) {
+  pointer-events: none;
+}
+
+:global(.packing-svg .circle-group circle) {
+  stroke-width: 0px;
+  stroke: $teal-700;
+  transition: stroke 100ms linear, stroke-width 100ms linear;
+}
+
 :global(.packing-svg .circle-group-1 circle) {
   fill: $teal-200;
 }
 
 :global(.packing-svg .circle-group-1 circle.hovered) {
   stroke: $teal-600;
-  stroke-width: 2px;
+  stroke-width: calc(var(--base-stroke) * 3);
 }
 
 :global(.packing-svg .circle-group-2 circle) {
@@ -78,6 +78,5 @@
 }
 
 :global(.packing-svg .circle-group-2 circle.hovered) {
-  stroke: $teal-700;
-  stroke-width: 3px;
+  stroke-width: calc(var(--base-stroke) * 2);
 }
