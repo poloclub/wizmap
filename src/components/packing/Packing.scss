@@ -92,3 +92,27 @@
   stroke-width: calc(var(--base-stroke) * 2);
   stroke: $teal-900;
 }
+
+:global(.packing-tooltip) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+:global(.packing-tooltip .top) {
+  font-weight: 600;
+}
+
+:global(.packing-tooltip .top .parent-label) {
+  color: $teal-300;
+}
+
+:global(.packing-tooltip .splitter) {
+  margin: 3px 0 2px 0;
+  border-bottom: 1px solid hsla(0, 100%, 100%, 0.3);
+  width: 100%;
+}
+
+:global(.packing-tooltip .bottom) {
+}

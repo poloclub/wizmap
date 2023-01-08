@@ -18,6 +18,9 @@ const FONT_SIZE = 12;
 const HALO_WIDTH = 4;
 const GRACE_PADDING = 3;
 
+let circleMouseenterTimer: number | null = null;
+let circleMouseleaveTimer: number | null = null;
+
 interface NodeRect extends Rect {
   node: d3.HierarchyCircularNode<PhraseTreeData>;
 }
@@ -33,6 +36,7 @@ export class Packer {
   /** The size of the drawing space of the SVG element */
   svgSize: Size;
   svgPadding: Padding;
+  svgBBox: DOMRect;
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -59,6 +63,9 @@ export class Packer {
     unknown
   > | null = null;
 
+  // Mouse over
+  hoverNode: d3.HierarchyCircularNode<PhraseTreeData> | null = null;
+
   // Stores
   tooltipStore: Writable<TooltipStoreValue>;
   tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
@@ -83,11 +90,9 @@ export class Packer {
     // Initialize the SVG
     this.svg = d3.select(this.component).select('svg.packing-svg');
     this.svgFullSize = { width: 0, height: 0 };
-    const svgBBox = this.svg.node()?.getBoundingClientRect();
-    if (svgBBox !== undefined) {
-      this.svgFullSize.width = svgBBox.width;
-      this.svgFullSize.height = svgBBox.height;
-    }
+    this.svgBBox = this.svg.node()!.getBoundingClientRect();
+    this.svgFullSize.width = this.svgBBox.width;
+    this.svgFullSize.height = this.svgBBox.height;
 
     this.svgPadding = {
       top: 5,
@@ -181,59 +186,11 @@ export class Packer {
     this.view = [this.pack.x, this.pack.y, this.pack.r * 2];
     this.baseView = [this.pack.x, this.pack.y, this.pack.r * 2];
 
-    const enterFunc = (
-      enter: d3.Selection<
-        d3.EnterElement,
-        d3.HierarchyCircularNode<PhraseTreeData>,
-        SVGGElement,
-        unknown
-      >
-    ) => {
-      // Draw the circle
-      const group = enter
-        .append('g')
-        .attr('class', d => `circle-group circle-group-${d.depth}`)
-        .attr('transform', d => `translate(${d.x}, ${d.y})`)
-        .classed('no-pointer', d => d.r < 10 && d.children === undefined)
-        .style('font-size', `${FONT_SIZE}px`);
-
-      group
-        .append('circle')
-        .attr('class', 'phrase-circle')
-        .attr('cx', 0)
-        .attr('cy', 0)
-        .attr('r', d => d.r)
-        .on('mouseenter', (e, d) =>
-          this.circleMouseenterHandler(e as MouseEvent, d)
-        )
-        .on('mouseleave', (e, d) =>
-          this.circleMouseleaveHandler(e as MouseEvent, d)
-        )
-        .on('click', (e, d) => this.circleClickHandler(e as MouseEvent, d));
-
-      // Draw the text
-      group
-        .append('text')
-        .attr('class', d => `phrase-label phrase-label-${d.depth}`)
-        .each((d, i, g) =>
-          drawLabelInCircle({
-            d,
-            i,
-            g,
-            hideParent: true,
-            checkHidden: true,
-            showHalo: false,
-            scale: 1,
-            markVisible: true
-          })
-        );
-
-      return group;
-    };
-
     // Visible all children and compute the text size information
     const nodes = this.pack.descendants().slice(1);
+    let nodeID = 1;
     for (const node of nodes) {
+      node.data.id = nodeID++;
       node.data.textInfo = processName(node.data.n);
     }
     this.circleGroups = circleContent
@@ -241,7 +198,41 @@ export class Packer {
         'g.circle-group'
       )
       .data(nodes)
-      .join(enterFunc);
+      .join('g')
+      .attr('class', d => `circle-group circle-group-${d.depth}`)
+      .attr('id', d => `circle-group-${d.data.id!}`)
+      .attr('transform', d => `translate(${d.x}, ${d.y})`)
+      .classed('no-pointer', d => d.r < 10 && d.children === undefined)
+      .style('font-size', `${FONT_SIZE}px`);
+
+    this.circleGroups
+      .append('circle')
+      .attr('class', 'phrase-circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', d => d.r)
+      .on('mouseenter', (e, d) =>
+        this.circleMouseenterHandler(e as MouseEvent, d)
+      )
+      .on('mouseleave', e => this.circleMouseleaveHandler(e as MouseEvent))
+      .on('click', (e, d) => this.circleClickHandler(e as MouseEvent, d));
+
+    // Draw the text
+    this.circleGroups
+      .append('text')
+      .attr('class', d => `phrase-label phrase-label-${d.depth}`)
+      .each((d, i, g) =>
+        drawLabelInCircle({
+          d,
+          i,
+          g,
+          hideParent: true,
+          checkHidden: true,
+          showHalo: false,
+          scale: 1,
+          markVisible: true
+        })
+      );
 
     // Draw the text of first level circles on top of all circles
     // Find all first level nodes without any text drawn and have enough space
@@ -310,8 +301,49 @@ export class Packer {
     e: MouseEvent,
     d: d3.HierarchyCircularNode<PhraseTreeData>
   ) => {
+    if (this.circleGroups === null) return;
+
+    // Ignore hovering that is on the focus node's ancestors
+    if (this.focusNode && this.focusNode.ancestors().includes(d)) return;
+
     const element = d3.select(e.target as HTMLElement);
     element.classed('hovered', true);
+
+    if (circleMouseleaveTimer !== null) {
+      clearTimeout(circleMouseleaveTimer);
+      circleMouseleaveTimer = null;
+    }
+
+    // Get the tooltip position
+    const circleGroup = this.svg.select(`#circle-group-${d.data.id!}`);
+
+    const position = (
+      circleGroup.node()! as HTMLElement
+    ).getBoundingClientRect();
+    const curWidth = position.width;
+    const tooltipCenterX = position.x + curWidth / 2;
+    const tooltipCenterY = Math.max(this.svgBBox.y, position.y);
+
+    this.tooltipStoreValue.html = this.getTooltipMessage(d);
+    this.tooltipStoreValue.x = tooltipCenterX;
+    this.tooltipStoreValue.y = tooltipCenterY;
+    this.tooltipStoreValue.show = true;
+
+    if (this.hoverNode === null) {
+      if (circleMouseenterTimer) clearTimeout(circleMouseenterTimer);
+      circleMouseenterTimer = setTimeout(() => {
+        this.hoverNode = d;
+        this.tooltipStore.set(this.tooltipStoreValue);
+        circleMouseenterTimer = null;
+      }, 500);
+    } else {
+      if (circleMouseenterTimer) clearTimeout(circleMouseenterTimer);
+      circleMouseenterTimer = setTimeout(() => {
+        this.hoverNode = d;
+        this.tooltipStore.set(this.tooltipStoreValue);
+        circleMouseenterTimer = null;
+      }, 200);
+    }
   };
 
   /**
@@ -319,12 +351,71 @@ export class Packer {
    * @param e Mouse event
    * @param d Datum
    */
-  circleMouseleaveHandler = (
-    e: MouseEvent,
-    d: d3.HierarchyCircularNode<PhraseTreeData>
-  ) => {
+  circleMouseleaveHandler = (e: MouseEvent) => {
     const element = d3.select(e.target as HTMLElement);
     element.classed('hovered', false);
+
+    if (this.hoverNode !== null) {
+      if (circleMouseleaveTimer !== null) {
+        clearTimeout(circleMouseleaveTimer);
+        circleMouseleaveTimer = null;
+      }
+
+      circleMouseleaveTimer = setTimeout(() => {
+        this.hoverNode = null;
+        this.tooltipStoreValue.show = false;
+        this.tooltipStore.set(this.tooltipStoreValue);
+      }, 50);
+    }
+  };
+
+  /**
+   * Compose a tooltip message for the hovered node
+   * @param d Hovered node
+   */
+  getTooltipMessage = (d: d3.HierarchyCircularNode<PhraseTreeData>) => {
+    let parentName = '';
+    let label = `<span class="label">"${d.data.n}"</span>`;
+    if (d.depth > 1) {
+      parentName = d.parent!.data.n;
+      const occurrenceIndex = d.data.n.match(
+        new RegExp(parentName, 'i')
+      )?.index;
+
+      if (occurrenceIndex !== undefined) {
+        if (occurrenceIndex == 0) {
+          label = `<span class="parent-label">${parentName}</span>`;
+          label += `<span class="label">${d.data.n.slice(
+            parentName.length
+          )}</span>`;
+        } else {
+          label = `<span class="label">${d.data.n.slice(
+            0,
+            occurrenceIndex
+          )}</span>`;
+          label += `<span class="parent-label">${parentName}</span>`;
+          label += `<span class="label">${d.data.n.slice(
+            occurrenceIndex + parentName.length
+          )}</span>`;
+        }
+      }
+    }
+
+    const message = `
+    <div class='tooltip-content packing-tooltip'>
+      <div class="top">
+        ${label}
+      </div>
+
+      <div class="splitter"></div>
+
+      <div class="bottom">
+        Count: ${d.data.v}
+      </div>
+
+    </div>
+    `;
+    return message;
   };
 
   /**

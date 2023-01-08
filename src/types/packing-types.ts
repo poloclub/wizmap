@@ -24,6 +24,11 @@ export interface PhraseTreeData {
   c?: PhraseTreeData[];
 
   /**
+   * Unique identifier for this data record
+   */
+  id?: number;
+
+  /**
    * Size information about the rendered phrase text
    */
   textInfo?: PhraseTextInfo;
