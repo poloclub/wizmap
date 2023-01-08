@@ -16,6 +16,7 @@ import { config } from '../../config/config';
 const DEBUG = config.debug;
 const FONT_SIZE = 12;
 const HALO_WIDTH = 4;
+const GRACE_PADDING = 3;
 
 /**
  * Class for the circle packing view
@@ -410,7 +411,11 @@ export class Packer {
       const drawnRects: Rect[] = [];
 
       // Check if we have drawn label for this node or its descendants
-      const descendants = d3.shuffle(this.focusNode.descendants().slice(1));
+      let descendants = d3.shuffle(this.focusNode.descendants().slice(1));
+      if (descendants.length === 0) {
+        descendants = this.focusNode.descendants();
+      }
+
       for (const child of descendants) {
         if (!child.data.textInfo!.visible) {
           const curRect: Rect = {
@@ -442,6 +447,51 @@ export class Packer {
         }
       }
 
+      // If we are focusing on one node without children, we can increase the
+      // label font size
+      let curFontSize = FONT_SIZE;
+      if (descendants.length === 1) {
+        let size = 12;
+        while (size < 150) {
+          if (descendants[0].data.textInfo?.infos[1].lines.length == 1) {
+            // This word has only one line
+            const width = getLatoTextWidth(
+              descendants[0].data.textInfo!.infos[0].lines[0],
+              size
+            );
+            const height = size;
+            const diagonal = Math.sqrt(width ** 2 + height ** 2);
+            if (diagonal > descendants[0].r * 2 * scale) {
+              size -= 10;
+              break;
+            }
+
+            size += 10;
+          } else {
+            // Use two line
+            const width = Math.max(
+              getLatoTextWidth(
+                descendants[0].data.textInfo!.infos[1].lines[0],
+                size
+              ),
+              getLatoTextWidth(
+                descendants[0].data.textInfo!.infos[1].lines[1],
+                size
+              )
+            );
+            const height = 2 * size;
+            const diagonal = Math.sqrt(width ** 2 + height ** 2);
+            if (diagonal > descendants[0].r * 2 * scale) {
+              size -= 10;
+              break;
+            }
+
+            size += 10;
+          }
+        }
+        curFontSize = size;
+      }
+
       const localLabels = curTextContent
         .selectAll<SVGGElement, d3.HierarchyCircularNode<PhraseTreeData>>(
           'g.top-text-group'
@@ -453,12 +503,19 @@ export class Packer {
           'transform',
           d => `translate(${(d.x - x0) * scale}, ${(d.y - y0) * scale})`
         )
-        .style('font-size', `${FONT_SIZE}px`);
+        .style(
+          'font-size',
+          `${descendants.length === 1 ? curFontSize : FONT_SIZE}px`
+        );
 
       // Draw the text
       localLabels
         .append('text')
         .attr('class', 'phrase-label')
+        .classed(
+          'phrase-label-2',
+          d => descendants.length === 1 && d.depth == 2
+        )
         .each((d, i, g) =>
           drawLabelInCircle({
             d,
@@ -466,7 +523,7 @@ export class Packer {
             g,
             hideParent: false,
             checkHidden: false,
-            showHalo: true,
+            showHalo: descendants.length > 1,
             scale,
             markVisible: false
           })
@@ -577,7 +634,7 @@ const shouldHideText = (
         d.data.textInfo.infos[0].diagonal,
         d.data.textInfo.infos[1].diagonal
       ) >
-        2 * d.r * scale
+        2 * d.r * scale + GRACE_PADDING
     : true;
 };
 
@@ -608,7 +665,8 @@ const drawLabelInCircle = ({
 
   // Prioritize fitting the text in one line
   if (
-    d.data.textInfo.infos[0].diagonal < 2 * d.r ||
+    (checkHidden &&
+      d.data.textInfo.infos[0].diagonal < 2 * d.r * scale + GRACE_PADDING) ||
     (!checkHidden && d.data.textInfo.infos[1].lines.length == 1)
   ) {
     // One line
