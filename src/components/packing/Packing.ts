@@ -436,7 +436,10 @@ export class Packer {
         allDescendants[0].push(descendant);
       }
       allDescendants.forEach(ds => d3.shuffle(ds));
-      let descendants = allDescendants.reduce((a, b) => a.concat(b));
+      let descendants =
+        allDescendants.length === 0
+          ? []
+          : allDescendants.reduce((a, b) => a.concat(b));
 
       if (descendants.length === 0) {
         descendants = this.focusNode.descendants();
