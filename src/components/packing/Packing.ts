@@ -18,6 +18,10 @@ const FONT_SIZE = 12;
 const HALO_WIDTH = 4;
 const GRACE_PADDING = 3;
 
+interface NodeRect extends Rect {
+  node: d3.HierarchyCircularNode<PhraseTreeData>;
+}
+
 /**
  * Class for the circle packing view
  */
@@ -113,7 +117,6 @@ export class Packer {
       .attr('height', this.svgSize.height)
       .on('click', (e: MouseEvent) => {
         if (this.pack) {
-          this.resetZoomInteractions();
           this.circleClickHandler(e, this.pack);
         }
       });
@@ -168,9 +171,10 @@ export class Packer {
     if (this.pack === null) return;
     const content = this.svg.select('g.content');
     const circleContent = content.append('g').attr('class', 'content-circle');
-    const textContent1 = content.append('g').attr('class', 'content-text-1');
-    const textContent2 = content.append('g').attr('class', 'content-text-2');
-    const textContent3 = content.append('g').attr('class', 'content-text-3');
+
+    for (let h = 1; h < this.pack.height + 2; h++) {
+      content.append('g').attr('class', `content-text-${h}`);
+    }
 
     // Initialize the zoom
     this.focusNode = this.pack;
@@ -265,6 +269,7 @@ export class Packer {
       }
     }
 
+    const textContent1 = this.svg.select<SVGGElement>('g.content-text-1');
     this.topTextGroups = textContent1
       .selectAll<SVGGElement, d3.HierarchyCircularNode<PhraseTreeData>>(
         'g.top-text-group'
@@ -356,6 +361,8 @@ export class Packer {
     if (d === this.focusNode) return;
     e.stopPropagation();
 
+    this.resetZoomInteractions();
+
     const textContent1 = this.svg.select<SVGGElement>('g.content-text-1');
 
     // Start zooming
@@ -402,39 +409,70 @@ export class Packer {
 
       // Allow users to interact with all descendants
       this.circleGroups
-        .filter(d => d.parent === this.focusNode)
+        .filter(d => {
+          return d.ancestors().slice(0, 3).includes(this.focusNode!);
+        })
         .style('--base-stroke', `${scale}px`)
         .classed('no-pointer', false);
 
+      // Disallow users to interact with the current node
+      this.circleGroups
+        .filter(d => d == this.focusNode)
+        .classed('no-pointer', true);
+
       // If a node is focused, show all descendants' texts
       const topLabelNodes: d3.HierarchyCircularNode<PhraseTreeData>[] = [];
-      const drawnRects: Rect[] = [];
+      const drawnRects: NodeRect[] = [];
 
       // Check if we have drawn label for this node or its descendants
-      let descendants = d3.shuffle(this.focusNode.descendants().slice(1));
+      // Prioritize drawing children in the deeper levels
+      let curDepth = -1;
+      const allDescendants: d3.HierarchyCircularNode<PhraseTreeData>[][] = [];
+      for (const descendant of this.focusNode.descendants().slice(1)) {
+        if (descendant.depth !== curDepth) {
+          allDescendants.unshift([]);
+          curDepth = descendant.depth;
+        }
+        allDescendants[0].push(descendant);
+      }
+      allDescendants.forEach(ds => d3.shuffle(ds));
+      let descendants = allDescendants.reduce((a, b) => a.concat(b));
+
       if (descendants.length === 0) {
         descendants = this.focusNode.descendants();
       }
 
       for (const child of descendants) {
         if (!child.data.textInfo!.visible) {
-          const curRect: Rect = {
+          const curRect: NodeRect = {
             x: (child.x - x0) * scale - child.data.textInfo!.infos[1].width / 2,
             y:
               (child.y - y0) * scale - child.data.textInfo!.infos[1].height / 2,
             width: child.data.textInfo!.infos[1].width,
-            height: child.data.textInfo!.infos[1].height
+            height: child.data.textInfo!.infos[1].height,
+            node: child
           };
 
-          // Check if this label is taller than the back circle
+          // Check if this label is much taller or wider than the back circle
           if (curRect.height > child.r * scale * 2 - 5) {
             continue;
           }
 
+          if (curRect.width > child.r * scale * 3) {
+            continue;
+          }
+
           // Check if this label would interact with other labels
+          // Also check if we are drawing a label where its children's label has
+          // already been drawn (ignore the parent's label in this case)
           let intersect = false;
           for (const drawnRect of drawnRects) {
             if (rectsIntersect(drawnRect, curRect)) {
+              intersect = true;
+              break;
+            }
+
+            if (child === drawnRect.node.parent) {
               intersect = true;
               break;
             }
@@ -451,7 +489,7 @@ export class Packer {
       // label font size
       let curFontSize = FONT_SIZE;
       if (descendants.length === 1) {
-        let size = 12;
+        let size = 5;
         while (size < 150) {
           if (descendants[0].data.textInfo?.infos[1].lines.length == 1) {
             // This word has only one line
@@ -466,7 +504,7 @@ export class Packer {
               break;
             }
 
-            size += 10;
+            size += 5;
           } else {
             // Use two line
             const width = Math.max(
@@ -486,7 +524,7 @@ export class Packer {
               break;
             }
 
-            size += 10;
+            size += 5;
           }
         }
         curFontSize = size;
@@ -512,10 +550,7 @@ export class Packer {
       localLabels
         .append('text')
         .attr('class', 'phrase-label')
-        .classed(
-          'phrase-label-2',
-          d => descendants.length === 1 && d.depth == 2
-        )
+        .classed('phrase-label-2', d => descendants.length === 1 && d.depth > 1)
         .each((d, i, g) =>
           drawLabelInCircle({
             d,

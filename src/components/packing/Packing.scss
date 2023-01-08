@@ -70,13 +70,25 @@
 
 :global(.packing-svg .circle-group-1 circle.hovered) {
   stroke: $teal-600;
-  stroke-width: calc(var(--base-stroke) * 3);
+  stroke-width: calc(var(--base-stroke) * 2);
 }
 
 :global(.packing-svg .circle-group-2 circle) {
-  fill: $teal-700;
+  fill: $teal-600;
+  stroke: $teal-600;
 }
 
 :global(.packing-svg .circle-group-2 circle.hovered) {
   stroke-width: calc(var(--base-stroke) * 2);
+  stroke: $teal-600;
+}
+
+:global(.packing-svg .circle-group-3 circle) {
+  fill: $teal-900;
+  stroke: $teal-900;
+}
+
+:global(.packing-svg .circle-group-3 circle.hovered) {
+  stroke-width: calc(var(--base-stroke) * 2);
+  stroke: $teal-900;
 }
