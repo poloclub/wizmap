@@ -3,9 +3,9 @@ import d3 from '../../utils/d3-import';
 import type {
   TopicData,
   DrawnLabel,
-  LabelData,
-  Direction
+  LabelData
 } from '../../types/embedding-types';
+import { Direction } from '../../types/embedding-types';
 import type { Size, Padding, Rect, Point } from '../../types/common-types';
 import { timeit, rectsIntersect } from '../../utils/utils';
 import { getLatoTextWidth } from '../../utils/text-width';

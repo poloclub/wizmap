@@ -299,6 +299,7 @@ export class Embedding {
       .attr('height', this.svgFullSize.height)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
+        this.highlightPoint(undefined);
         this.mouseoverLabel(null, null);
       });
 

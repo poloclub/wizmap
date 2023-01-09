@@ -54,7 +54,7 @@
         on:click={() => {
           view = 'embedding';
         }}
-        data-text="Embedding">Embedding</button
+        data-text="Prompt Embedding">Prompt Embedding</button
       >
       <span class="splitter" />
       <button
@@ -63,7 +63,7 @@
         on:click={() => {
           view = 'phrase';
         }}
-        data-text="Popular Phrase">Popular Phrase</button
+        data-text="Popular Phrases">Popular Phrases</button
       >
     </div>
   </div>

@@ -151,7 +151,7 @@
       visibility: hidden;
       pointer-events: none;
       overflow: hidden;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     &:hover {
@@ -163,7 +163,7 @@
     }
 
     &.selected {
-      font-weight: 600;
+      font-weight: 700;
 
       &::before {
         content: '';
@@ -175,7 +175,7 @@
         transform: translate(-50%, 0);
 
         border-radius: 5px;
-        border-bottom: 2px solid $gray-500;
+        // border-bottom: 2px solid $gray-500;
       }
     }
   }
