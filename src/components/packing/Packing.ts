@@ -355,6 +355,11 @@ export class Packer {
     const element = d3.select(e.target as HTMLElement);
     element.classed('hovered', false);
 
+    if (circleMouseenterTimer !== null) {
+      clearTimeout(circleMouseenterTimer);
+      circleMouseenterTimer = null;
+    }
+
     if (this.hoverNode !== null) {
       if (circleMouseleaveTimer !== null) {
         clearTimeout(circleMouseleaveTimer);

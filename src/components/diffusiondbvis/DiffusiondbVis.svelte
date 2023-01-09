@@ -3,9 +3,11 @@
   import Packing from '../packing/Packing.svelte';
   import Tooltip from '../Tooltip.svelte';
   import { getTooltipStore } from '../../stores';
+  import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
+  import iconGithub from '../../imgs/icon-github.svg?raw';
 
   let component: HTMLElement | null = null;
-  let view = 'packing';
+  let view = 'embedding';
 
   // Initialize the stores to pass to child components
   const tooltipStore = getTooltipStore();
@@ -18,11 +20,51 @@
 <div class="diffusiondbvis-page">
   <Tooltip {tooltipStore} />
 
-  <div class="main-app" bind:this={component}>
-    {#if view === 'embedding'}
-      <Embedding {tooltipStore} />
-    {:else if view === 'packing'}
-      <Packing {tooltipStore} />
-    {/if}
+  <div class="app-wrapper">
+    <div class="app-title">
+      <div class="title-left">
+        <div class="app-icon">
+          {@html logoDiffusionDB}
+        </div>
+        <span class="app-name"> DiffusionDB Explorer </span>
+      </div>
+
+      <div class="title-right">
+        <div class="title-link">
+          {@html iconGithub}
+          <!-- <a href="https://github.com/poloclub/diffusiondb">Code</a> -->
+        </div>
+      </div>
+    </div>
+
+    <div class="main-app" bind:this={component}>
+      <div class="main-app-container" class:hidden={view !== 'embedding'}>
+        <Embedding {tooltipStore} />
+      </div>
+
+      <div class="main-app-container" class:hidden={view !== 'phrase'}>
+        <Packing {tooltipStore} />
+      </div>
+    </div>
+
+    <div class="app-tabs">
+      <button
+        class="tab"
+        class:selected={view === 'embedding'}
+        on:click={() => {
+          view = 'embedding';
+        }}
+        data-text="Embedding">Embedding</button
+      >
+      <span class="splitter" />
+      <button
+        class="tab"
+        class:selected={view === 'phrase'}
+        on:click={() => {
+          view = 'phrase';
+        }}
+        data-text="Popular Phrase">Popular Phrase</button
+      >
+    </div>
   </div>
 </div>
