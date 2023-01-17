@@ -570,64 +570,21 @@ export class Embedding {
 
     // Create a new blue interpolator based on d3.interpolateBlues
     // (starting from white here)
-    const blues = [
+    const blueScale = d3.interpolateLab(
       '#ffffff',
-      '#deebf7',
-      '#c6dbef',
-      '#9ecae1',
-      '#6baed6',
-      '#4292c6',
-      '#2171b5',
-      '#08519c',
-      '#08306b'
-    ];
-    const blueScale = d3.interpolateRgbBasis(blues);
-
-    // const reds = [
-    //   '#ffffff',
-    //   '#fee0d2',
-    //   '#fcbba1',
-    //   '#fc9272',
-    //   '#fb6a4a',
-    //   '#ef3b2c',
-    //   '#cb181d',
-    //   '#a50f15',
-    //   '#67000d'
-    // ];
-
-    // const greens = [
-    //   '#ffffff',
-    //   '#e5f5e0',
-    //   '#c7e9c0',
-    //   '#a1d99b',
-    //   '#74c476',
-    //   '#41ab5d',
-    //   '#238b45',
-    //   '#006d2c',
-    //   '#00441b'
-    // ];
-
-    const purples = [
-      '#ffffff',
-      '#efedf5',
-      '#dadaeb',
-      '#bcbddc',
-      '#9e9ac8',
-      '#807dba',
-      '#6a51a3',
-      '#54278f',
-      '#3f007d'
-    ];
-
-    const purpleScale = d3.interpolateRgbBasis(purples);
-
+      config.colors['light-blue-800']
+    );
     let colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
-      blueScale(d / 1.2)
+      blueScale(d / 1)
     );
 
     if (this.embeddingName === 'image') {
+      const purpleScale = d3.interpolateLab(
+        '#ffffff',
+        config.colors['pink-900']
+      );
       colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
-        purpleScale(d / 1.1)
+        purpleScale(d / 1)
       );
     }
 
