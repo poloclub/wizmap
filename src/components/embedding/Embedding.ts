@@ -85,7 +85,8 @@ export class Embedding {
   component: HTMLElement;
   updateEmbedding: () => void;
 
-  // Data URLs
+  // Different settings based on the embedding type (prompt, image)
+  embeddingName: string;
   pointURL: string;
   gridURL: string;
 
@@ -174,6 +175,7 @@ export class Embedding {
     this.component = component;
     this.tooltipStore = tooltipStore;
     this.updateEmbedding = updateEmbedding;
+    this.embeddingName = embeddingName;
 
     // Figure out data urls based on the embedding name
     // const url = '/data/umap-1m.ndjson';
@@ -581,10 +583,53 @@ export class Embedding {
     ];
     const blueScale = d3.interpolateRgbBasis(blues);
 
-    const colorScale = d3.scaleSequential(
-      d3.extent(thresholds) as number[],
-      d => blueScale(d / 1.2)
+    // const reds = [
+    //   '#ffffff',
+    //   '#fee0d2',
+    //   '#fcbba1',
+    //   '#fc9272',
+    //   '#fb6a4a',
+    //   '#ef3b2c',
+    //   '#cb181d',
+    //   '#a50f15',
+    //   '#67000d'
+    // ];
+
+    // const greens = [
+    //   '#ffffff',
+    //   '#e5f5e0',
+    //   '#c7e9c0',
+    //   '#a1d99b',
+    //   '#74c476',
+    //   '#41ab5d',
+    //   '#238b45',
+    //   '#006d2c',
+    //   '#00441b'
+    // ];
+
+    const purples = [
+      '#ffffff',
+      '#efedf5',
+      '#dadaeb',
+      '#bcbddc',
+      '#9e9ac8',
+      '#807dba',
+      '#6a51a3',
+      '#54278f',
+      '#3f007d'
+    ];
+
+    const purpleScale = d3.interpolateRgbBasis(purples);
+
+    let colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
+      blueScale(d / 1.2)
     );
+
+    if (this.embeddingName === 'image') {
+      colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
+        purpleScale(d / 1.1)
+      );
+    }
 
     // Draw the contours
     contourGroup
