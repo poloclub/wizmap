@@ -7,7 +7,7 @@
   import iconGithub from '../../imgs/icon-github.svg?raw';
 
   let component: HTMLElement | null = null;
-  let view = 'embedding';
+  let view = 'image-embedding';
 
   // Initialize the stores to pass to child components
   const tooltipStore = getTooltipStore();
@@ -38,8 +38,15 @@
     </div>
 
     <div class="main-app" bind:this={component}>
-      <div class="main-app-container" class:hidden={view !== 'embedding'}>
-        <Embedding {tooltipStore} />
+      <div
+        class="main-app-container"
+        class:hidden={view !== 'prompt-embedding'}
+      >
+        <Embedding {tooltipStore} embeddingName={'prompt'} />
+      </div>
+
+      <div class="main-app-container" class:hidden={view !== 'image-embedding'}>
+        <Embedding {tooltipStore} embeddingName={'image'} />
       </div>
 
       <div class="main-app-container" class:hidden={view !== 'phrase'}>
@@ -50,13 +57,26 @@
     <div class="app-tabs">
       <button
         class="tab"
-        class:selected={view === 'embedding'}
+        class:selected={view === 'prompt-embedding'}
         on:click={() => {
-          view = 'embedding';
+          view = 'prompt-embedding';
         }}
         data-text="Prompt Embedding">Prompt Embedding</button
       >
+
       <span class="splitter" />
+
+      <button
+        class="tab"
+        class:selected={view === 'image-embedding'}
+        on:click={() => {
+          view = 'image-embedding';
+        }}
+        data-text="Image Embedding">Image Embedding</button
+      >
+
+      <span class="splitter" />
+
       <button
         class="tab"
         class:selected={view === 'phrase'}

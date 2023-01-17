@@ -22,6 +22,7 @@
   };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;
+  export let embeddingName = 'prompt';
 
   onMount(() => {
     mounted = true;
@@ -57,7 +58,8 @@
         component,
         tooltipStore,
         updateEmbedding,
-        defaultSetting
+        defaultSetting,
+        embeddingName
       });
     }
   };

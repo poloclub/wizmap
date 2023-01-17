@@ -53,6 +53,7 @@ import { config } from '../../config/config';
 
 const DEBUG = config.debug;
 const REFILL_TIME_GAP = 300;
+const DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
 
 type HoverMode = 'point' | 'label' | 'none';
 
@@ -84,9 +85,13 @@ export class Embedding {
   component: HTMLElement;
   updateEmbedding: () => void;
 
+  // Data URLs
+  pointURL: string;
+  gridURL: string;
+
   // Zooming
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
-  initZoomK = 1;
+  initZoomTransform = d3.zoomIdentity;
   curZoomTransform: d3.ZoomTransform = d3.zoomIdentity;
   curZoomLevel = 1;
 
@@ -157,16 +162,29 @@ export class Embedding {
     component,
     tooltipStore,
     updateEmbedding,
-    defaultSetting
+    defaultSetting,
+    embeddingName
   }: {
     component: HTMLElement;
     tooltipStore: Writable<TooltipStoreValue>;
     updateEmbedding: () => void;
     defaultSetting: EmbeddingInitSetting;
+    embeddingName: string;
   }) {
     this.component = component;
     this.tooltipStore = tooltipStore;
     this.updateEmbedding = updateEmbedding;
+
+    // Figure out data urls based on the embedding name
+    // const url = '/data/umap-1m.ndjson';
+    this.pointURL = new URL('umap-1m.ndjson', DATA_BASE).href;
+    this.gridURL = `${import.meta.env.BASE_URL}data/umap-1m-grid.json`;
+
+    if (embeddingName === 'image') {
+      // this.pointURL = `${import.meta.env.BASE_URL}data/umap-image-150k.ndjson`;
+      this.pointURL = new URL('umap-image-150k.ndjson', DATA_BASE).href;
+      this.gridURL = `${import.meta.env.BASE_URL}data/umap-image-1m-grid.json`;
+    }
 
     // Init some properties based on the default setting
     this.hoverMode = defaultSetting.hover;
@@ -329,7 +347,7 @@ export class Embedding {
   initData = async () => {
     // Read the grid data for contour background
     // Await the data to load to get the range for x and y
-    const gridData = await d3.json<GridData>('/data/umap-1m-grid.json');
+    const gridData = await d3.json<GridData>(this.gridURL);
 
     if (gridData === undefined) {
       throw Error('Fail to load grid data.');
@@ -366,13 +384,9 @@ export class Embedding {
 
     // Tell the worker to start loading data
     // (need to wait to get the xRange and yRange)
-    const url = `/data/umap-${'1m'}.ndjson`;
-    // const url =
-    //   'https://pub-596951ee767949aba9096a18685c74bd.r2.dev/umap-1m.ndjson';
-
     const message: EmbeddingWorkerMessage = {
       command: 'startLoadData',
-      payload: { url, xRange, yRange }
+      payload: { url: this.pointURL, xRange, yRange }
     };
     this.embeddingWorker.postMessage(message);
 
@@ -389,7 +403,9 @@ export class Embedding {
 
     // Read the topic label data
     const topicPromise = d3
-      .json<TopicDataJSON>('/data/umap-1m-topic-data.json')
+      .json<TopicDataJSON>(
+        `${import.meta.env.BASE_URL}data/umap-1m-topic-data.json`
+      )
       .then(topicData => {
         if (topicData) {
           // Create a quad tree at each level
@@ -564,9 +580,10 @@ export class Embedding {
       '#08306b'
     ];
     const blueScale = d3.interpolateRgbBasis(blues);
+
     const colorScale = d3.scaleSequential(
       d3.extent(thresholds) as number[],
-      d => blueScale(d / 1.3)
+      d => blueScale(d / 1.2)
     );
 
     // Draw the contours
@@ -597,20 +614,22 @@ export class Embedding {
       }
     }
 
-    this.initZoomK = Math.min(
+    const initZoomK = Math.min(
       this.svgFullSize.width / (x1 - x0),
       this.svgFullSize.height / (y1 - y0)
     );
+
+    this.initZoomTransform = d3.zoomIdentity
+      .translate(this.svgSize.width / 2, this.svgSize.height / 2)
+      .scale(initZoomK)
+      .translate(-x0 - (x1 - x0) / 2, -y0 - (y1 - y0) / 2);
 
     // Trigger the first zoom
     this.topSvg
       .transition()
       .duration(300)
       .call(selection =>
-        this.zoom?.scaleTo(selection, this.initZoomK, [
-          this.svgSize.width / 2,
-          this.svgSize.height / 2
-        ])
+        this.zoom?.transform(selection, this.initZoomTransform)
       )
       .on('end', () => {
         this.contoursInitialized = true;
@@ -622,13 +641,7 @@ export class Embedding {
         .transition()
         .duration(700)
         .call(selection => {
-          this.zoom?.transform(
-            selection,
-            d3.zoomIdentity
-              .translate(this.svgSize.width / 2, this.svgSize.height / 2)
-              .scale(this.initZoomK)
-              .translate(-this.svgSize.width / 2, -this.svgSize.height / 2)
-          );
+          this.zoom?.transform(selection, this.initZoomTransform);
         });
     });
 
