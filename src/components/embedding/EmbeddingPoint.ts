@@ -36,7 +36,8 @@ export function drawScatterCanvas(this: Embedding) {
   if (!this.showPoint) return;
 
   const r =
-    (SCATTER_DOT_RADIUS * this.initZoomK) / Math.sqrt(this.curZoomTransform.k);
+    (SCATTER_DOT_RADIUS * this.initZoomTransform.k) /
+    Math.sqrt(this.curZoomTransform.k);
   this.pointCtx.globalAlpha = 0.5;
 
   for (const point of this.promptPoints) {
@@ -47,8 +48,7 @@ export function drawScatterCanvas(this: Embedding) {
     this.pointCtx.arc(x, y, r, 0, TAU);
 
     // Fill the data point circle
-    const color = config.colors['pink-300'];
-    // const color = config.colors['gray-900'];
+    const color = config.colors['gray-900'];
 
     // const modifiedColor = color.replace(
     //   /hsl\((.+),(.+),(.+)\)/,
@@ -72,7 +72,7 @@ export function drawScatterBackCanvas(this: Embedding) {
   // Trick: here we draw a slightly larger circle when user zooms out the
   // viewpoint, so that the pixel coverage is higher (smoother/better
   // mouseover picking)
-  const defaultR = SCATTER_BACK_DOT_RADIUS * this.initZoomK;
+  const defaultR = SCATTER_BACK_DOT_RADIUS * this.initZoomTransform.k;
   const r = Math.max(defaultR, 3.5 * defaultR - this.curZoomTransform.k);
 
   for (const point of this.promptPoints) {

@@ -626,6 +626,14 @@ export class Embedding {
       .scale(initZoomK)
       .translate(-x0 - (x1 - x0) / 2, -y0 - (y1 - y0) / 2);
 
+    // TODO: (remove me) Hack to override the auto zoom for image embedding
+    if (this.embeddingName === 'image') {
+      this.initZoomTransform = d3.zoomIdentity
+        .translate(this.svgSize.width / 2, this.svgSize.height / 2)
+        .scale(2.037)
+        .translate(-340, -376);
+    }
+
     // Trigger the first zoom
     this.topSvg
       .transition()
