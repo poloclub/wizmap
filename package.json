@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
+    "build:github": "vite build --mode github",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },

@@ -53,7 +53,11 @@ import { config } from '../../config/config';
 
 const DEBUG = config.debug;
 const REFILL_TIME_GAP = 300;
-const DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
+
+let DATA_BASE = `${import.meta.env.BASE_URL}data`;
+if (import.meta.env.PROD) {
+  DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
+}
 
 type HoverMode = 'point' | 'label' | 'none';
 
@@ -179,12 +183,14 @@ export class Embedding {
 
     // Figure out data urls based on the embedding name
     // const url = '/data/umap-1m.ndjson';
-    this.pointURL = new URL('umap-1m.ndjson', DATA_BASE).href;
+    console.log(DATA_BASE);
+    this.pointURL = DATA_BASE + '/umap-1m.ndjson';
     this.gridURL = `${import.meta.env.BASE_URL}data/umap-1m-grid.json`;
 
     if (embeddingName === 'image') {
       // this.pointURL = `${import.meta.env.BASE_URL}data/umap-image-150k.ndjson`;
-      this.pointURL = new URL('umap-image-150k.ndjson', DATA_BASE).href;
+      // this.pointURL = new URL('umap-image-150k.ndjson', DATA_BASE).href;
+      this.pointURL = DATA_BASE + '/umap-image-150k.ndjson';
       this.gridURL = `${import.meta.env.BASE_URL}data/umap-image-1m-grid.json`;
     }
 
