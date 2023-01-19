@@ -183,7 +183,6 @@ export class Embedding {
 
     // Figure out data urls based on the embedding name
     // const url = '/data/umap-1m.ndjson';
-    console.log(DATA_BASE);
     this.pointURL = DATA_BASE + '/umap-1m.ndjson';
     this.gridURL = `${import.meta.env.BASE_URL}data/umap-1m-grid.json`;
 

@@ -7,7 +7,33 @@
   import iconGithub from '../../imgs/icon-github.svg?raw';
 
   let component: HTMLElement | null = null;
-  let view = 'image-embedding';
+  let view = 'prompt-embedding';
+
+  // Check for url hash (/#phrase)
+  if (window.location.hash) {
+    const hash = window.location.hash.slice(1);
+
+    switch (hash) {
+      case 'phrase': {
+        view = 'phrase';
+        break;
+      }
+
+      case 'prompt-embedding': {
+        view = 'prompt-embedding';
+        break;
+      }
+
+      case 'image-embedding': {
+        view = 'image-embedding';
+        break;
+      }
+
+      default: {
+        break;
+      }
+    }
+  }
 
   // Initialize the stores to pass to child components
   const tooltipStore = getTooltipStore();
@@ -30,10 +56,9 @@
       </div>
 
       <div class="title-right">
-        <div class="title-link">
+        <a class="title-link" href="https://github.com/anonacl/diffusiondb">
           {@html iconGithub}
-          <!-- <a href="https://github.com/poloclub/diffusiondb">Code</a> -->
-        </div>
+        </a>
       </div>
     </div>
 
