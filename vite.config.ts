@@ -30,7 +30,7 @@ export default defineConfig(({ command, mode }) => {
         return {
           base: '/diffusiondb/explorer',
           build: {
-            outDir: 'gh-page'
+            outDir: 'explorer'
           },
           plugins: [svelte()]
         };

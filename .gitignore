@@ -13,6 +13,7 @@ publish.sh
 publish*
 dist
 gh-page
+explorer
 lite
 
 umap-1m.json

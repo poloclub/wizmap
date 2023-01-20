@@ -1180,7 +1180,6 @@ export function redrawTopicGrid(
   );
 
   for (const topicCtx of topicCtxs) {
-    topicCtx.save();
     topicCtx.setTransform(1, 0, 0, 1, 0, 0);
     topicCtx.clearRect(0, 0, this.svgFullSize.width, this.svgFullSize.height);
     topicCtx.translate(this.curZoomTransform.x, this.curZoomTransform.y);
@@ -1188,7 +1187,6 @@ export function redrawTopicGrid(
   }
 
   this.drawTopicGrid(strokeColor);
-  topicCtxs.forEach(c => c.restore());
 }
 
 /**

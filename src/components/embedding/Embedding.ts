@@ -635,7 +635,7 @@ export class Embedding {
     if (this.embeddingName === 'image') {
       this.initZoomTransform = d3.zoomIdentity
         .translate(this.svgSize.width / 2, this.svgSize.height / 2)
-        .scale(2.037)
+        .scale(1.6)
         .translate(-340, -376);
     }
 
