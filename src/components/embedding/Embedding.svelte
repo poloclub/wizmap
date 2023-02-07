@@ -14,11 +14,11 @@
   let showControl = false;
 
   const defaultSetting: EmbeddingInitSetting = {
-    showContour: true,
-    showPoint: false,
-    showGrid: true,
-    showLabel: true,
-    hover: 'none'
+    showContour: false,
+    showPoint: true,
+    showGrid: false,
+    showLabel: false,
+    hover: 'point'
   };
 
   export let tooltipStore: Writable<TooltipStoreValue> | null = null;

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import DiffusiondbVis from './src/components/diffusiondbvis/DiffusiondbVis.svelte';
+  // import DiffusiondbVis from './src/components/diffusiondbvis/DiffusiondbVis.svelte';
+  import MapView from './src/components/mapview/MapView.svelte';
 </script>
 
 <style></style>
@@ -14,5 +15,6 @@
 </svelte:head>
 
 <div class="stand-alone-page">
-  <DiffusiondbVis />
+  <!-- <DiffusiondbVis /> -->
+  <MapView />
 </div>
