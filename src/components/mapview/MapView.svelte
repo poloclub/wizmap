@@ -51,7 +51,7 @@
       <div class="title-left">
         <!-- <div class="app-icon">
         </div> -->
-        <span class="app-name"> Embedding Map </span>
+        <span class="app-name"> EmbeddingWise </span>
       </div>
 
       <div class="title-right">

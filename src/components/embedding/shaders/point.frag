@@ -1,4 +1,3 @@
-// Precision of floating point numbers
 precision highp float;
 
 // Passed from the vertex shader

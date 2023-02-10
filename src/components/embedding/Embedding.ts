@@ -681,7 +681,7 @@ export class Embedding {
       .select('.top-group')
       .attr('transform', `${transform.toString()}`);
 
-    // Update the points
+    // Refill more points in the region
     // if (Date.now() - this.lsatRefillTime > REFILL_TIME_GAP) {
     //   const refillMessage: EmbeddingWorkerMessage = {
     //     command: 'startRefillRegion',
@@ -696,7 +696,7 @@ export class Embedding {
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      // this.redrawFrontPoints();
+      this.drawScatterCanvas();
     }
 
     // Adjust the label size based on the zoom level
