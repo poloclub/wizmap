@@ -13,7 +13,8 @@ import type {
   LabelData,
   Direction,
   EmbeddingWorkerMessage,
-  EmbeddingInitSetting
+  EmbeddingInitSetting,
+  WebGLMatrices
 } from '../../types/embedding-types';
 import type { Size, Padding, Rect, Point } from '../../types/common-types';
 import {
@@ -37,16 +38,14 @@ import {
   redrawTopicGrid,
   drawTopicGridFrame
 } from './EmbeddingLabel';
-// import {
-// drawScatterCanvas,
-//   drawScatterBackCanvas,
-//   getNextUniqueColor,
-//   highlightPoint,
-//   redrawFrontPoints,
-//   redrawBackPoints
-// } from './EmbeddingPoint';
 import createRegl from 'regl';
-import { drawScatterCanvas } from './EmbeddingPointWebGL';
+import {
+  initWebGLMatrices,
+  drawScatterPlot,
+  getNextUniqueColor,
+  drawScatterBackPlot,
+  highlightPoint
+} from './EmbeddingPointWebGL';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
@@ -77,13 +76,12 @@ export class Embedding {
 
   topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
 
-  pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
-  pointRegl: createRegl.Regl;
-
   topicCanvases: d3.Selection<HTMLElement, unknown, null, undefined>[];
 
+  pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  pointRegl: createRegl.Regl;
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
-  pointBackCtx: CanvasRenderingContext2D;
+  pointBackRegl: createRegl.Regl;
   colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
   hoverPoint: PromptPoint | null = null;
 
@@ -123,6 +121,7 @@ export class Embedding {
   // Scatter plot
   lastRefillID = 0;
   lsatRefillTime = 0;
+  webGLMatrices: WebGLMatrices | null = null;
 
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
@@ -154,12 +153,11 @@ export class Embedding {
   redrawTopicGrid = redrawTopicGrid;
   drawTopicGridFrame = drawTopicGridFrame;
 
-  drawScatterCanvas = drawScatterCanvas;
-  // drawScatterBackCanvas = drawScatterBackCanvas;
-  // getNextUniqueColor = getNextUniqueColor;
-  // highlightPoint = highlightPoint;
-  // redrawFrontPoints = redrawFrontPoints;
-  // redrawBackPoints = redrawBackPoints;
+  drawScatterPlot = drawScatterPlot;
+  initWebGLMatrices = initWebGLMatrices;
+  drawScatterBackPlot = drawScatterBackPlot;
+  getNextUniqueColor = getNextUniqueColor;
+  highlightPoint = highlightPoint;
 
   /**
    *
@@ -225,11 +223,12 @@ export class Embedding {
     }
 
     this.svgPadding = {
-      top: 5,
-      bottom: 5,
-      left: 5,
-      right: 5
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0
     };
+
     this.svgSize = {
       width:
         this.svgFullSize.width - this.svgPadding.left - this.svgPadding.right,
@@ -272,10 +271,10 @@ export class Embedding {
       .select<HTMLElement>('.embedding-canvas-back')
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
-    this.pointBackCtx = (
-      this.pointBackCanvas.node()! as HTMLCanvasElement
-    ).getContext('2d', { willReadFrequently: true })!;
-    this.pointBackCtx.imageSmoothingEnabled = false;
+    this.pointBackRegl = createRegl({
+      canvas: this.pointBackCanvas!.node() as HTMLCanvasElement,
+      attributes: { preserveDrawingBuffer: true }
+    });
 
     // Register zoom
     this.zoom = d3
@@ -327,7 +326,11 @@ export class Embedding {
       .on('mouseleave', () => {
         // this.highlightPoint(undefined);
         this.mouseoverLabel(null, null);
-      });
+      })
+      .attr(
+        'transform',
+        `translate(${this.svgPadding.left}, ${this.svgPadding.top})`
+      );
 
     const topGroup = topSvg.append('g').attr('class', 'top-group');
 
@@ -444,6 +447,9 @@ export class Embedding {
         ).value = `${this.curLabelNum}`;
       }, 500);
     });
+
+    // Initialize WebGL matrices once we have the scales
+    this.initWebGLMatrices();
   };
 
   /**
@@ -696,7 +702,7 @@ export class Embedding {
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      this.drawScatterCanvas();
+      this.drawScatterPlot();
     }
 
     // Adjust the label size based on the zoom level
@@ -722,7 +728,7 @@ export class Embedding {
     // === Task (2) ===
     // Transform the background canvas elements
     if (this.showPoint) {
-      // this.redrawBackPoints();
+      this.drawScatterBackPlot();
     }
   };
 
@@ -751,9 +757,8 @@ export class Embedding {
         if (e.data.payload.isFirstBatch && e.data.payload.points) {
           // Draw the first batch
           this.promptPoints = e.data.payload.points;
-          // this.redrawFrontPoints();
-          // this.redrawBackPoints();
-          this.drawScatterCanvas();
+          this.drawScatterPlot();
+          this.drawScatterBackPlot();
         } else {
           console.log('Finished loading all');
         }
@@ -787,10 +792,20 @@ export class Embedding {
     const y = e.offsetY;
     this.lastMouseClientPosition = { x: x, y: y };
 
-    const pixel = this.pointBackCtx.getImageData(x, y, 1, 1);
-    const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);
-    const point = this.colorPointMap.get(hex);
-    // this.highlightPoint(point);
+    // Read the pixel value from the webGL context
+    const pixelData = new Uint8Array(4);
+    this.pointBackRegl.read({
+      x: x,
+      y: this.svgFullSize.height - y,
+      width: 1,
+      height: 1,
+      data: pixelData
+    });
+
+    const rgb = [pixelData[0], pixelData[1], pixelData[2]];
+    const rgbString = rgb.toString();
+    const point = this.colorPointMap.get(rgbString);
+    this.highlightPoint(point);
 
     // Show labels
     this.mouseoverLabel(x, y);

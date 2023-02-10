@@ -1,8 +1,12 @@
-import type { Point, Rect } from './common-types';
-
 /**
  * Types for the Embedding view
  */
+import type { Point, Rect } from './common-types';
+
+export interface WebGLMatrices {
+  dataScaleMatrix: number[];
+  normalizeMatrix: number[];
+}
 
 export type EmbeddingInitSetting = {
   showContour: boolean;
