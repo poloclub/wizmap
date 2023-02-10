@@ -37,14 +37,16 @@ import {
   redrawTopicGrid,
   drawTopicGridFrame
 } from './EmbeddingLabel';
-import {
-  drawScatterCanvas,
-  drawScatterBackCanvas,
-  getNextUniqueColor,
-  highlightPoint,
-  redrawFrontPoints,
-  redrawBackPoints
-} from './EmbeddingPoint';
+// import {
+// drawScatterCanvas,
+//   drawScatterBackCanvas,
+//   getNextUniqueColor,
+//   highlightPoint,
+//   redrawFrontPoints,
+//   redrawBackPoints
+// } from './EmbeddingPoint';
+import createRegl from 'regl';
+import { drawScatterCanvas } from './EmbeddingPointWebGL';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
 import type { TooltipStoreValue } from '../../stores';
@@ -76,8 +78,9 @@ export class Embedding {
   topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  pointRegl: createRegl.Regl;
+
   topicCanvases: d3.Selection<HTMLElement, unknown, null, undefined>[];
-  pointCtx: CanvasRenderingContext2D;
 
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointBackCtx: CanvasRenderingContext2D;
@@ -152,11 +155,11 @@ export class Embedding {
   drawTopicGridFrame = drawTopicGridFrame;
 
   drawScatterCanvas = drawScatterCanvas;
-  drawScatterBackCanvas = drawScatterBackCanvas;
-  getNextUniqueColor = getNextUniqueColor;
-  highlightPoint = highlightPoint;
-  redrawFrontPoints = redrawFrontPoints;
-  redrawBackPoints = redrawBackPoints;
+  // drawScatterBackCanvas = drawScatterBackCanvas;
+  // getNextUniqueColor = getNextUniqueColor;
+  // highlightPoint = highlightPoint;
+  // redrawFrontPoints = redrawFrontPoints;
+  // redrawBackPoints = redrawBackPoints;
 
   /**
    *
@@ -249,9 +252,7 @@ export class Embedding {
       .select<HTMLElement>('.embedding-canvas')
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
-    this.pointCtx = (this.pointCanvas.node()! as HTMLCanvasElement).getContext(
-      '2d'
-    )!;
+    this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
 
     this.topicCanvases = [];
     for (const pos of ['top', 'bottom']) {
@@ -324,7 +325,7 @@ export class Embedding {
       .attr('height', this.svgFullSize.height)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
-        this.highlightPoint(undefined);
+        // this.highlightPoint(undefined);
         this.mouseoverLabel(null, null);
       });
 
@@ -681,21 +682,21 @@ export class Embedding {
       .attr('transform', `${transform.toString()}`);
 
     // Update the points
-    if (Date.now() - this.lsatRefillTime > REFILL_TIME_GAP) {
-      const refillMessage: EmbeddingWorkerMessage = {
-        command: 'startRefillRegion',
-        payload: {
-          refillID: ++this.lastRefillID,
-          viewRange: this.getCurViewRanges()
-        }
-      };
-      this.embeddingWorker.postMessage(refillMessage);
-      this.lsatRefillTime = Date.now();
-    }
+    // if (Date.now() - this.lsatRefillTime > REFILL_TIME_GAP) {
+    //   const refillMessage: EmbeddingWorkerMessage = {
+    //     command: 'startRefillRegion',
+    //     payload: {
+    //       refillID: ++this.lastRefillID,
+    //       viewRange: this.getCurViewRanges()
+    //     }
+    //   };
+    //   this.embeddingWorker.postMessage(refillMessage);
+    //   this.lsatRefillTime = Date.now();
+    // }
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      this.redrawFrontPoints();
+      // this.redrawFrontPoints();
     }
 
     // Adjust the label size based on the zoom level
@@ -721,7 +722,7 @@ export class Embedding {
     // === Task (2) ===
     // Transform the background canvas elements
     if (this.showPoint) {
-      this.redrawBackPoints();
+      // this.redrawBackPoints();
     }
   };
 
@@ -730,14 +731,14 @@ export class Embedding {
    */
   zoomEnded = () => {
     // Update the points (the last call during zoomed() might be skipped)
-    const refillMessage: EmbeddingWorkerMessage = {
-      command: 'startRefillRegion',
-      payload: {
-        refillID: ++this.lastRefillID,
-        viewRange: this.getCurViewRanges()
-      }
-    };
-    this.embeddingWorker.postMessage(refillMessage);
+    // const refillMessage: EmbeddingWorkerMessage = {
+    //   command: 'startRefillRegion',
+    //   payload: {
+    //     refillID: ++this.lastRefillID,
+    //     viewRange: this.getCurViewRanges()
+    //   }
+    // };
+    // this.embeddingWorker.postMessage(refillMessage);
   };
 
   /**
@@ -750,8 +751,9 @@ export class Embedding {
         if (e.data.payload.isFirstBatch && e.data.payload.points) {
           // Draw the first batch
           this.promptPoints = e.data.payload.points;
-          this.redrawFrontPoints();
-          this.redrawBackPoints();
+          // this.redrawFrontPoints();
+          // this.redrawBackPoints();
+          this.drawScatterCanvas();
         } else {
           console.log('Finished loading all');
         }
@@ -761,8 +763,8 @@ export class Embedding {
       case 'finishRefillRegion': {
         if (e.data.payload.refillID === this.lastRefillID) {
           this.promptPoints = e.data.payload.points;
-          this.redrawFrontPoints();
-          this.redrawBackPoints();
+          // this.redrawFrontPoints();
+          // this.redrawBackPoints();
         }
         break;
       }
@@ -788,7 +790,7 @@ export class Embedding {
     const pixel = this.pointBackCtx.getImageData(x, y, 1, 1);
     const hex = rgbToHex(pixel.data[0], pixel.data[1], pixel.data[2]);
     const point = this.colorPointMap.get(hex);
-    this.highlightPoint(point);
+    // this.highlightPoint(point);
 
     // Show labels
     this.mouseoverLabel(x, y);
@@ -879,8 +881,8 @@ export class Embedding {
           .classed('faded', this.showPoint && this.showLabel);
 
         if (this.showPoint) {
-          this.redrawFrontPoints();
-          this.redrawBackPoints();
+          // this.redrawFrontPoints();
+          // this.redrawBackPoints();
         }
 
         if (this.showGrid) this.redrawTopicGrid();

@@ -185,7 +185,6 @@ const processPointStream = (point: UMAPPointStreamData) => {
   dataPoints.push(promptPoint);
   tree.add(promptPoint);
   curPointID += 1;
-
   // Notify the main thread if we have load enough data for the first batch
   if (lastDrawnPoints === null && dataPoints.length >= POINT_THRESHOLD) {
     const result: EmbeddingWorkerMessage = {
@@ -196,7 +195,7 @@ const processPointStream = (point: UMAPPointStreamData) => {
       }
     };
     postMessage(result);
-    lastDrawnPoints = structuredClone(dataPoints) as PromptPoint[];
+    lastDrawnPoints = dataPoints.slice();
   }
 };
 
