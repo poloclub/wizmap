@@ -57,6 +57,44 @@ export function initWebGLMatrices(this: Embedding) {
   };
 }
 
+export function initWebGLBuffers(this: Embedding) {
+  // Get the position and color of each point
+  const positions: number[][] = [];
+  const frontColors: number[][] = [];
+  const backColors: number[][] = [];
+
+  this.colorPointMap.clear();
+
+  for (const point of this.promptPoints) {
+    const color = this.getNextUniqueColor();
+    this.colorPointMap.set(color.toString(), point);
+
+    positions.push([point.x, point.y]);
+    frontColors.push([0.0, 0.0, 0.0]);
+    backColors.push(color.map(d => d / 255));
+  }
+
+  this.frontPositionBuffer({
+    data: positions,
+    length: positions.length
+  });
+
+  this.backPositionBuffer({
+    data: positions,
+    length: positions.length
+  });
+
+  this.frontColorBuffer({
+    data: frontColors,
+    length: frontColors.length
+  });
+
+  this.backColorBuffer({
+    data: backColors,
+    length: backColors.length
+  });
+}
+
 /**
  * Draw a scatter plot for the UMAP.
  */
@@ -67,25 +105,23 @@ export function drawScatterPlot(this: Embedding) {
 
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
-
-  // Get the position and color of each point
-  const positions: number[][] = [];
-  const colors: number[][] = [];
-
-  for (const point of this.promptPoints) {
-    const color = [0, 0, 0];
-
-    positions.push([point.x, point.y]);
-    colors.push(color);
-  }
-
   const drawPoints = this.pointRegl({
+    depth: { enable: false },
+    stencil: { enable: false },
     frag: fragmentShader,
     vert: vertexShader,
 
     attributes: {
-      position: positions,
-      color: colors
+      position: {
+        buffer: this.frontPositionBuffer,
+        stride: 8,
+        offset: 0
+      },
+      color: {
+        buffer: this.frontColorBuffer,
+        stride: 12,
+        offset: 0
+      }
     },
 
     uniforms: {
@@ -97,7 +133,7 @@ export function drawScatterPlot(this: Embedding) {
       isBackPoint: false
     },
 
-    count: positions.length,
+    count: this.promptPoints.length,
     primitive: 'points'
   });
 
@@ -118,33 +154,29 @@ export function drawScatterBackPlot(this: Embedding) {
   // Trick: here we draw a slightly larger circle when user zooms out the
   // viewpoint, so that the pixel coverage is higher (smoother/better
   // mouseover picking)
-
-  // Get the position and color of each point
-  const positions: number[][] = [];
-  const colors: number[][] = [];
-
-  this.colorPointMap.clear();
   this.pointBackRegl.clear({
     color: [0, 0, 0, 0],
     depth: 1,
     stencil: 0
   });
 
-  for (const point of this.promptPoints) {
-    const color = this.getNextUniqueColor();
-    this.colorPointMap.set(color.toString(), point);
-
-    positions.push([point.x, point.y]);
-    colors.push(color.map(d => d / 255));
-  }
-
   const drawPoints = this.pointBackRegl({
+    depth: { enable: false },
+    stencil: { enable: false },
     frag: fragmentShader,
     vert: vertexShader,
 
     attributes: {
-      position: positions,
-      color: colors
+      position: {
+        buffer: this.backPositionBuffer,
+        stride: 8,
+        offset: 0
+      },
+      color: {
+        buffer: this.backColorBuffer,
+        stride: 12,
+        offset: 0
+      }
     },
 
     uniforms: {
@@ -156,7 +188,7 @@ export function drawScatterBackPlot(this: Embedding) {
       isBackPoint: true
     },
 
-    count: positions.length,
+    count: this.promptPoints.length,
     primitive: 'points'
   });
 
@@ -230,7 +262,7 @@ export function highlightPoint(
 
   // There is no point highlighted yet
   const highlightRadius = Math.max(
-    SCATTER_DOT_RADIUS * 1.5,
+    (SCATTER_DOT_RADIUS * 3) / this.curZoomTransform.k,
     7 / this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;

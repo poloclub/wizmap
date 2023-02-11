@@ -44,7 +44,8 @@ import {
   drawScatterPlot,
   getNextUniqueColor,
   drawScatterBackPlot,
-  highlightPoint
+  highlightPoint,
+  initWebGLBuffers
 } from './EmbeddingPointWebGL';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -80,6 +81,11 @@ export class Embedding {
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointRegl: createRegl.Regl;
+  frontPositionBuffer: createRegl.Buffer;
+  frontColorBuffer: createRegl.Buffer;
+  backPositionBuffer: createRegl.Buffer;
+  backColorBuffer: createRegl.Buffer;
+
   pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointBackRegl: createRegl.Regl;
   colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
@@ -153,6 +159,7 @@ export class Embedding {
   redrawTopicGrid = redrawTopicGrid;
   drawTopicGridFrame = drawTopicGridFrame;
 
+  initWebGLBuffers = initWebGLBuffers;
   drawScatterPlot = drawScatterPlot;
   initWebGLMatrices = initWebGLMatrices;
   drawScatterBackPlot = drawScatterBackPlot;
@@ -252,6 +259,8 @@ export class Embedding {
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
     this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
+    this.frontPositionBuffer = this.pointRegl.buffer(0);
+    this.frontColorBuffer = this.pointRegl.buffer(0);
 
     this.topicCanvases = [];
     for (const pos of ['top', 'bottom']) {
@@ -275,6 +284,8 @@ export class Embedding {
       canvas: this.pointBackCanvas!.node() as HTMLCanvasElement,
       attributes: { preserveDrawingBuffer: true }
     });
+    this.backPositionBuffer = this.pointBackRegl.buffer(0);
+    this.backColorBuffer = this.pointBackRegl.buffer(0);
 
     // Register zoom
     this.zoom = d3
@@ -757,6 +768,7 @@ export class Embedding {
         if (e.data.payload.isFirstBatch && e.data.payload.points) {
           // Draw the first batch
           this.promptPoints = e.data.payload.points;
+          this.initWebGLBuffers();
           this.drawScatterPlot();
           this.drawScatterBackPlot();
         } else {

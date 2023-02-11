@@ -12,11 +12,11 @@ void main() {
   float alpha = 1.0;
 
   // Test if the fragment is inside the circle area of this point
-  vec2 cxy = 2.0 * gl_PointCoord - 1.0;
-  if (dot(cxy, cxy) > 1.03) {
-    discard;
-    return;
-  }
+  // vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+  // if (dot(cxy, cxy) > 1.03) {
+  //   discard;
+  //   return;
+  // }
 
   gl_FragColor = vec4(fragColor, alpha);
 }
