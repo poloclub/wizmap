@@ -42,10 +42,9 @@ import createRegl from 'regl';
 import {
   initWebGLMatrices,
   drawScatterPlot,
-  getNextUniqueColor,
-  drawScatterBackPlot,
   highlightPoint,
-  initWebGLBuffers
+  initWebGLBuffers,
+  updateWebGLBuffers
 } from './EmbeddingPointWebGL';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -55,6 +54,7 @@ import { config } from '../../config/config';
 
 const DEBUG = config.debug;
 const REFILL_TIME_GAP = 300;
+const HOVER_RADIUS = 3;
 
 let DATA_BASE = `${import.meta.env.BASE_URL}data`;
 if (import.meta.env.PROD) {
@@ -81,14 +81,9 @@ export class Embedding {
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointRegl: createRegl.Regl;
-  frontPositionBuffer: createRegl.Buffer;
-  frontColorBuffer: createRegl.Buffer;
-  backPositionBuffer: createRegl.Buffer;
-  backColorBuffer: createRegl.Buffer;
-
-  pointBackCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
-  pointBackRegl: createRegl.Regl;
-  colorPointMap: Map<string, PromptPoint> = new Map<string, PromptPoint>();
+  frontPositionBuffer: createRegl.Buffer | null = null;
+  frontColorBuffer: createRegl.Buffer | null = null;
+  bufferPointSize = 0;
   hoverPoint: PromptPoint | null = null;
 
   xScale: d3.ScaleLinear<number, number, never>;
@@ -160,10 +155,9 @@ export class Embedding {
   drawTopicGridFrame = drawTopicGridFrame;
 
   initWebGLBuffers = initWebGLBuffers;
+  updateWebGLBuffers = updateWebGLBuffers;
   drawScatterPlot = drawScatterPlot;
   initWebGLMatrices = initWebGLMatrices;
-  drawScatterBackPlot = drawScatterBackPlot;
-  getNextUniqueColor = getNextUniqueColor;
   highlightPoint = highlightPoint;
 
   /**
@@ -259,8 +253,6 @@ export class Embedding {
       .attr('width', this.svgFullSize.width)
       .attr('height', this.svgFullSize.height);
     this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
-    this.frontPositionBuffer = this.pointRegl.buffer(0);
-    this.frontColorBuffer = this.pointRegl.buffer(0);
 
     this.topicCanvases = [];
     for (const pos of ['top', 'bottom']) {
@@ -274,19 +266,6 @@ export class Embedding {
       );
     }
 
-    // Initialize the background canvas (for mouseover)
-    this.pointBackCanvas = d3
-      .select(this.component)
-      .select<HTMLElement>('.embedding-canvas-back')
-      .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height);
-    this.pointBackRegl = createRegl({
-      canvas: this.pointBackCanvas!.node() as HTMLCanvasElement,
-      attributes: { preserveDrawingBuffer: true }
-    });
-    this.backPositionBuffer = this.pointBackRegl.buffer(0);
-    this.backColorBuffer = this.pointBackRegl.buffer(0);
-
     // Register zoom
     this.zoom = d3
       .zoom<HTMLElement, unknown>()
@@ -294,7 +273,7 @@ export class Embedding {
         [0, 0],
         [this.svgSize.width, this.svgSize.height]
       ])
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 1000])
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => {
         (async () => {
           await this.zoomed(g);
@@ -713,7 +692,9 @@ export class Embedding {
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      this.drawScatterPlot();
+      if (this.frontPositionBuffer && this.frontColorBuffer) {
+        this.drawScatterPlot();
+      }
     }
 
     // Adjust the label size based on the zoom level
@@ -735,12 +716,6 @@ export class Embedding {
     }
 
     await yieldToMain();
-
-    // === Task (2) ===
-    // Transform the background canvas elements
-    if (this.showPoint) {
-      this.drawScatterBackPlot();
-    }
   };
 
   /**
@@ -764,24 +739,57 @@ export class Embedding {
    */
   embeddingWorkerMessageHandler = (e: MessageEvent<EmbeddingWorkerMessage>) => {
     switch (e.data.command) {
-      case 'finishLoadData': {
-        if (e.data.payload.isFirstBatch && e.data.payload.points) {
-          // Draw the first batch
+      case 'transferLoadData': {
+        if (e.data.payload.isFirstBatch) {
+          // Add the first batch points
           this.promptPoints = e.data.payload.points;
           this.initWebGLBuffers();
-          this.drawScatterPlot();
-          this.drawScatterBackPlot();
+          // this.drawScatterPlot();
         } else {
-          console.log('Finished loading all');
+          // Batches after the first batch
+          // Add the points to the the prompt point list
+          const newPoints = e.data.payload.points;
+          for (const point of newPoints) {
+            this.promptPoints.push(point);
+          }
+
+          // Add the new points to the WebGL buffers
+          this.updateWebGLBuffers(newPoints);
+
+          if (this.bufferPointSize > 20000) {
+            this.drawScatterPlot();
+          }
+
+          if (e.data.payload.isLastBatch) {
+            console.log('Finished loading all data.');
+          }
         }
         break;
       }
 
-      case 'finishRefillRegion': {
-        if (e.data.payload.refillID === this.lastRefillID) {
-          this.promptPoints = e.data.payload.points;
-          // this.redrawFrontPoints();
-          // this.redrawBackPoints();
+      case 'finishQuadtreeSearch': {
+        if (this.lastMouseClientPosition === null) {
+          throw Error('lastMouseClientPosition is null');
+        }
+        // Check if the closest point is relatively close to the mouse
+        const closestPoint = e.data.payload.point;
+        const screenPointX = this.curZoomTransform.applyX(
+          this.xScale(closestPoint.x)
+        );
+        const screenPointY = this.curZoomTransform.applyY(
+          this.yScale(closestPoint.y)
+        );
+
+        const distance = Math.max(
+          Math.abs(screenPointX - this.lastMouseClientPosition.x),
+          Math.abs(screenPointY - this.lastMouseClientPosition.y)
+        );
+
+        // Highlight the point if it is close enough to the mouse
+        if (distance <= HOVER_RADIUS) {
+          this.highlightPoint(closestPoint);
+        } else {
+          this.highlightPoint(undefined);
         }
         break;
       }
@@ -804,20 +812,19 @@ export class Embedding {
     const y = e.offsetY;
     this.lastMouseClientPosition = { x: x, y: y };
 
-    // Read the pixel value from the webGL context
-    const pixelData = new Uint8Array(4);
-    this.pointBackRegl.read({
-      x: x,
-      y: this.svgFullSize.height - y,
-      width: 1,
-      height: 1,
-      data: pixelData
-    });
+    // Invert to the stage scale => invert to the data scale
+    const dataX = this.xScale.invert(this.curZoomTransform.invertX(x));
+    const dataY = this.yScale.invert(this.curZoomTransform.invertY(y));
 
-    const rgb = [pixelData[0], pixelData[1], pixelData[2]];
-    const rgbString = rgb.toString();
-    const point = this.colorPointMap.get(rgbString);
-    this.highlightPoint(point);
+    // Let the worker to search the closest point in a radius
+    const message: EmbeddingWorkerMessage = {
+      command: 'startQuadtreeSearch',
+      payload: {
+        x: dataX,
+        y: dataY
+      }
+    };
+    this.embeddingWorker.postMessage(message);
 
     // Show labels
     this.mouseoverLabel(x, y);

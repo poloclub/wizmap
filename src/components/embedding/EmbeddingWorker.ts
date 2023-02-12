@@ -14,14 +14,15 @@ import { config } from '../../config/config';
 const DEBUG = config.debug;
 const POINT_THRESHOLD = 5000;
 
-const dataPoints: PromptPoint[] = [];
+let pendingDataPoints: PromptPoint[] = [];
+let loadedPointCount = 0;
+let sentPointCount = 0;
 const tree = d3
   .quadtree<PromptPoint>()
   .x(d => d.x)
   .y(d => d.y);
 
 let lastDrawnPoints: PromptPoint[] | null = null;
-let curPointID = 0;
 
 /**
  * Handle message events from the main thread
@@ -41,10 +42,9 @@ self.onmessage = (e: MessageEvent<EmbeddingWorkerMessage>) => {
       break;
     }
 
-    case 'startRefillRegion': {
-      const viewRange = e.data.payload.viewRange;
-      const refillID = e.data.payload.refillID;
-      startRefillRegion(viewRange, refillID);
+    case 'startQuadtreeSearch': {
+      const { x, y } = e.data.payload;
+      quadtreeSearch(x, y);
       break;
     }
 
@@ -93,7 +93,7 @@ const startLoadData = (
         processPointStream(point);
 
         // TODO: Remove me
-        if (dataPoints.length >= 50000) {
+        if (loadedPointCount >= 200300) {
           pointStreamFinished();
           timeit('Stream data', DEBUG);
           break;
@@ -101,74 +101,6 @@ const startLoadData = (
       }
     }
   });
-};
-
-/**
- * Resample data points in the view region
- * @param viewRange Current view range [xMin, xMax, yMin, yMax]
- */
-const startRefillRegion = (
-  viewRange: [number, number, number, number],
-  refillID: number
-) => {
-  const results: PromptPoint[] = [];
-  const xMin = viewRange[0];
-  const xMax = viewRange[1];
-  const yMin = viewRange[2];
-  const yMax = viewRange[3];
-
-  tree.visit((node, x1, y1, x2, y2) => {
-    if (!node.length) {
-      // Leaves
-      let leaf = node as d3.QuadtreeLeaf<PromptPoint>;
-      const point = leaf.data;
-      if (
-        point.x >= xMin &&
-        point.x <= xMax &&
-        point.y >= yMin &&
-        point.y <= yMax
-      ) {
-        results.push(point);
-      }
-
-      while (leaf.next) {
-        leaf = leaf.next;
-        const point = leaf.data;
-        if (
-          point.x >= xMin &&
-          point.x <= xMax &&
-          point.y >= yMin &&
-          point.y <= yMax
-        ) {
-          results.push(point);
-        }
-      }
-    }
-    // Return true to terminate visiting a branch
-    return x1 >= xMax || y1 >= yMax || x2 < xMin || y2 < yMin;
-  });
-
-  // We have to visit all in-range nodes in the tree to spread out the sampled
-  // data to show on the canvas. We can use quickselect on the point ID to
-  // stably and randomly sample n points to draw.
-  d3.quickselect<PromptPoint>(
-    results,
-    Math.min(POINT_THRESHOLD, results.length - 1),
-    0,
-    results.length - 1,
-    (a, b) =>
-      (a as unknown as PromptPoint).id - (b as unknown as PromptPoint).id
-  );
-
-  const message: EmbeddingWorkerMessage = {
-    command: 'finishRefillRegion',
-    payload: {
-      points: results.slice(0, POINT_THRESHOLD),
-      refillID: refillID
-    }
-  };
-  postMessage(message);
-  lastDrawnPoints = results;
 };
 
 /**
@@ -180,22 +112,32 @@ const processPointStream = (point: UMAPPointStreamData) => {
     x: point[0],
     y: point[1],
     prompt: point[2],
-    id: curPointID
+    id: loadedPointCount
   };
-  dataPoints.push(promptPoint);
-  tree.add(promptPoint);
-  curPointID += 1;
-  // Notify the main thread if we have load enough data for the first batch
-  if (lastDrawnPoints === null && dataPoints.length >= POINT_THRESHOLD) {
+
+  pendingDataPoints.push(promptPoint);
+  loadedPointCount += 1;
+
+  // Notify the main thread if we have load enough data
+  if (pendingDataPoints.length >= POINT_THRESHOLD) {
     const result: EmbeddingWorkerMessage = {
-      command: 'finishLoadData',
+      command: 'transferLoadData',
       payload: {
-        isFirstBatch: true,
-        points: dataPoints
+        isFirstBatch: lastDrawnPoints === null,
+        isLastBatch: false,
+        points: pendingDataPoints
       }
     };
     postMessage(result);
-    lastDrawnPoints = dataPoints.slice();
+
+    // Add these points to the quadtree after sending them to the main thread
+    for (const point of pendingDataPoints) {
+      tree.add(point);
+    }
+
+    sentPointCount += pendingDataPoints.length;
+    lastDrawnPoints = pendingDataPoints.slice();
+    pendingDataPoints = [];
   }
 };
 
@@ -203,12 +145,107 @@ const processPointStream = (point: UMAPPointStreamData) => {
  * Construct tree and notify the main thread when finish reading all data
  */
 const pointStreamFinished = () => {
+  // Send any left over points
+
   const result: EmbeddingWorkerMessage = {
-    command: 'finishLoadData',
+    command: 'transferLoadData',
     payload: {
       isFirstBatch: false,
-      points: null
+      isLastBatch: true,
+      points: pendingDataPoints
+    }
+  };
+  postMessage(result);
+
+  // Add these points to the quadtree after sending them to the main thread
+  for (const point of pendingDataPoints) {
+    tree.add(point);
+  }
+
+  sentPointCount += pendingDataPoints.length;
+  lastDrawnPoints = pendingDataPoints.slice();
+  pendingDataPoints = [];
+};
+
+const quadtreeSearch = (x: number, y: number) => {
+  const closestPoint = tree.find(x, y);
+  if (closestPoint === undefined) {
+    throw Error('Quadtree find returns undefined.');
+  }
+
+  const result: EmbeddingWorkerMessage = {
+    command: 'finishQuadtreeSearch',
+    payload: {
+      point: closestPoint
     }
   };
   postMessage(result);
 };
+
+/**
+ * Resample data points in the view region
+ * @param viewRange Current view range [xMin, xMax, yMin, yMax]
+ */
+// const startRefillRegion = (
+//   viewRange: [number, number, number, number],
+//   refillID: number
+// ) => {
+//   const results: PromptPoint[] = [];
+//   const xMin = viewRange[0];
+//   const xMax = viewRange[1];
+//   const yMin = viewRange[2];
+//   const yMax = viewRange[3];
+
+//   tree.visit((node, x1, y1, x2, y2) => {
+//     if (!node.length) {
+//       // Leaves
+//       let leaf = node as d3.QuadtreeLeaf<PromptPoint>;
+//       const point = leaf.data;
+//       if (
+//         point.x >= xMin &&
+//         point.x <= xMax &&
+//         point.y >= yMin &&
+//         point.y <= yMax
+//       ) {
+//         results.push(point);
+//       }
+
+//       while (leaf.next) {
+//         leaf = leaf.next;
+//         const point = leaf.data;
+//         if (
+//           point.x >= xMin &&
+//           point.x <= xMax &&
+//           point.y >= yMin &&
+//           point.y <= yMax
+//         ) {
+//           results.push(point);
+//         }
+//       }
+//     }
+//     // Return true to terminate visiting a branch
+//     return x1 >= xMax || y1 >= yMax || x2 < xMin || y2 < yMin;
+//   });
+
+//   // We have to visit all in-range nodes in the tree to spread out the sampled
+//   // data to show on the canvas. We can use quickselect on the point ID to
+//   // stably and randomly sample n points to draw.
+//   d3.quickselect<PromptPoint>(
+//     results,
+//     Math.min(POINT_THRESHOLD, results.length - 1),
+//     0,
+//     results.length - 1,
+//     (a, b) =>
+//       (a as unknown as PromptPoint).id - (b as unknown as PromptPoint).id
+//   );
+
+//   const message: EmbeddingWorkerMessage = {
+//     command: 'finishRefillRegion',
+//     payload: {
+//       points: results.slice(0, POINT_THRESHOLD),
+//       refillID: refillID
+//     }
+//   };
+//   postMessage(message);
+//   lastDrawnPoints = results;
+// };

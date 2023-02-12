@@ -27,24 +27,24 @@ export type EmbeddingWorkerMessage =
       };
     }
   | {
-      command: 'finishLoadData';
+      command: 'transferLoadData';
       payload: {
         isFirstBatch: boolean;
-        points: PromptPoint[] | null;
-      };
-    }
-  | {
-      command: 'startRefillRegion';
-      payload: {
-        viewRange: [number, number, number, number];
-        refillID: number;
-      };
-    }
-  | {
-      command: 'finishRefillRegion';
-      payload: {
+        isLastBatch: boolean;
         points: PromptPoint[];
-        refillID: number;
+      };
+    }
+  | {
+      command: 'startQuadtreeSearch';
+      payload: {
+        x: number;
+        y: number;
+      };
+    }
+  | {
+      command: 'finishQuadtreeSearch';
+      payload: {
+        point: PromptPoint;
       };
     };
 
@@ -176,6 +176,7 @@ export interface GridData {
   yRange: [number, number];
   padded: boolean;
   sampleSize: number;
+  totalPointSize: number;
 }
 
 export interface PromptPoint extends Point {

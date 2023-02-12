@@ -6,7 +6,7 @@ import type { PromptPoint } from '../../types/embedding-types';
 import fragmentShader from './shaders/point.frag?raw';
 import vertexShader from './shaders/point.vert?raw';
 
-const SCATTER_DOT_RADIUS = 2;
+const SCATTER_DOT_RADIUS = 1.2;
 const DEBUG = config.debug;
 
 let pointMouseleaveTimer: number | null = null;
@@ -58,41 +58,55 @@ export function initWebGLMatrices(this: Embedding) {
 }
 
 export function initWebGLBuffers(this: Embedding) {
+  if (this.gridData === null) {
+    throw Error('GridData is null.');
+  }
+
   // Get the position and color of each point
   const positions: number[][] = [];
   const frontColors: number[][] = [];
-  const backColors: number[][] = [];
-
-  this.colorPointMap.clear();
 
   for (const point of this.promptPoints) {
-    const color = this.getNextUniqueColor();
-    this.colorPointMap.set(color.toString(), point);
-
     positions.push([point.x, point.y]);
-    frontColors.push([0.0, 0.0, 0.0]);
-    backColors.push(color.map(d => d / 255));
+    frontColors.push([0.2, 0.2, 0.2]);
   }
 
-  this.frontPositionBuffer({
-    data: positions,
-    length: positions.length
+  this.frontPositionBuffer = this.pointRegl.buffer({
+    length: this.gridData.totalPointSize * 4 * 2,
+    type: 'float',
+    usage: 'dynamic'
   });
+  this.frontPositionBuffer.subdata(positions, 0);
 
-  this.backPositionBuffer({
-    data: positions,
-    length: positions.length
+  this.frontColorBuffer = this.pointRegl.buffer({
+    length: this.gridData.totalPointSize * 4 * 3,
+    type: 'float',
+    usage: 'dynamic'
   });
+  this.frontColorBuffer.subdata(frontColors, 0);
 
-  this.frontColorBuffer({
-    data: frontColors,
-    length: frontColors.length
-  });
+  this.bufferPointSize = this.promptPoints.length;
+}
 
-  this.backColorBuffer({
-    data: backColors,
-    length: backColors.length
-  });
+/**
+ * Update WebGL buffers with stream data
+ * @param this Embedding object
+ * @param newPoints A list of loaded new points
+ */
+export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
+  // Get the position and color of each new point
+  const positions: number[][] = [];
+  const frontColors: number[][] = [];
+
+  for (const point of newPoints) {
+    positions.push([point.x, point.y]);
+    frontColors.push([0.2, 0.2, 0.2]);
+  }
+
+  // Update the buffer using byte offsets
+  this.frontPositionBuffer!.subdata(positions, this.bufferPointSize * 2 * 4);
+  this.frontColorBuffer!.subdata(frontColors, this.bufferPointSize * 3 * 4);
+  this.bufferPointSize += newPoints.length;
 }
 
 /**
@@ -114,12 +128,12 @@ export function drawScatterPlot(this: Embedding) {
     attributes: {
       position: {
         buffer: this.frontPositionBuffer,
-        stride: 8,
+        stride: 2 * 4,
         offset: 0
       },
       color: {
         buffer: this.frontColorBuffer,
-        stride: 12,
+        stride: 3 * 4,
         offset: 0
       }
     },
@@ -130,91 +144,14 @@ export function drawScatterPlot(this: Embedding) {
       dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
-      isBackPoint: false
+      alpha: 1
     },
 
-    count: this.promptPoints.length,
+    count: this.bufferPointSize,
     primitive: 'points'
   });
 
   drawPoints();
-}
-
-/**
- * Draw a second scatter plot underneath the visible plot for color picking.
- */
-export function drawScatterBackPlot(this: Embedding) {
-  if (!this.webGLMatrices || !this.showPoint) {
-    throw Error('webGLMatrices or showPoint not initialized');
-  }
-
-  // Get the current zoom
-  const zoomMatrix = getZoomMatrix(this.curZoomTransform);
-
-  // Trick: here we draw a slightly larger circle when user zooms out the
-  // viewpoint, so that the pixel coverage is higher (smoother/better
-  // mouseover picking)
-  this.pointBackRegl.clear({
-    color: [0, 0, 0, 0],
-    depth: 1,
-    stencil: 0
-  });
-
-  const drawPoints = this.pointBackRegl({
-    depth: { enable: false },
-    stencil: { enable: false },
-    frag: fragmentShader,
-    vert: vertexShader,
-
-    attributes: {
-      position: {
-        buffer: this.backPositionBuffer,
-        stride: 8,
-        offset: 0
-      },
-      color: {
-        buffer: this.backColorBuffer,
-        stride: 12,
-        offset: 0
-      }
-    },
-
-    uniforms: {
-      // Placeholder for function parameters
-      pointWidth: SCATTER_DOT_RADIUS,
-      dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
-      zoomMatrix: zoomMatrix,
-      normalizeMatrix: this.webGLMatrices.normalizeMatrix,
-      isBackPoint: true
-    },
-
-    count: this.promptPoints.length,
-    primitive: 'points'
-  });
-
-  drawPoints();
-}
-
-/**
- * Get a unique color in hex.
- */
-export function getNextUniqueColor(this: Embedding) {
-  if (this.colorPointMap.size >= 256 * 256 * 256) {
-    console.error('Unique color overflow.');
-    return [255, 255, 255];
-  }
-
-  const rng = d3.randomInt(0, 256);
-  let randomRGB = [rng(), rng(), rng()];
-  let randomRGBStr = randomRGB.toString();
-  while (
-    this.colorPointMap.has(randomRGBStr) ||
-    randomRGB.reduce((a, b) => a + b) === 0
-  ) {
-    randomRGB = [rng(), rng(), rng()];
-    randomRGBStr = randomRGB.toString();
-  }
-  return randomRGB;
 }
 
 /**
