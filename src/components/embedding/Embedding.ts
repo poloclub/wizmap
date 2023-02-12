@@ -283,6 +283,7 @@ export class Embedding {
         [this.svgSize.width, this.svgSize.height]
       ])
       .scaleExtent([1, 1000])
+      .interpolate(d3.interpolate)
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => {
         (async () => {
           await this.zoomed(g);
@@ -404,6 +405,7 @@ export class Embedding {
       .scaleLinear()
       .domain(xRange)
       .range([0, this.svgSize.width]);
+
     this.yScale = d3
       .scaleLinear()
       .domain(yRange)
