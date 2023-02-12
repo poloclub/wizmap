@@ -47,10 +47,8 @@
   <Tooltip {tooltipStore} />
 
   <div class="app-wrapper">
-    <div class="app-title">
+    <!-- <div class="app-title">
       <div class="title-left">
-        <!-- <div class="app-icon">
-        </div> -->
         <span class="app-name"> WizMap </span>
       </div>
 
@@ -59,7 +57,7 @@
           {@html iconGithub}
         </a>
       </div>
-    </div>
+    </div> -->
 
     <div class="main-app" bind:this={component}>
       <div

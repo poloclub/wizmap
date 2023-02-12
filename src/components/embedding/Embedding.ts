@@ -223,6 +223,11 @@ export class Embedding {
       this.svgFullSize.height = svgBBox.height;
     }
 
+    // Fix the svg width and height
+    this.svg
+      .attr('width', this.svgFullSize.width)
+      .attr('height', this.svgFullSize.height);
+
     this.svgPadding = {
       top: 0,
       bottom: 0,
@@ -230,11 +235,15 @@ export class Embedding {
       right: 0
     };
 
+    // We keep the initial drawing region as a square
+    const squareCanvasWidth = Math.min(
+      this.svgFullSize.width - this.svgPadding.left - this.svgPadding.right,
+      this.svgFullSize.height - this.svgPadding.top - this.svgPadding.bottom
+    );
+
     this.svgSize = {
-      width:
-        this.svgFullSize.width - this.svgPadding.left - this.svgPadding.right,
-      height:
-        this.svgFullSize.width - this.svgPadding.top - this.svgPadding.bottom
+      width: squareCanvasWidth,
+      height: squareCanvasWidth
     };
 
     this.xScale = d3.scaleLinear();
@@ -618,28 +627,19 @@ export class Embedding {
       }
     }
 
+    const screenPadding = 10;
     const initZoomK = Math.min(
-      this.svgFullSize.width / (x1 - x0),
-      this.svgFullSize.height / (y1 - y0)
+      this.svgFullSize.width / (x1 - x0 + screenPadding),
+      this.svgFullSize.height / (y1 - y0 + screenPadding)
     );
 
     this.initZoomTransform = d3.zoomIdentity
-      .translate(this.svgSize.width / 2, this.svgSize.height / 2)
+      .translate(this.svgFullSize.width / 2, this.svgFullSize.height / 2)
       .scale(initZoomK)
       .translate(-x0 - (x1 - x0) / 2, -y0 - (y1 - y0) / 2);
 
-    // TODO: (remove me) Hack to override the auto zoom for image embedding
-    if (this.embeddingName === 'image') {
-      this.initZoomTransform = d3.zoomIdentity
-        .translate(this.svgSize.width / 2, this.svgSize.height / 2)
-        .scale(1.6)
-        .translate(-340, -376);
-    }
-
     // Trigger the first zoom
     this.topSvg
-      .transition()
-      .duration(300)
       .call(selection =>
         this.zoom?.transform(selection, this.initZoomTransform)
       )
@@ -744,7 +744,9 @@ export class Embedding {
           // Add the first batch points
           this.promptPoints = e.data.payload.points;
           this.initWebGLBuffers();
-          // this.drawScatterPlot();
+          if (this.showPoint) {
+            this.drawScatterPlot();
+          }
         } else {
           // Batches after the first batch
           // Add the points to the the prompt point list
@@ -755,8 +757,7 @@ export class Embedding {
 
           // Add the new points to the WebGL buffers
           this.updateWebGLBuffers(newPoints);
-
-          if (this.bufferPointSize > 20000) {
+          if (this.showPoint) {
             this.drawScatterPlot();
           }
 
@@ -915,8 +916,7 @@ export class Embedding {
           .classed('faded', this.showPoint && this.showLabel);
 
         if (this.showPoint) {
-          // this.redrawFrontPoints();
-          // this.redrawBackPoints();
+          this.drawScatterPlot();
         }
 
         if (this.showGrid) this.redrawTopicGrid();

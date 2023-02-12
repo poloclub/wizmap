@@ -45,8 +45,8 @@ export function initWebGLMatrices(this: Embedding) {
   // Transforming the stage space to the normalized coordinate
   // Note we need to flip the y coordinate
   const normalizeMatrix = [
-    [2 / this.svgSize.width, 0, -1],
-    [0, -2 / this.svgSize.height, 1],
+    [2 / this.svgFullSize.width, 0, -1],
+    [0, -2 / this.svgFullSize.height, 1],
     [0, 0, 1]
   ];
   const normalizeMatrix1D = normalizeMatrix.flat();
@@ -113,8 +113,8 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
  * Draw a scatter plot for the UMAP.
  */
 export function drawScatterPlot(this: Embedding) {
-  if (!this.webGLMatrices || !this.showPoint) {
-    throw Error('webGLMatrices or showPoint not initialized');
+  if (!this.webGLMatrices) {
+    throw Error('webGLMatrices not initialized');
   }
 
   // Get the current zoom
