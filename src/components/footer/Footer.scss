@@ -1,5 +1,11 @@
 @import '../../define.scss';
 
+.footer-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 .footer {
   display: flex;
   flex-direction: row;
@@ -46,5 +52,70 @@
       border: 1px solid currentColor;
       border-top: none;
     }
+  }
+}
+
+.svg-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1em;
+  height: 1em;
+  color: currentColor;
+
+  cursor: pointer;
+  pointer-events: fill;
+
+  :global(svg) {
+    fill: currentColor;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+$zoom-button-border-radius: 8px;
+
+.zoom-control {
+  display: flex;
+  flex-direction: column;
+  background-color: change-color($color: white, $alpha: 0.95);
+  box-shadow: 0 1px 4px hsla(0, 0%, 0%, 0.3);
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: $zoom-button-border-radius;
+  font-size: 14px;
+}
+
+.zoom-button {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  color: $gray-700;
+
+  transition: background-color 100ms ease-in-out;
+
+  &.zoom-button-plus {
+    border-top-left-radius: $zoom-button-border-radius;
+    border-top-right-radius: $zoom-button-border-radius;
+  }
+
+  &.zoom-button-minus {
+    border-bottom-left-radius: $zoom-button-border-radius;
+    border-bottom-right-radius: $zoom-button-border-radius;
+  }
+
+  &.zoom-button-reset {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background-color: $gray-100;
+  }
+
+  &:active {
+    background-color: $gray-200;
   }
 }

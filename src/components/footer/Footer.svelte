@@ -4,7 +4,9 @@
   import type { EmbeddingInitSetting } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
   import type { FooterStoreValue } from '../../stores';
-  import iconGear from '../../imgs/icon-gear.svg?raw';
+  import iconPlus from '../../imgs/icon-plus.svg?raw';
+  import iconMinus from '../../imgs/icon-minus.svg?raw';
+  import iconHome from '../../imgs/icon-home.svg?raw';
 
   export let footerStore: Writable<FooterStoreValue>;
 
@@ -41,6 +43,21 @@
 </style>
 
 <div class="footer-wrapper" bind:this="{component}">
+  <div class="zoom-control">
+    <button class="zoom-button zoom-button-reset"
+      ><div class="svg-icon">{@html iconHome}</div></button
+    >
+  </div>
+
+  <div class="zoom-control">
+    <button class="zoom-button zoom-button-plus"
+      ><div class="svg-icon">{@html iconPlus}</div></button
+    >
+    <button class="zoom-button zoom-button-minus"
+      ><div class="svg-icon">{@html iconMinus}</div></button
+    >
+  </div>
+
   <div class="footer">
     <span class="name">WizMap </span>
     <div class="splitter"></div>
