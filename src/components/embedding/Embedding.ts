@@ -47,10 +47,6 @@ import {
   updateWebGLBuffers,
   updateHighlightPoint
 } from './EmbeddingPointWebGL';
-import { getLatoTextWidth } from '../../utils/text-width';
-import type { Writable } from 'svelte/store';
-import type { TooltipStoreValue } from '../../stores';
-import { getTooltipStoreDefaultValue } from '../../stores';
 import { config } from '../../config/config';
 
 const DEBUG = config.debug;
@@ -139,10 +135,6 @@ export class Embedding {
   lastLabelTreeLevel: number | null = null;
   lastGridTreeLevels: number[] = [];
 
-  // Stores
-  tooltipStore: Writable<TooltipStoreValue>;
-  tooltipStoreValue: TooltipStoreValue = getTooltipStoreDefaultValue();
-
   // Web workers
   embeddingWorker: Worker;
 
@@ -171,19 +163,16 @@ export class Embedding {
    */
   constructor({
     component,
-    tooltipStore,
     updateEmbedding,
     defaultSetting,
     embeddingName
   }: {
     component: HTMLElement;
-    tooltipStore: Writable<TooltipStoreValue>;
     updateEmbedding: () => void;
     defaultSetting: EmbeddingInitSetting;
     embeddingName: string;
   }) {
     this.component = component;
-    this.tooltipStore = tooltipStore;
     this.updateEmbedding = updateEmbedding;
     this.embeddingName = embeddingName;
 
@@ -304,19 +293,7 @@ export class Embedding {
     this.initData().then(() => {
       timeit('Init data', DEBUG);
     });
-
-    // Initialize the stores
-    this.initStores();
   }
-
-  /**
-   * Initialize the stores.
-   */
-  initStores = () => {
-    this.tooltipStore.subscribe(value => {
-      this.tooltipStoreValue = value;
-    });
-  };
 
   /**
    * Initialize the top SVG element

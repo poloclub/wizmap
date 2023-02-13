@@ -3,8 +3,6 @@
   import { onMount } from 'svelte';
   import type { EmbeddingInitSetting } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
-  import type { TooltipStoreValue } from '../../stores';
-  import { getTooltipStoreDefaultValue } from '../../stores';
   import iconGear from '../../imgs/icon-gear.svg?raw';
 
   let component: HTMLElement | null = null;
@@ -15,13 +13,12 @@
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
-    showPoint: true,
-    showGrid: false,
-    showLabel: false,
-    hover: 'point'
+    showPoint: false,
+    showGrid: true,
+    showLabel: true,
+    hover: 'label'
   };
 
-  export let tooltipStore: Writable<TooltipStoreValue> | null = null;
   export let embeddingName = 'prompt';
 
   onMount(() => {
@@ -53,10 +50,9 @@
   const initView = () => {
     initialized = true;
 
-    if (component && tooltipStore) {
+    if (component) {
       embedding = new Embedding({
         component,
-        tooltipStore,
         updateEmbedding,
         defaultSetting,
         embeddingName
@@ -64,27 +60,27 @@
     }
   };
 
-  $: mounted && !initialized && component && tooltipStore && initView();
+  $: mounted && !initialized && component && initView();
 </script>
 
 <style lang="scss">
   @import './Embedding.scss';
 </style>
 
-<div class="embedding-wrapper" bind:this={component}>
+<div class="embedding-wrapper" bind:this="{component}">
   <div class="embedding">
-    <svg class="top-svg" />
-    <canvas class="embedding-canvas" />
-    <canvas class="embedding-canvas-back" />
-    <canvas class="topic-grid-canvas top" />
-    <canvas class="topic-grid-canvas bottom" />
-    <svg class="embedding-svg" />
+    <svg class="top-svg"></svg>
+    <canvas class="embedding-canvas"></canvas>
+    <canvas class="embedding-canvas-back"></canvas>
+    <canvas class="topic-grid-canvas top"></canvas>
+    <canvas class="topic-grid-canvas bottom"></canvas>
+    <svg class="embedding-svg"></svg>
   </div>
 
-  <div class="control-panel" class:shown={showControl}>
+  <div class="control-panel" class:shown="{showControl}">
     <div class="header">Setting</div>
 
-    <div class="splitter" />
+    <div class="splitter"></div>
 
     <div class="control-item">
       <div class="item-header">Display</div>
@@ -95,8 +91,8 @@
           class="checkbox"
           id="checkbox-contour"
           name="checkbox-contour"
-          bind:checked={defaultSetting.showContour}
-          on:input={e => displayCheckboxChanged(e, 'contour')}
+          bind:checked="{defaultSetting.showContour}"
+          on:input="{e => displayCheckboxChanged(e, 'contour')}"
         />
         <label for="checkbox-contour">Density Contour</label>
       </div>
@@ -107,8 +103,8 @@
           class="checkbox"
           id="checkbox-point"
           name="checkbox-point"
-          bind:checked={defaultSetting.showPoint}
-          on:input={e => displayCheckboxChanged(e, 'point')}
+          bind:checked="{defaultSetting.showPoint}"
+          on:input="{e => displayCheckboxChanged(e, 'point')}"
         />
         <label for="checkbox-point">Data Points</label>
       </div>
@@ -119,14 +115,14 @@
           class="checkbox"
           id="checkbox-grid"
           name="checkbox-grid"
-          bind:checked={defaultSetting.showGrid}
-          on:input={e => displayCheckboxChanged(e, 'grid')}
+          bind:checked="{defaultSetting.showGrid}"
+          on:input="{e => displayCheckboxChanged(e, 'grid')}"
         />
         <label for="checkbox-grid">Label Grid</label>
       </div>
     </div>
 
-    <div class="splitter" />
+    <div class="splitter"></div>
 
     <div class="control-item">
       <div class="item-header">Automatic Labeling</div>
@@ -137,8 +133,8 @@
           class="checkbox"
           id="checkbox-label"
           name="checkbox-label"
-          bind:checked={defaultSetting.showLabel}
-          on:input={e => displayCheckboxChanged(e, 'label')}
+          bind:checked="{defaultSetting.showLabel}"
+          on:input="{e => displayCheckboxChanged(e, 'label')}"
         />
         <label for="checkbox-label">High Density Region</label>
       </div>
@@ -157,15 +153,15 @@
         class="slider"
         id="slider-label-num"
         name="label-num"
-        disabled={!defaultSetting.showLabel}
+        disabled="{!defaultSetting.showLabel}"
         min="0"
         max="0"
-        on:input={e =>
-          embedding ? embedding.labelNumSliderChanged(e) : () => {}}
+        on:input="{e =>
+          embedding ? embedding.labelNumSliderChanged(e) : () => {}}"
       />
     </div>
 
-    <div class="splitter" />
+    <div class="splitter"></div>
 
     <div class="control-item">
       <div class="item-header">Mouse Hover Mode</div>
@@ -173,37 +169,37 @@
       <div class="segmented-control">
         <div
           class="segmented-control-option"
-          class:selected={defaultSetting.hover === 'label'}
-          on:click={() => {
+          class:selected="{defaultSetting.hover === 'label'}"
+          on:click="{() => {
             hoverModeClicked('label');
-          }}
-          on:keypress={() => {
+          }}"
+          on:keypress="{() => {
             hoverModeClicked('label');
-          }}
+          }}"
         >
           Label
         </div>
         <div
           class="segmented-control-option"
-          class:selected={defaultSetting.hover === 'point'}
-          on:click={() => {
+          class:selected="{defaultSetting.hover === 'point'}"
+          on:click="{() => {
             hoverModeClicked('point');
-          }}
-          on:keypress={() => {
+          }}"
+          on:keypress="{() => {
             hoverModeClicked('point');
-          }}
+          }}"
         >
           Point
         </div>
         <div
           class="segmented-control-option"
-          class:selected={defaultSetting.hover === 'none'}
-          on:click={() => {
+          class:selected="{defaultSetting.hover === 'none'}"
+          on:click="{() => {
             hoverModeClicked('none');
-          }}
-          on:keypress={() => {
+          }}"
+          on:keypress="{() => {
             hoverModeClicked('none');
-          }}
+          }}"
         >
           None
         </div>
@@ -213,14 +209,14 @@
 
   <div
     class="setting-icon"
-    on:click={() => {
+    on:click="{() => {
       showControl = !showControl;
-    }}
-    on:keypress={() => {
+    }}"
+    on:keypress="{() => {
       showControl = !showControl;
-    }}
+    }}"
   >
-    <div class="icon-wrapper svg-icon" class:activated={showControl}>
+    <div class="icon-wrapper svg-icon" class:activated="{showControl}">
       {@html iconGear}
     </div>
   </div>

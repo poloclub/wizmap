@@ -1,8 +1,6 @@
 <script lang="ts">
   import Embedding from '../embedding/Embedding.svelte';
   import Packing from '../packing/Packing.svelte';
-  import Tooltip from '../Tooltip.svelte';
-  import { getTooltipStore } from '../../stores';
   import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
   import iconGithub from '../../imgs/icon-github.svg?raw';
 
@@ -34,9 +32,6 @@
       }
     }
   }
-
-  // Initialize the stores to pass to child components
-  const tooltipStore = getTooltipStore();
 </script>
 
 <style lang="scss">
@@ -44,7 +39,6 @@
 </style>
 
 <div class="mapview-page">
-  <Tooltip tooltipStore="{tooltipStore}" />
   <div id="popper-tooltip" class="hidden" role="tooltip">
     <span id="popper-content"></span>
     <div id="popper-arrow"></div>
@@ -68,7 +62,7 @@
         class="main-app-container"
         class:hidden="{view !== 'prompt-embedding'}"
       >
-        <Embedding tooltipStore="{tooltipStore}" embeddingName="{'prompt'}" />
+        <Embedding embeddingName="{'prompt'}" />
       </div>
     </div>
   </div>

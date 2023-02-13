@@ -1,5 +1,6 @@
 import type { Embedding } from './Embedding';
 import d3 from '../../utils/d3-import';
+import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
 import type {
   TopicData,
   DrawnLabel,
@@ -1026,8 +1027,7 @@ export function mouseoverLabel(
       labelGroup.classed('faded', false);
       oldTopRect.interrupt('top-fade').remove();
       oldBottomRect.remove();
-      this.tooltipStoreValue.show = false;
-      this.tooltipStore.set(this.tooltipStoreValue);
+      this.tooltip.classList.add('hidden');
       labelMouseleaveTimer = null;
     }, 50);
   };
@@ -1078,20 +1078,12 @@ export function mouseoverLabel(
         this.showContour ? config.gridColorLight : config.gridColorDark
       );
 
-    // Get the tooltip position
-    const position = rect.node()!.getBoundingClientRect();
-    const curWidth = position.width;
-    const tooltipCenterX = position.x + curWidth / 2;
-    const tooltipCenterY = position.y;
-    this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${tile[2]}
-          </div>
-        `;
-    this.tooltipStoreValue.x = tooltipCenterX;
-    this.tooltipStoreValue.y = tooltipCenterY;
-    this.tooltipStoreValue.show = true;
+    // Show the tooltip
+    updatePopperTooltip(
+      this.tooltip,
+      rect.node()! as unknown as HTMLElement,
+      tile[2]
+    );
 
     // Insert a clone to the top layer
     const clone = rect.clone(true).style('stroke', null).remove().node()!;
@@ -1108,7 +1100,7 @@ export function mouseoverLabel(
       .on('end', () => {
         topRect.style('opacity', 1);
         labelGroup.classed('faded', true);
-        this.tooltipStore.set(this.tooltipStoreValue);
+        this.tooltip.classList.remove('hidden');
         labelMouseenterTimer = null;
       });
   } else {
@@ -1131,25 +1123,15 @@ export function mouseoverLabel(
       .attr('ry', 4 / this.curZoomTransform.k)
       .style('stroke-width', 2.6 / this.curZoomTransform.k);
 
-    // Get the point position
-    const position = (
-      oldBottomRect.node()! as HTMLElement
-    ).getBoundingClientRect();
-    const curWidth = position.width;
-    const tooltipCenterX = position.x + curWidth / 2;
-    const tooltipCenterY = position.y;
-    this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${tile[2]}
-          </div>
-        `;
-    this.tooltipStoreValue.x = tooltipCenterX;
-    this.tooltipStoreValue.y = tooltipCenterY;
-    this.tooltipStoreValue.show = true;
+    // Show the tooltip
+    updatePopperTooltip(
+      this.tooltip,
+      oldBottomRect.node()! as unknown as HTMLElement,
+      tile[2]
+    );
 
     if (labelMouseenterTimer === null) {
-      this.tooltipStore.set(this.tooltipStoreValue);
+      this.tooltip.classList.remove('hidden');
     } else {
       labelMouseenterTimer = tile[2];
       oldTopRect
@@ -1161,12 +1143,51 @@ export function mouseoverLabel(
         .on('end', () => {
           oldTopRect.style('opacity', 1);
           labelGroup.classed('faded', true);
-          this.tooltipStore.set(this.tooltipStoreValue);
+          this.tooltip.classList.remove('hidden');
           labelMouseenterTimer = null;
         });
     }
   }
 }
+
+/**
+ * Update the popper tooltip for the highlighted prompt point
+ * @param tooltip Tooltip element
+ * @param anchor Anchor point for the tooltip
+ * @param point The prompt point
+ */
+const updatePopperTooltip = (
+  tooltip: HTMLElement,
+  anchor: HTMLElement,
+  text: string
+) => {
+  const arrowElement = tooltip.querySelector('#popper-arrow')! as HTMLElement;
+  const contentElement = tooltip.querySelector(
+    '#popper-content'
+  )! as HTMLElement;
+  contentElement.innerText = text;
+
+  computePosition(anchor, tooltip, {
+    placement: 'top',
+    middleware: [offset(6), flip(), shift(), arrow({ element: arrowElement })]
+  }).then(({ x, y, placement, middlewareData }) => {
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+
+    const { x: arrowX, y: arrowY } = middlewareData.arrow!;
+    let staticSide: 'bottom' | 'left' | 'top' | 'right' = 'bottom';
+    if (placement.includes('top')) staticSide = 'bottom';
+    if (placement.includes('right')) staticSide = 'left';
+    if (placement.includes('bottom')) staticSide = 'top';
+    if (placement.includes('left')) staticSide = 'right';
+
+    arrowElement.style.left = arrowX ? `${arrowX}px` : '';
+    arrowElement.style.top = arrowY ? `${arrowY}px` : '';
+    arrowElement.style.right = '';
+    arrowElement.style.bottom = '';
+    arrowElement.style[staticSide] = '-4px';
+  });
+};
 
 /**
  * Redraw the topic canvases (clear, transform, draw).
