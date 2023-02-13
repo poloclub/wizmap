@@ -7,7 +7,6 @@ import type { PromptPoint } from '../../types/embedding-types';
 import fragmentShader from './shaders/point.frag?raw';
 import vertexShader from './shaders/point.vert?raw';
 
-const SCATTER_DOT_RADIUS = 1;
 const DEBUG = config.debug;
 
 let pointMouseenterTimer: number | null = null;
@@ -146,7 +145,7 @@ export function drawScatterPlot(this: Embedding) {
 
     uniforms: {
       // Placeholder for function parameters
-      pointWidth: SCATTER_DOT_RADIUS,
+      pointWidth: config.layout.scatterDotRadius,
       dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
@@ -174,8 +173,10 @@ export function updateHighlightPoint(this: Embedding) {
 
   // There is no point highlighted yet
   const highlightRadius = Math.max(
-    (SCATTER_DOT_RADIUS * 3) / this.curZoomTransform.k,
-    7 / this.curZoomTransform.k
+    10 / this.curZoomTransform.k,
+    (config.layout.scatterDotRadius *
+      Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
+      this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;
 
@@ -239,8 +240,10 @@ export function highlightPoint(
   }
 
   const highlightRadius = Math.max(
-    (SCATTER_DOT_RADIUS * 3) / this.curZoomTransform.k,
-    7 / this.curZoomTransform.k
+    10 / this.curZoomTransform.k,
+    (config.layout.scatterDotRadius *
+      Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
+      this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;
   let curHighlightPoint: d3.Selection<

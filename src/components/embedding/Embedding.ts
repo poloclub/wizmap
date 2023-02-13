@@ -786,8 +786,20 @@ export class Embedding {
           Math.abs(screenPointY - this.lastMouseClientPosition.y)
         );
 
+        const highlightRadius = Math.max(
+          10 / this.curZoomTransform.k,
+          (config.layout.scatterDotRadius *
+            Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
+            this.curZoomTransform.k
+        );
+
         // Highlight the point if it is close enough to the mouse
-        if (distance <= HOVER_RADIUS) {
+        const curHoverRadius = Math.max(
+          HOVER_RADIUS,
+          highlightRadius * this.curZoomTransform.k
+        );
+
+        if (distance <= curHoverRadius) {
           this.highlightPoint(closestPoint);
         } else {
           this.highlightPoint(undefined);

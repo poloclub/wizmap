@@ -32,7 +32,6 @@ void main() {
   // Scale the point based on the zoom level
   // https://observablehq.com/@bmschmidt/zoom-strategies-for-huge-scatterplots-with-three-js
   float dynamicSize = pointWidth * (exp(log(zoomMatrix[0][0]) * 0.55));
-
   gl_PointSize = dynamicSize;
 
   // Normalize the vertex position
