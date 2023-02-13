@@ -1,5 +1,7 @@
 <script lang="ts">
   import Embedding from '../embedding/Embedding.svelte';
+  import Footer from '../footer/Footer.svelte';
+  import { getFooterStore } from '../../stores';
   import Packing from '../packing/Packing.svelte';
   import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
   import iconGithub from '../../imgs/icon-github.svg?raw';
@@ -32,6 +34,9 @@
       }
     }
   }
+
+  // Create stores for child components to consume
+  const footerStore = getFooterStore();
 </script>
 
 <style lang="scss">
@@ -62,8 +67,12 @@
         class="main-app-container"
         class:hidden="{view !== 'prompt-embedding'}"
       >
-        <Embedding embeddingName="{'prompt'}" />
+        <Embedding embeddingName="{'prompt'}" footerStore="{footerStore}" />
       </div>
     </div>
+  </div>
+
+  <div class="footer-container">
+    <Footer footerStore="{footerStore}" />
   </div>
 </div>

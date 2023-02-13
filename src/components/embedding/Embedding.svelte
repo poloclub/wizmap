@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import type { EmbeddingInitSetting } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
+  import type { FooterStoreValue } from '../../stores';
   import iconGear from '../../imgs/icon-gear.svg?raw';
 
   let component: HTMLElement | null = null;
@@ -20,6 +21,7 @@
   };
 
   export let embeddingName = 'prompt';
+  export let footerStore: Writable<FooterStoreValue>;
 
   onMount(() => {
     mounted = true;
@@ -55,7 +57,8 @@
         component,
         updateEmbedding,
         defaultSetting,
-        embeddingName
+        embeddingName,
+        footerStore
       });
     }
   };

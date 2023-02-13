@@ -1,0 +1,37 @@
+@import '../../define.scss';
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+
+  font-size: $font-d2;
+  font-variant-numeric: tabular-nums;
+
+  padding: 2px 4px;
+  line-height: 1;
+  border-top-left-radius: 2px;
+  background-color: change-color($gray-100, $alpha: 0.8);
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  a {
+    color: currentColor;
+
+    &:hover {
+      color: $blue-800;
+    }
+  }
+}
+
+.name {
+  font-weight: 600;
+}
+
+.splitter {
+  height: 12px;
+  width: 1px;
+  border-right: 1px solid $gray-400;
+}

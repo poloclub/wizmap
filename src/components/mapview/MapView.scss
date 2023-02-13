@@ -154,3 +154,10 @@
     transform: rotate(45deg);
   }
 }
+
+.footer-container {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  z-index: 20;
+}

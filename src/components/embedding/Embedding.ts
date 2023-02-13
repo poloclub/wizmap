@@ -18,6 +18,9 @@ import type {
   WebGLMatrices
 } from '../../types/embedding-types';
 import type { Size, Padding, Rect, Point } from '../../types/common-types';
+import type { FooterStoreValue } from '../../stores';
+import { getFooterStoreDefaultValue } from '../../stores';
+import type { Writable } from 'svelte/store';
 import {
   downloadJSON,
   splitStreamTransform,
@@ -124,6 +127,10 @@ export class Embedding {
   lsatRefillTime = 0;
   webGLMatrices: WebGLMatrices | null = null;
 
+  // Stores
+  footerStore: Writable<FooterStoreValue>;
+  footerStoreValue: FooterStoreValue;
+
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
     number,
@@ -167,16 +174,20 @@ export class Embedding {
     component,
     updateEmbedding,
     defaultSetting,
-    embeddingName
+    embeddingName,
+    footerStore
   }: {
     component: HTMLElement;
     updateEmbedding: () => void;
     defaultSetting: EmbeddingInitSetting;
     embeddingName: string;
+    footerStore: Writable<FooterStoreValue>;
   }) {
     this.component = component;
     this.updateEmbedding = updateEmbedding;
     this.embeddingName = embeddingName;
+    this.footerStore = footerStore;
+    this.footerStoreValue = getFooterStoreDefaultValue();
 
     // Figure out data urls based on the embedding name
     // const url = '/data/umap-1m.ndjson';
@@ -301,6 +312,8 @@ export class Embedding {
     this.initData().then(() => {
       timeit('Init data', DEBUG);
     });
+
+    this.initStore();
   }
 
   /**
@@ -341,6 +354,12 @@ export class Embedding {
     topContent.append('g').attr('class', 'topics-top');
     topContent.append('g').attr('class', 'highlights');
     return topSvg;
+  };
+
+  initStore = () => {
+    this.footerStore.subscribe(value => {
+      this.footerStoreValue = value;
+    });
   };
 
   /**
@@ -758,6 +777,10 @@ export class Embedding {
             console.log('Finished loading all data.');
           }
         }
+
+        // Update the footer
+        this.footerStoreValue.numPoints = this.promptPoints.length;
+        this.footerStore.set(this.footerStoreValue);
         break;
       }
 
