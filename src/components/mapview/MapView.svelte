@@ -44,7 +44,11 @@
 </style>
 
 <div class="mapview-page">
-  <Tooltip {tooltipStore} />
+  <Tooltip tooltipStore="{tooltipStore}" />
+  <div id="popper-tooltip" class="hidden" role="tooltip">
+    <span id="popper-content"></span>
+    <div id="popper-arrow"></div>
+  </div>
 
   <div class="app-wrapper">
     <!-- <div class="app-title">
@@ -59,12 +63,12 @@
       </div>
     </div> -->
 
-    <div class="main-app" bind:this={component}>
+    <div class="main-app" bind:this="{component}">
       <div
         class="main-app-container"
-        class:hidden={view !== 'prompt-embedding'}
+        class:hidden="{view !== 'prompt-embedding'}"
       >
-        <Embedding {tooltipStore} embeddingName={'prompt'} />
+        <Embedding tooltipStore="{tooltipStore}" embeddingName="{'prompt'}" />
       </div>
     </div>
   </div>

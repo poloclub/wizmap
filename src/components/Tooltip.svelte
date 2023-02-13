@@ -21,12 +21,21 @@
     if (tooltipConfig.width === 0) {
       style = `left: ${left}px; top: ${top}px;
         max-width: ${tooltipConfig.maxWidth}px;
-        font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
+        font-size: ${tooltipConfig.fontSize}px; opacity: ${0}`;
     } else {
       style = `left: ${left}px; top: ${top}px;
         width: ${tooltipConfig.width}px; max-width: ${tooltipConfig.maxWidth}px;
-        font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
+        font-size: ${tooltipConfig.fontSize}px; opacity: ${0}`;
     }
+    // if (tooltipConfig.width === 0) {
+    //   style = `left: ${left}px; top: ${top}px;
+    //     max-width: ${tooltipConfig.maxWidth}px;
+    //     font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
+    // } else {
+    //   style = `left: ${left}px; top: ${top}px;
+    //     width: ${tooltipConfig.width}px; max-width: ${tooltipConfig.maxWidth}px;
+    //     font-size: ${tooltipConfig.fontSize}px; opacity: ${opacity}`;
+    // }
   };
 
   const initView = () => {
@@ -194,13 +203,13 @@
 
 <div
   class="tooltip"
-  {style}
-  bind:this={tooltip}
-  class:hidden={!tooltipConfig.show}
+  style="{style}"
+  bind:this="{tooltip}"
+  class:hidden="{!tooltipConfig.show}"
 >
   <div
-    class:arrow-up={tooltipConfig.orientation === 'n'}
-    class:arrow-down={tooltipConfig.orientation === 's'}
-  />
+    class:arrow-up="{tooltipConfig.orientation === 'n'}"
+    class:arrow-down="{tooltipConfig.orientation === 's'}"
+  ></div>
   {@html tooltipConfig.html}
 </div>

@@ -118,3 +118,39 @@
     pointer-events: none;
   }
 }
+
+#popper-tooltip {
+  position: absolute;
+  width: max-content;
+  max-width: 300px;
+  left: 0px;
+  top: 0px;
+  z-index: 20;
+  background: #222;
+  color: white;
+  box-shadow: 0 0 1px hsla(0, 0%, 0%, 0.6), 0 0 3px hsla(0, 0%, 0%, 0.05);
+  padding: 2px 6px 4px 6px;
+  border-radius: 4px;
+  font-size: $font-d2;
+
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  pointer-events: none;
+  text-align: center;
+
+  opacity: 1;
+  transition: opacity 150ms, visibility 150ms;
+
+  &.hidden {
+    opacity: 0;
+  }
+
+  #popper-arrow {
+    position: absolute;
+    background: #222;
+    width: 8px;
+    height: 8px;
+    transform: rotate(45deg);
+  }
+}

@@ -1,16 +1,17 @@
 import { config } from '../../config/config';
 import { timeit, rgbToHex } from '../../utils/utils';
 import d3 from '../../utils/d3-import';
+import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
 import type { Embedding } from './Embedding';
 import type { PromptPoint } from '../../types/embedding-types';
 import fragmentShader from './shaders/point.frag?raw';
 import vertexShader from './shaders/point.vert?raw';
 
-const SCATTER_DOT_RADIUS = 1.2;
+const SCATTER_DOT_RADIUS = 1;
 const DEBUG = config.debug;
 
-let pointMouseleaveTimer: number | null = null;
 let pointMouseenterTimer: number | null = null;
+let pointMouseleaveTimer: number | null = null;
 
 /**
  * Initialize the data => stage, stage => [-1, 1] transformation matrices
@@ -117,6 +118,11 @@ export function drawScatterPlot(this: Embedding) {
     throw Error('webGLMatrices not initialized');
   }
 
+  this.pointRegl.clear({
+    color: [0, 0, 0, 0],
+    depth: 1
+  });
+
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
   const drawPoints = this.pointRegl({
@@ -155,6 +161,36 @@ export function drawScatterPlot(this: Embedding) {
 }
 
 /**
+ * Update the highlight point's annotation during zooming
+ */
+export function updateHighlightPoint(this: Embedding) {
+  if (this.hoverPoint === null) return;
+  if (this.hoverMode !== 'point') return;
+  if (!this.showPoint) return;
+
+  // Draw the point on the top svg
+  const group = this.topSvg.select('g.top-content g.highlights');
+  const oldHighlightPoint = group.select('circle.highlight-point');
+
+  // There is no point highlighted yet
+  const highlightRadius = Math.max(
+    (SCATTER_DOT_RADIUS * 3) / this.curZoomTransform.k,
+    7 / this.curZoomTransform.k
+  );
+  const highlightStroke = 1.2 / this.curZoomTransform.k;
+
+  oldHighlightPoint
+    .attr('r', highlightRadius)
+    .style('stroke-width', highlightStroke);
+
+  updatePopperTooltip(
+    this.tooltip,
+    oldHighlightPoint.node()! as unknown as HTMLElement,
+    this.hoverPoint
+  );
+}
+
+/**
  * Highlight the point where the user hovers over
  * @param point The point that user hovers over
  */
@@ -168,25 +204,30 @@ export function highlightPoint(
 
   // Draw the point on the top svg
   const group = this.topSvg.select('g.top-content g.highlights');
-  const oldHighlightPoint = group.select('circle.highlight-point');
+  const oldHighlightPoint = group.select<SVGCircleElement>(
+    'circle.highlight-point'
+  );
 
   // Hovering empty space
   if (point === undefined) {
-    if (!oldHighlightPoint.empty()) {
-      if (pointMouseleaveTimer !== null) {
-        clearTimeout(pointMouseleaveTimer);
-        pointMouseleaveTimer = null;
-      }
-
-      // Clear the highlight and tooltip in a short delay
-      pointMouseleaveTimer = setTimeout(() => {
-        this.hoverPoint = null;
-        oldHighlightPoint.remove();
-        this.tooltipStoreValue.show = false;
-        this.tooltipStore.set(this.tooltipStoreValue);
-        pointMouseleaveTimer = null;
-      }, 50);
+    if (pointMouseleaveTimer !== null) {
+      clearTimeout(pointMouseleaveTimer);
+      pointMouseleaveTimer = null;
     }
+
+    if (pointMouseenterTimer !== null) {
+      clearTimeout(pointMouseenterTimer);
+      pointMouseenterTimer = null;
+    }
+
+    // Clear the highlight and tooltip in a short delay
+    pointMouseleaveTimer = setTimeout(() => {
+      this.hoverPoint = null;
+      this.tooltip.classList.add('hidden');
+      oldHighlightPoint.remove();
+      pointMouseleaveTimer = null;
+    }, 50);
+
     return;
   }
 
@@ -197,84 +238,89 @@ export function highlightPoint(
     pointMouseleaveTimer = null;
   }
 
-  // There is no point highlighted yet
   const highlightRadius = Math.max(
     (SCATTER_DOT_RADIUS * 3) / this.curZoomTransform.k,
     7 / this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;
+  let curHighlightPoint: d3.Selection<
+    SVGCircleElement,
+    unknown,
+    null,
+    undefined
+  >;
 
+  // There is no point highlighted yet
   if (oldHighlightPoint.empty()) {
-    const highlightPoint = group
+    curHighlightPoint = group
       .append('circle')
       .attr('class', 'highlight-point')
       .attr('cx', this.xScale(point.x))
       .attr('cy', this.yScale(point.y))
       .attr('r', highlightRadius)
       .style('stroke-width', highlightStroke);
-
-    // Get the point position
-    const position = highlightPoint.node()!.getBoundingClientRect();
-    const curWidth = position.width;
-    const tooltipCenterX = position.x + curWidth / 2;
-    const tooltipCenterY = position.y;
-    this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${point.prompt}
-          </div>
-        `;
-
-    this.tooltipStoreValue.x = tooltipCenterX;
-    this.tooltipStoreValue.y = tooltipCenterY;
-    this.tooltipStoreValue.show = true;
-
-    if (pointMouseenterTimer !== null) {
-      clearTimeout(pointMouseenterTimer);
-      pointMouseenterTimer = null;
-    }
-
-    // Show the tooltip after a delay
-    pointMouseenterTimer = setTimeout(() => {
-      this.tooltipStore.set(this.tooltipStoreValue);
-      pointMouseenterTimer = null;
-    }, 300);
   } else {
     // There has been a highlighted point already
-    oldHighlightPoint
+    curHighlightPoint = oldHighlightPoint
       .attr('cx', this.xScale(point.x))
       .attr('cy', this.yScale(point.y))
       .attr('r', highlightRadius)
       .style('stroke-width', highlightStroke);
-
-    // Get the point position
-    const position = (
-      oldHighlightPoint.node()! as HTMLElement
-    ).getBoundingClientRect();
-    const curWidth = position.width;
-    const tooltipCenterX = position.x + curWidth / 2;
-    const tooltipCenterY = position.y;
-    this.tooltipStoreValue.html = `
-          <div class='tooltip-content' style='display: flex; flex-direction:
-            column; justify-content: center;'>
-            ${point.prompt}
-          </div>
-        `;
-    this.tooltipStoreValue.x = tooltipCenterX;
-    this.tooltipStoreValue.y = tooltipCenterY;
-    this.tooltipStoreValue.show = true;
-
-    if (pointMouseenterTimer !== null) {
-      clearTimeout(pointMouseenterTimer);
-      pointMouseenterTimer = setTimeout(() => {
-        this.tooltipStore.set(this.tooltipStoreValue);
-        pointMouseenterTimer = null;
-      }, 300);
-    } else {
-      this.tooltipStore.set(this.tooltipStoreValue);
-    }
   }
+
+  updatePopperTooltip(
+    this.tooltip,
+    curHighlightPoint.node()! as unknown as HTMLElement,
+    point
+  );
+
+  if (pointMouseenterTimer !== null) {
+    clearTimeout(pointMouseenterTimer);
+  }
+  pointMouseenterTimer = setTimeout(() => {
+    this.tooltip.classList.remove('hidden');
+    pointMouseenterTimer = null;
+  }, 300);
 }
+
+/**
+ * Update the popper tooltip for the highlighted prompt point
+ * @param tooltip Tooltip element
+ * @param anchor Anchor point for the tooltip
+ * @param point The prompt point
+ */
+const updatePopperTooltip = (
+  tooltip: HTMLElement,
+  anchor: HTMLElement,
+  point: PromptPoint
+) => {
+  const arrowElement = tooltip.querySelector('#popper-arrow')! as HTMLElement;
+  const contentElement = tooltip.querySelector(
+    '#popper-content'
+  )! as HTMLElement;
+  contentElement.innerText = point.prompt;
+
+  computePosition(anchor, tooltip, {
+    placement: 'top',
+    middleware: [offset(6), flip(), shift(), arrow({ element: arrowElement })]
+  }).then(({ x, y, placement, middlewareData }) => {
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+
+    const { x: arrowX, y: arrowY } = middlewareData.arrow!;
+    let staticSide: 'bottom' | 'left' | 'top' | 'right' = 'bottom';
+    if (placement.includes('top')) staticSide = 'bottom';
+    if (placement.includes('right')) staticSide = 'left';
+    if (placement.includes('bottom')) staticSide = 'top';
+    if (placement.includes('left')) staticSide = 'right';
+
+    arrowElement.style.left = arrowX ? `${arrowX}px` : '';
+    arrowElement.style.top = arrowY ? `${arrowY}px` : '';
+    arrowElement.style.right = '';
+    arrowElement.style.bottom = '';
+    arrowElement.style[staticSide] = '-4px';
+  });
+};
 
 /**
  * Convert the current zoom transform into a matrix

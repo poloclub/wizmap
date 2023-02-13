@@ -44,7 +44,8 @@ import {
   drawScatterPlot,
   highlightPoint,
   initWebGLBuffers,
-  updateWebGLBuffers
+  updateWebGLBuffers,
+  updateHighlightPoint
 } from './EmbeddingPointWebGL';
 import { getLatoTextWidth } from '../../utils/text-width';
 import type { Writable } from 'svelte/store';
@@ -76,7 +77,6 @@ export class Embedding {
   svgPadding: Padding;
 
   topSvg: d3.Selection<HTMLElement, unknown, null, undefined>;
-
   topicCanvases: d3.Selection<HTMLElement, unknown, null, undefined>[];
 
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
@@ -84,6 +84,9 @@ export class Embedding {
   frontPositionBuffer: createRegl.Buffer | null = null;
   frontColorBuffer: createRegl.Buffer | null = null;
   bufferPointSize = 0;
+
+  // Tooltips
+  tooltip: HTMLElement;
   hoverPoint: PromptPoint | null = null;
 
   xScale: d3.ScaleLinear<number, number, never>;
@@ -159,6 +162,7 @@ export class Embedding {
   drawScatterPlot = drawScatterPlot;
   initWebGLMatrices = initWebGLMatrices;
   highlightPoint = highlightPoint;
+  updateHighlightPoint = updateHighlightPoint;
 
   /**
    *
@@ -292,6 +296,8 @@ export class Embedding {
       .on('end', () => this.zoomEnded());
 
     this.topSvg.call(this.zoom).on('dblclick.zoom', null);
+
+    this.tooltip = document.querySelector('#popper-tooltip')!;
 
     // Initialize the data
     timeit('Init data', DEBUG);
@@ -679,19 +685,6 @@ export class Embedding {
       .select('.top-group')
       .attr('transform', `${transform.toString()}`);
 
-    // Refill more points in the region
-    // if (Date.now() - this.lsatRefillTime > REFILL_TIME_GAP) {
-    //   const refillMessage: EmbeddingWorkerMessage = {
-    //     command: 'startRefillRegion',
-    //     payload: {
-    //       refillID: ++this.lastRefillID,
-    //       viewRange: this.getCurViewRanges()
-    //     }
-    //   };
-    //   this.embeddingWorker.postMessage(refillMessage);
-    //   this.lsatRefillTime = Date.now();
-    // }
-
     // Transform the visible canvas elements
     if (this.showPoint) {
       if (this.frontPositionBuffer && this.frontColorBuffer) {
@@ -715,6 +708,11 @@ export class Embedding {
         this.lastMouseClientPosition.x,
         this.lastMouseClientPosition.y
       );
+    }
+
+    // Adjust the highlighted point
+    if (this.hoverMode === 'point') {
+      this.updateHighlightPoint();
     }
 
     await yieldToMain();
