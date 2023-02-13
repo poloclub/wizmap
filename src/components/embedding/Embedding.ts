@@ -12,7 +12,8 @@ import type {
   DrawnLabel,
   LabelData,
   Direction,
-  EmbeddingWorkerMessage,
+  LoaderWorkerMessage,
+  TreeWorkerMessage,
   EmbeddingInitSetting,
   WebGLMatrices
 } from '../../types/embedding-types';
@@ -136,7 +137,8 @@ export class Embedding {
   lastGridTreeLevels: number[] = [];
 
   // Web workers
-  embeddingWorker: Worker;
+  loaderWorker: Worker;
+  treeWorker: Worker;
 
   // Methods implemented in other files
   drawLabels = drawLabels;
@@ -195,15 +197,21 @@ export class Embedding {
     this.showPoint = defaultSetting.showPoint;
     this.showLabel = defaultSetting.showLabel;
 
-    // Initialize the web worker to load data
-    this.embeddingWorker = new Worker(
-      new URL('./EmbeddingWorker.ts', import.meta.url),
+    // Initialize the web worker to load data and deal with the quadtree
+    this.loaderWorker = new Worker(
+      new URL('./workers/loader.ts', import.meta.url),
       { type: 'module' }
     );
-    this.embeddingWorker.onmessage = (
-      e: MessageEvent<EmbeddingWorkerMessage>
-    ) => {
-      this.embeddingWorkerMessageHandler(e);
+    this.loaderWorker.onmessage = (e: MessageEvent<LoaderWorkerMessage>) => {
+      this.loaderWorkerMessageHandler(e);
+    };
+
+    this.treeWorker = new Worker(
+      new URL('./workers/tree.ts', import.meta.url),
+      { type: 'module' }
+    );
+    this.treeWorker.onmessage = (e: MessageEvent<TreeWorkerMessage>) => {
+      this.treeWorkerMessageHandler(e);
     };
 
     // Initialize the SVG
@@ -376,13 +384,20 @@ export class Embedding {
       }
     }
 
-    // Tell the worker to start loading data
+    // Tell the loader worker to start loading data
     // (need to wait to get the xRange and yRange)
-    const message: EmbeddingWorkerMessage = {
+    const message: LoaderWorkerMessage = {
       command: 'startLoadData',
-      payload: { url: this.pointURL, xRange, yRange }
+      payload: { url: this.pointURL }
     };
-    this.embeddingWorker.postMessage(message);
+    this.loaderWorker.postMessage(message);
+
+    // Tell the tree worker to prepare to add points to the tree
+    const treeMessage: TreeWorkerMessage = {
+      command: 'initQuadtree',
+      payload: { xRange, yRange }
+    };
+    this.treeWorker.postMessage(treeMessage);
 
     this.xScale = d3
       .scaleLinear()
@@ -700,23 +715,24 @@ export class Embedding {
    */
   zoomEnded = () => {
     // Update the points (the last call during zoomed() might be skipped)
-    // const refillMessage: EmbeddingWorkerMessage = {
-    //   command: 'startRefillRegion',
-    //   payload: {
-    //     refillID: ++this.lastRefillID,
-    //     viewRange: this.getCurViewRanges()
-    //   }
-    // };
-    // this.embeddingWorker.postMessage(refillMessage);
   };
 
   /**
    * Handle messages from the embedding worker
    * @param e Message event
    */
-  embeddingWorkerMessageHandler = (e: MessageEvent<EmbeddingWorkerMessage>) => {
+  loaderWorkerMessageHandler = (e: MessageEvent<LoaderWorkerMessage>) => {
     switch (e.data.command) {
       case 'transferLoadData': {
+        // Add these points to the quadtree ASAP
+        const treeMessage: TreeWorkerMessage = {
+          command: 'updateQuadtree',
+          payload: {
+            points: e.data.payload.points
+          }
+        };
+        this.treeWorker.postMessage(treeMessage);
+
         if (e.data.payload.isFirstBatch) {
           // Add the first batch points
           this.promptPoints = e.data.payload.points;
@@ -745,6 +761,19 @@ export class Embedding {
         break;
       }
 
+      default: {
+        console.error('Unknown message', e.data.command);
+        break;
+      }
+    }
+  };
+
+  /**
+   * Handle messages from the embedding worker
+   * @param e Message event
+   */
+  treeWorkerMessageHandler = (e: MessageEvent<TreeWorkerMessage>) => {
+    switch (e.data.command) {
       case 'finishQuadtreeSearch': {
         if (this.lastMouseClientPosition === null) {
           throw Error('lastMouseClientPosition is null');
@@ -807,14 +836,14 @@ export class Embedding {
     const dataY = this.yScale.invert(this.curZoomTransform.invertY(y));
 
     // Let the worker to search the closest point in a radius
-    const message: EmbeddingWorkerMessage = {
+    const message: TreeWorkerMessage = {
       command: 'startQuadtreeSearch',
       payload: {
         x: dataX,
         y: dataY
       }
     };
-    this.embeddingWorker.postMessage(message);
+    this.treeWorker.postMessage(message);
 
     // Show labels
     this.mouseoverLabel(x, y);

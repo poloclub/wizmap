@@ -13,10 +13,10 @@
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
-    showPoint: false,
-    showGrid: true,
-    showLabel: true,
-    hover: 'label'
+    showPoint: true,
+    showGrid: false,
+    showLabel: false,
+    hover: 'point'
   };
 
   export let embeddingName = 'prompt';

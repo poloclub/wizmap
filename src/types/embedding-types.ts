@@ -16,21 +16,17 @@ export type EmbeddingInitSetting = {
   hover: 'point' | 'label' | 'none';
 };
 
-export type EmbeddingWorkerMessage =
+export type TreeWorkerMessage =
   | {
-      command: 'startLoadData';
+      command: 'initQuadtree';
       payload: {
-        /** JSON data url */
-        url: string;
         xRange: [number, number];
         yRange: [number, number];
       };
     }
   | {
-      command: 'transferLoadData';
+      command: 'updateQuadtree';
       payload: {
-        isFirstBatch: boolean;
-        isLastBatch: boolean;
         points: PromptPoint[];
       };
     }
@@ -45,6 +41,23 @@ export type EmbeddingWorkerMessage =
       command: 'finishQuadtreeSearch';
       payload: {
         point: PromptPoint;
+      };
+    };
+
+export type LoaderWorkerMessage =
+  | {
+      command: 'startLoadData';
+      payload: {
+        /** JSON data url */
+        url: string;
+      };
+    }
+  | {
+      command: 'transferLoadData';
+      payload: {
+        isFirstBatch: boolean;
+        isLastBatch: boolean;
+        points: PromptPoint[];
       };
     };
 
