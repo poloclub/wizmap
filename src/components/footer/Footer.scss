@@ -9,10 +9,10 @@
   font-size: $font-d2;
   font-variant-numeric: tabular-nums;
 
-  padding: 2px 4px;
+  padding: 2px 8px 2px 4px;
   line-height: 1;
   border-top-left-radius: 2px;
-  background-color: change-color($gray-100, $alpha: 0.8);
+  background-color: change-color($gray-100, $alpha: 0.9);
 
   user-select: none;
   -webkit-user-select: none;
@@ -24,14 +24,27 @@
       color: $blue-800;
     }
   }
-}
 
-.name {
-  font-weight: 600;
-}
+  .name {
+    font-weight: 600;
+  }
 
-.splitter {
-  height: 12px;
-  width: 1px;
-  border-right: 1px solid $gray-400;
+  .splitter {
+    height: 12px;
+    width: 1px;
+    border-right: 1px solid $gray-400;
+  }
+
+  .scale-legend {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+
+    .scale-line {
+      height: 8px;
+      border: 1px solid currentColor;
+      border-top: none;
+    }
+  }
 }

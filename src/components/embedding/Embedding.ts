@@ -468,6 +468,10 @@ export class Embedding {
 
     // Initialize WebGL matrices once we have the scales
     this.initWebGLMatrices();
+
+    // Send the xScale to the footer
+    this.footerStoreValue.xScale = this.xScale;
+    this.footerStore.set(this.footerStoreValue);
   };
 
   /**
@@ -685,6 +689,7 @@ export class Embedding {
    */
   zoomed = async (e: d3.D3ZoomEvent<HTMLElement, unknown>) => {
     const transform = e.transform;
+    const scaleChanged = this.curZoomTransform.k !== transform.k;
     this.curZoomTransform = transform;
 
     // === Task (1) ===
@@ -727,6 +732,13 @@ export class Embedding {
     }
 
     await yieldToMain();
+
+    // === TTask (2) ===
+    // Update the footer with the new zoom level
+    if (scaleChanged) {
+      this.footerStoreValue.curZoomTransform = this.curZoomTransform;
+      this.footerStore.set(this.footerStoreValue);
+    }
   };
 
   /**

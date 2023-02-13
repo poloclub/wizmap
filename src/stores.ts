@@ -1,7 +1,10 @@
 import { writable } from 'svelte/store';
+import d3 from './utils/d3-import';
 
 export interface FooterStoreValue {
   numPoints: number;
+  curZoomTransform: d3.ZoomTransform;
+  xScale: d3.ScaleLinear<number, number, never>;
 }
 
 export interface TooltipStoreValue {
@@ -18,7 +21,9 @@ export interface TooltipStoreValue {
 
 export const getFooterStoreDefaultValue = (): FooterStoreValue => {
   return {
-    numPoints: 0
+    numPoints: 0,
+    curZoomTransform: d3.zoomIdentity,
+    xScale: d3.scaleLinear()
   };
 };
 

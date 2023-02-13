@@ -12,6 +12,7 @@
   let mounted = false;
   let initialized = false;
   let myFooter: Footer | null = null;
+  const scaleWidth = 50;
 
   const footerUpdated = () => {
     myFooter = myFooter;
@@ -28,7 +29,7 @@
     initialized = true;
 
     if (component && footerStore) {
-      myFooter = new Footer(component, footerStore, footerUpdated);
+      myFooter = new Footer(component, scaleWidth, footerStore, footerUpdated);
     }
   };
 
@@ -49,8 +50,13 @@
     <div class="splitter"></div>
     <span><a href="https://github.com/poloclub/wizmap">Video</a> </span>
     <div class="splitter"></div>
-    <span>{myFooter ? myFooter.numPoints : '0'} data points</span>
+    <span>{myFooter ? myFooter.numPoints : '0'} Data points</span>
     <div class="splitter"></div>
-    <div class="scale-legend"></div>
+    <div class="scale-legend">
+      <span class="sclae-num"
+        >{myFooter ? myFooter.scaleDataWidth : '0.0000'}</span
+      >
+      <div class="scale-line" style="{`width: ${scaleWidth}px`}"></div>
+    </div>
   </div>
 </div>
