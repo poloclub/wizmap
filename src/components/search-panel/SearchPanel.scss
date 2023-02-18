@@ -1,0 +1,87 @@
+@import '../../define.scss';
+
+$button-border-radius: 8px;
+
+.search-panel-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.svg-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1em;
+  height: 1em;
+  color: currentColor;
+
+  // cursor: pointer;
+  pointer-events: fill;
+
+  :global(svg) {
+    fill: currentColor;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.search-bar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: $font-d1;
+  color: $gray-600;
+
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+
+  padding: 12px;
+  border-radius: $button-border-radius;
+  background-color: change-color($color: white, $alpha: 1);
+  box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.2), 0 -1px 0 hsla(0, 0%, 0%, 0.02);
+
+  &.focused {
+    box-shadow: 0 0 2px hsla(0, 0%, 0%, 0.2), 0 -1px 0 hsla(0, 0%, 0%, 0.02);
+  }
+
+  &:focus {
+    background-color: red;
+  }
+
+  #search-bar-input {
+    border: none;
+    width: 26ch;
+
+    &:focus {
+      border: none;
+      outline: none;
+    }
+
+    &::placeholder {
+      color: $gray-600;
+    }
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cancel-icon {
+    margin-left: 8px;
+    color: $gray-500;
+    transition: color 100ms ease-in-out;
+
+    &:hover {
+      color: adjust-color($color: $gray-500, $lightness: -10%);
+    }
+
+    &:active {
+      color: adjust-color($color: $gray-500, $lightness: 10%);
+    }
+  }
+}

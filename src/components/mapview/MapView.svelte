@@ -1,6 +1,7 @@
 <script lang="ts">
   import Embedding from '../embedding/Embedding.svelte';
   import Footer from '../footer/Footer.svelte';
+  import SearchPanel from '../search-panel/SearchPanel.svelte';
   import { getFooterStore } from '../../stores';
   import Packing from '../packing/Packing.svelte';
   import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
@@ -74,5 +75,9 @@
 
   <div class="footer-container">
     <Footer footerStore="{footerStore}" />
+  </div>
+
+  <div class="search-panel-container">
+    <SearchPanel searchPanelStore="{footerStore}" />
   </div>
 </div>

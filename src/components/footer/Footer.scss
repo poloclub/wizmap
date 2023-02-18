@@ -78,7 +78,7 @@ $zoom-button-border-radius: 8px;
 .zoom-control {
   display: flex;
   flex-direction: column;
-  background-color: change-color($color: white, $alpha: 0.95);
+  background-color: change-color($color: white, $alpha: 1);
   box-shadow: 0 1px 4px hsla(0, 0%, 0%, 0.3);
   margin-right: 10px;
   margin-bottom: 10px;
@@ -109,13 +109,14 @@ $zoom-button-border-radius: 8px;
 
   &.zoom-button-reset {
     font-size: 16px;
+    border-radius: $zoom-button-border-radius;
   }
 
   &:hover {
-    background-color: $gray-100;
+    background-color: $gray-200;
   }
 
   &:active {
-    background-color: $gray-200;
+    background-color: adjust-color($color: $gray-200, $lightness: -2%);
   }
 }

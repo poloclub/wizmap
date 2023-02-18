@@ -237,8 +237,8 @@ export class Embedding {
 
     // Fix the svg width and height
     this.svg
-      .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height);
+      .attr('width', `${this.svgFullSize.width}px`)
+      .attr('height', `${this.svgFullSize.height}px`);
 
     this.svgPadding = {
       top: 0,
@@ -271,8 +271,8 @@ export class Embedding {
     this.pointCanvas = d3
       .select(this.component)
       .select<HTMLElement>('.embedding-canvas')
-      .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height);
+      .attr('width', `${this.svgFullSize.width}px`)
+      .attr('height', `${this.svgFullSize.height}px`);
     this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
 
     this.topicCanvases = [];
@@ -281,8 +281,8 @@ export class Embedding {
         d3
           .select(this.component)
           .select<HTMLElement>(`.topic-grid-canvas.${pos}`)
-          .attr('width', this.svgFullSize.width)
-          .attr('height', this.svgFullSize.height)
+          .attr('width', `${this.svgFullSize.width}px`)
+          .attr('height', `${this.svgFullSize.height}px`)
           .classed('hidden', !this.showGrid)
       );
     }
@@ -324,8 +324,8 @@ export class Embedding {
     const topSvg = d3
       .select(this.component)
       .select<HTMLElement>('.top-svg')
-      .attr('width', this.svgFullSize.width)
-      .attr('height', this.svgFullSize.height)
+      .attr('width', `${this.svgFullSize.width}px`)
+      .attr('height', `${this.svgFullSize.height}px`)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
         // this.highlightPoint(undefined);
