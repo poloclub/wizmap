@@ -232,10 +232,12 @@
   width: 1rem;
   height: 1rem;
 
+  color: currentColor;
   cursor: pointer;
   pointer-events: fill;
 
   :global(svg) {
+    fill: currentColor;
     width: 100%;
     height: 100%;
   }
@@ -429,31 +431,41 @@ $search-panel-width: 348px;
 
   .flex-gap {
     flex-grow: 1;
-    max-width: 20px;
+    max-width: 12px;
   }
 
   .item {
     pointer-events: all;
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    // color: $red-400;
+
     background-color: white;
     box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
       0 1px 3px 1px hsla(0, 6%, 25%, 0.15);
     border-radius: 8px;
     font-weight: 500;
-    padding: 5px 8px;
+    padding: 6px 12px;
 
     display: flex;
     flex-direction: row;
     align-items: center;
 
     .caret {
-      margin-left: 5px;
+      margin-left: 1px;
       margin-top: 1px;
       width: 0;
       height: 0;
       border-left: 5px solid transparent;
       border-right: 5px solid transparent;
       border-top: 6px solid currentColor;
+    }
+
+    .svg-icon {
+      width: 18px;
+      height: 18px;
     }
   }
 }

@@ -3,8 +3,13 @@
   import { onMount } from 'svelte';
   import type { EmbeddingInitSetting } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
-  import type { FooterStoreValue, searchBarStoreValue } from '../../stores';
+  import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
   import iconGear from '../../imgs/icon-gear.svg?raw';
+  import iconContour from '../../imgs/icon-contour.svg?raw';
+  import iconPoint from '../../imgs/icon-point.svg?raw';
+  import iconLabel from '../../imgs/icon-label.svg?raw';
+  import iconGrid from '../../imgs/icon-grid.svg?raw';
+  import iconTime from '../../imgs/icon-time.svg?raw';
 
   let component: HTMLElement | null = null;
   let mounted = false;
@@ -22,7 +27,7 @@
 
   export let embeddingName = 'prompt';
   export let footerStore: Writable<FooterStoreValue>;
-  export let searchBarStore: Writable<searchBarStoreValue>;
+  export let searchBarStore: Writable<SearchBarStoreValue>;
 
   onMount(() => {
     mounted = true;
@@ -228,33 +233,33 @@
 
   <div class="control-bar">
     <div class="item">
-      <div class="svg-icon"></div>
+      <div class="svg-icon">{@html iconContour}</div>
       <div class="name">Contour</div>
       <div class="caret"></div>
     </div>
     <div class="flex-gap"></div>
 
     <div class="item">
-      <div class="svg-icon"></div>
+      <div class="svg-icon">{@html iconPoint}</div>
       <div class="name">Point</div>
       <div class="caret"></div>
     </div>
     <div class="flex-gap"></div>
 
     <div class="item">
-      <div class="svg-icon"></div>
+      <div class="svg-icon">{@html iconLabel}</div>
       <div class="name">Label</div>
     </div>
     <div class="flex-gap"></div>
 
     <div class="item">
-      <div class="svg-icon"></div>
+      <div class="svg-icon">{@html iconGrid}</div>
       <div class="name">Grid</div>
     </div>
     <div class="flex-gap"></div>
 
     <div class="item">
-      <div class="svg-icon"></div>
+      <div class="svg-icon">{@html iconTime}</div>
       <div class="name">Time</div>
     </div>
   </div>
