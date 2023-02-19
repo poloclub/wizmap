@@ -81,7 +81,7 @@ $zoom-button-border-radius: 8px;
   pointer-events: all;
   display: flex;
   flex-direction: column;
-  background-color: change-color($color: white, $alpha: 1);
+  background-color: white;
   box-shadow: 0 1px 4px hsla(0, 0%, 0%, 0.3);
   margin-right: 10px;
   margin-bottom: 10px;

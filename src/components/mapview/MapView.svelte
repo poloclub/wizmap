@@ -52,18 +52,6 @@
   </div>
 
   <div class="app-wrapper">
-    <!-- <div class="app-title">
-      <div class="title-left">
-        <span class="app-name"> WizMap </span>
-      </div>
-
-      <div class="title-right">
-        <a class="title-link" href="https://github.com/anonacl/diffusiondb">
-          {@html iconGithub}
-        </a>
-      </div>
-    </div> -->
-
     <div class="main-app" bind:this="{component}">
       <div
         class="main-app-container"

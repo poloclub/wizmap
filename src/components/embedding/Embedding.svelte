@@ -225,4 +225,37 @@
       {@html iconGear}
     </div>
   </div>
+
+  <div class="control-bar">
+    <div class="item">
+      <div class="svg-icon"></div>
+      <div class="name">Contour</div>
+      <div class="caret"></div>
+    </div>
+    <div class="flex-gap"></div>
+
+    <div class="item">
+      <div class="svg-icon"></div>
+      <div class="name">Point</div>
+      <div class="caret"></div>
+    </div>
+    <div class="flex-gap"></div>
+
+    <div class="item">
+      <div class="svg-icon"></div>
+      <div class="name">Label</div>
+    </div>
+    <div class="flex-gap"></div>
+
+    <div class="item">
+      <div class="svg-icon"></div>
+      <div class="name">Grid</div>
+    </div>
+    <div class="flex-gap"></div>
+
+    <div class="item">
+      <div class="svg-icon"></div>
+      <div class="name">Time</div>
+    </div>
+  </div>
 </div>
