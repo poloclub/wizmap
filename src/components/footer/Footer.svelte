@@ -7,6 +7,9 @@
   import iconPlus from '../../imgs/icon-plus.svg?raw';
   import iconMinus from '../../imgs/icon-minus.svg?raw';
   import iconHome from '../../imgs/icon-home.svg?raw';
+  import iconGithub from '../../imgs/icon-github.svg?raw';
+  import iconFile from '../../imgs/icon-file.svg?raw';
+  import iconPlay from '../../imgs/icon-play.svg?raw';
 
   export let footerStore: Writable<FooterStoreValue>;
 
@@ -61,12 +64,31 @@
   <div class="footer">
     <span class="name">WizMap </span>
     <div class="splitter"></div>
-    <span><a href="https://github.com/poloclub/wizmap">Paper</a> </span>
+
+    <a href="https://github.com/poloclub/wizmap"
+      ><span class="item">
+        <span class="svg-icon">{@html iconFile}</span>
+        Paper
+      </span></a
+    >
     <div class="splitter"></div>
-    <span><a href="https://github.com/poloclub/wizmap">Code</a> </span>
+
+    <a href="https://github.com/poloclub/wizmap"
+      ><span class="item">
+        <span class="svg-icon">{@html iconGithub}</span>
+        Code
+      </span></a
+    >
     <div class="splitter"></div>
-    <span><a href="https://github.com/poloclub/wizmap">Video</a> </span>
+
+    <a href="https://github.com/poloclub/wizmap"
+      ><span class="item">
+        <span class="svg-icon">{@html iconPlay}</span>
+        Video
+      </span></a
+    >
     <div class="splitter"></div>
+
     <span>{myFooter ? myFooter.numPoints : '0'} Data points</span>
     <div class="splitter"></div>
     <div class="scale-legend">

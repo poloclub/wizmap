@@ -238,6 +238,7 @@
 
   :global(svg) {
     fill: currentColor;
+    stroke: currentColor;
     width: 100%;
     height: 100%;
   }
@@ -431,41 +432,129 @@ $search-panel-width: 348px;
 
   .flex-gap {
     flex-grow: 1;
-    max-width: 12px;
+    max-width: 15px;
   }
 
-  .item {
-    pointer-events: all;
+  .item-wrapper {
+    pointer-events: none;
+    position: relative;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 5px;
-    // color: $red-400;
 
-    background-color: white;
-    box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
-      0 1px 3px 1px hsla(0, 6%, 25%, 0.15);
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 6px 12px;
+    .item {
+      pointer-events: all;
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      font-size: $font-d1;
+      // color: $red-400;
 
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+      background-color: white;
+      box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
+        0 1px 3px 1px hsla(0, 6%, 25%, 0.15);
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 6px 12px;
 
-    .caret {
-      margin-left: 1px;
-      margin-top: 1px;
-      width: 0;
-      height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 6px solid currentColor;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+
+      transition: background-color 100ms ease-in-out;
+
+      &:hover {
+        background-color: $gray-100;
+      }
+
+      &:active {
+        background-color: $gray-200;
+      }
+
+      .item {
+      }
+
+      .caret {
+        transition: transform 150ms ease-in-out;
+
+        .svg-icon {
+          width: 13px;
+          height: 13px;
+        }
+
+        &.activated {
+          transform: rotate(-180deg);
+        }
+      }
+
+      .svg-icon {
+        width: 16px;
+        height: 16px;
+      }
     }
 
-    .svg-icon {
-      width: 18px;
-      height: 18px;
+    .menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0px;
+
+      background-color: white;
+      box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
+        0 2px 6px 2px hsla(0, 6%, 25%, 0.15);
+      border-radius: 8px;
+
+      max-width: 600px;
+      padding: 6px 12px;
+
+      font-size: $font-d1;
+      font-weight: 400;
+
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      opacity: 1;
+      pointer-events: all;
+      cursor: default;
+      transition: opacity 150ms ease-in-out;
+
+      &.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .control-row {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+
+        label {
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .contour-menu {
+      .control-row:nth-child(1) {
+        accent-color: $blue-500;
+      }
+
+      .control-row:nth-child(2) {
+        accent-color: $pink-500;
+      }
+    }
+
+    .point-menu {
+      .control-row:nth-child(1) {
+        accent-color: $blue-500;
+      }
+
+      .control-row:nth-child(2) {
+        accent-color: $pink-500;
+      }
     }
   }
 }

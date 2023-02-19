@@ -5,17 +5,20 @@
   import type { Writable } from 'svelte/store';
   import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
   import iconGear from '../../imgs/icon-gear.svg?raw';
-  import iconContour from '../../imgs/icon-contour.svg?raw';
+  import iconContour2 from '../../imgs/icon-contour.svg?raw';
   import iconPoint from '../../imgs/icon-point.svg?raw';
   import iconLabel from '../../imgs/icon-label.svg?raw';
   import iconGrid from '../../imgs/icon-grid.svg?raw';
   import iconTime from '../../imgs/icon-time.svg?raw';
+  import iconCaret from '../../imgs/icon-caret-down.svg?raw';
+  const iconContour = iconContour2.replaceAll('black', 'currentColor');
 
   let component: HTMLElement | null = null;
   let mounted = false;
   let initialized = false;
   let embedding: Embedding | null = null;
   let showControl = false;
+  let controlDisplayItem = '';
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -232,35 +235,140 @@
   </div>
 
   <div class="control-bar">
-    <div class="item">
-      <div class="svg-icon">{@html iconContour}</div>
-      <div class="name">Contour</div>
-      <div class="caret"></div>
+    <button
+      class="item-wrapper"
+      on:click="{() => {
+        if (controlDisplayItem === 'contour') {
+          controlDisplayItem = '';
+        } else {
+          controlDisplayItem = 'contour';
+        }
+      }}"
+    >
+      <div class="item">
+        <div class="svg-icon">{@html iconContour}</div>
+        <div class="name">Contour</div>
+        <div class="caret" class:activated="{controlDisplayItem === 'contour'}">
+          <div class="svg-icon">
+            {@html iconCaret}
+          </div>
+        </div>
+      </div>
+
+      <button
+        class="menu contour-menu"
+        class:hidden="{controlDisplayItem !== 'contour'}"
+        on:click="{e => {
+          e.stopPropagation();
+        }}"
+      >
+        <div class="control-row">
+          <input
+            type="checkbox"
+            class="checkbox"
+            id="checkbox-contour-1"
+            name="checkbox-contour-1"
+            bind:checked="{defaultSetting.showContour}"
+            on:input="{e => displayCheckboxChanged(e, 'contour')}"
+          />
+          <label for="checkbox-contour-1">Prompts</label>
+        </div>
+
+        <div class="control-row">
+          <input
+            type="checkbox"
+            class="checkbox"
+            id="checkbox-contour-2"
+            name="checkbox-contour-2"
+            bind:checked="{defaultSetting.showContour}"
+            on:input="{e => displayCheckboxChanged(e, 'contour')}"
+          />
+          <label for="checkbox-contour-2">Images</label>
+        </div>
+      </button>
+    </button>
+    <div class="flex-gap"></div>
+
+    <button
+      class="item-wrapper"
+      on:click="{() => {
+        if (controlDisplayItem === 'point') {
+          controlDisplayItem = '';
+        } else {
+          controlDisplayItem = 'point';
+        }
+      }}"
+    >
+      <div class="item">
+        <div class="svg-icon">{@html iconPoint}</div>
+        <div class="name">Point</div>
+        <div class="caret" class:activated="{controlDisplayItem === 'point'}">
+          <div class="svg-icon">
+            {@html iconCaret}
+          </div>
+        </div>
+      </div>
+
+      <button
+        class="menu point-menu"
+        class:hidden="{controlDisplayItem !== 'point'}"
+        on:click="{e => {
+          e.stopPropagation();
+        }}"
+      >
+        <div class="control-row">
+          <input
+            type="checkbox"
+            class="checkbox"
+            id="checkbox-point-1"
+            name="checkbox-point-1"
+            bind:checked="{defaultSetting.showPoint}"
+            on:input="{e => displayCheckboxChanged(e, 'point')}"
+          />
+          <label for="checkbox-point-1">Prompts</label>
+        </div>
+
+        <div class="control-row">
+          <input
+            type="checkbox"
+            class="checkbox"
+            id="checkbox-point-2"
+            name="checkbox-point-2"
+            bind:checked="{defaultSetting.showPoint}"
+            on:input="{e => displayCheckboxChanged(e, 'point')}"
+          />
+          <label for="checkbox-point-2">Images</label>
+        </div>
+      </button>
+    </button>
+    <div class="flex-gap"></div>
+
+    <div class="item-wrapper">
+      <div class="item">
+        <div class="svg-icon">{@html iconLabel}</div>
+        <div class="name">Label</div>
+      </div>
     </div>
     <div class="flex-gap"></div>
 
-    <div class="item">
-      <div class="svg-icon">{@html iconPoint}</div>
-      <div class="name">Point</div>
-      <div class="caret"></div>
+    <div class="item-wrapper">
+      <div class="item">
+        <div class="svg-icon">{@html iconGrid}</div>
+        <div class="name">Grid</div>
+      </div>
     </div>
     <div class="flex-gap"></div>
 
-    <div class="item">
-      <div class="svg-icon">{@html iconLabel}</div>
-      <div class="name">Label</div>
-    </div>
-    <div class="flex-gap"></div>
-
-    <div class="item">
-      <div class="svg-icon">{@html iconGrid}</div>
-      <div class="name">Grid</div>
-    </div>
-    <div class="flex-gap"></div>
-
-    <div class="item">
-      <div class="svg-icon">{@html iconTime}</div>
-      <div class="name">Time</div>
+    <div class="item-wrapper">
+      <div class="item">
+        <div class="svg-icon">{@html iconTime}</div>
+        <div class="name">Time</div>
+        <div class="caret">
+          <div class="svg-icon">
+            {@html iconCaret}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

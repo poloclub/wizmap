@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   pointer-events: all;
 
   font-size: $font-d2;
@@ -34,7 +34,7 @@
   }
 
   .name {
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .splitter {
@@ -53,6 +53,18 @@
       height: 8px;
       border: 1px solid currentColor;
       border-top: none;
+    }
+  }
+
+  .item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+
+    .svg-icon {
+      width: 1em;
+      height: 1em;
     }
   }
 }
