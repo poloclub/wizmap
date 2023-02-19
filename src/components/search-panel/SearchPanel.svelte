@@ -16,6 +16,7 @@
   let initialized = false;
   let mySearchPanel: SearchPanel | null = null;
   let resultListElement: HTMLElement | null = null;
+  let searchInputValue = '';
 
   // Component states
   let inputFocused = false;
@@ -56,7 +57,10 @@
 </style>
 
 <div class="search-panel-wrapper" bind:this="{component}">
-  <div class="search-list-container">
+  <div
+    class="search-list-container"
+    class:shown="{searchInputValue.length > 0}"
+  >
     <div class="search-list">
       <div class="header-gap" class:hidden="{!searchScrolled}"></div>
 
@@ -113,6 +117,7 @@
       type="text"
       id="search-bar-input"
       name="search-query"
+      bind:value="{searchInputValue}"
       placeholder="Search Embeddings"
       spellcheck="false"
       on:focus="{() => {
@@ -122,7 +127,13 @@
         inputFocused = false;
       }}"
     />
-    <div class="svg-icon cancel-icon">
+    <div
+      class="svg-icon cancel-icon"
+      class:hidden="{searchInputValue.length === 0}"
+      on:click="{() => {
+        searchInputValue = '';
+      }}"
+    >
       {@html iconCancel}
     </div>
   </div>
