@@ -1,6 +1,11 @@
 import { writable } from 'svelte/store';
 import d3 from './utils/d3-import';
 
+export interface SearchBarStoreValue {
+  shown: boolean;
+  results: string[];
+}
+
 export interface FooterStoreValue {
   numPoints: number;
   curZoomTransform: d3.ZoomTransform;
@@ -18,6 +23,13 @@ export interface TooltipStoreValue {
   orientation: string;
   mouseoverTimeout: number | null;
 }
+
+export const getSearchBarStoreDefaultValue = (): SearchBarStoreValue => {
+  return {
+    shown: false,
+    results: []
+  };
+};
 
 export const getFooterStoreDefaultValue = (): FooterStoreValue => {
   return {
@@ -39,6 +51,10 @@ export const getTooltipStoreDefaultValue = (): TooltipStoreValue => {
     orientation: 's',
     mouseoverTimeout: null
   };
+};
+
+export const getSearchBarStore = () => {
+  return writable(getSearchBarStoreDefaultValue());
 };
 
 export const getFooterStore = () => {

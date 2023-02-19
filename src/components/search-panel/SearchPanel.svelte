@@ -2,17 +2,23 @@
   import { onMount } from 'svelte';
   import { SearchPanel } from './SearchPanel';
   import type { Writable } from 'svelte/store';
-  import type { FooterStoreValue } from '../../stores';
+  import type { SearchBarStoreValue } from '../../stores';
   import iconPlus from '../../imgs/icon-plus.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
   import iconSearch from '../../imgs/icon-search.svg?raw';
 
-  export let searchPanelStore: Writable<FooterStoreValue>;
+  export let searchPanelStore: Writable<SearchBarStoreValue>;
 
+  // Components
   let component: HTMLElement | null = null;
   let mounted = false;
   let initialized = false;
   let mySearchPanel: SearchPanel | null = null;
+
+  // Component states
+  let inputFocused = false;
+  let searchScrolled = false;
+  let maxListLength = 100;
 
   const searchPanelUpdated = () => {
     mySearchPanel = mySearchPanel;
@@ -29,7 +35,11 @@
     initialized = true;
 
     if (component && searchPanelStore) {
-      mySearchPanel = new SearchPanel(component, searchPanelUpdated);
+      mySearchPanel = new SearchPanel(
+        component,
+        searchPanelUpdated,
+        searchPanelStore
+      );
     }
   };
 
@@ -41,7 +51,28 @@
 </style>
 
 <div class="search-panel-wrapper" bind:this="{component}">
-  <div class="search-bar">
+  <div class="search-list-container">
+    <div class="search-list">
+      <div class="header-gap" class:hidden="{!searchScrolled}"></div>
+
+      {#if mySearchPanel !== null}
+        <div
+          class="result-list"
+          on:scroll="{e => {
+            searchScrolled = e.target.scrollTop > 0;
+          }}"
+        >
+          {#each mySearchPanel.searchBarStoreValue.results.slice(0, maxListLength) as result, i}
+            <div class="item">{result} {i}</div>
+          {/each}
+
+          <div class="add-more-button">Show more</div>
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <div class="search-bar" class:focused="{inputFocused}">
     <div class="svg-icon search-icon">
       {@html iconSearch}
     </div>
@@ -50,6 +81,13 @@
       id="search-bar-input"
       name="search-query"
       placeholder="Search Embeddings"
+      spellcheck="false"
+      on:focus="{() => {
+        inputFocused = true;
+      }}"
+      on:blur="{() => {
+        inputFocused = false;
+      }}"
     />
     <div class="svg-icon cancel-icon">
       {@html iconCancel}

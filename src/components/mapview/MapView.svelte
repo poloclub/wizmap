@@ -2,7 +2,7 @@
   import Embedding from '../embedding/Embedding.svelte';
   import Footer from '../footer/Footer.svelte';
   import SearchPanel from '../search-panel/SearchPanel.svelte';
-  import { getFooterStore } from '../../stores';
+  import { getFooterStore, getSearchBarStore } from '../../stores';
   import Packing from '../packing/Packing.svelte';
   import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
   import iconGithub from '../../imgs/icon-github.svg?raw';
@@ -38,6 +38,7 @@
 
   // Create stores for child components to consume
   const footerStore = getFooterStore();
+  const searchBarStore = getSearchBarStore();
 </script>
 
 <style lang="scss">
@@ -68,7 +69,11 @@
         class="main-app-container"
         class:hidden="{view !== 'prompt-embedding'}"
       >
-        <Embedding embeddingName="{'prompt'}" footerStore="{footerStore}" />
+        <Embedding
+          embeddingName="{'prompt'}"
+          footerStore="{footerStore}"
+          searchBarStore="{searchBarStore}"
+        />
       </div>
     </div>
   </div>
@@ -78,6 +83,6 @@
   </div>
 
   <div class="search-panel-container">
-    <SearchPanel searchPanelStore="{footerStore}" />
+    <SearchPanel searchPanelStore="{searchBarStore}" />
   </div>
 </div>

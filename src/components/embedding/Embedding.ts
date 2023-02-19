@@ -18,8 +18,11 @@ import type {
   WebGLMatrices
 } from '../../types/embedding-types';
 import type { Size, Padding, Rect, Point } from '../../types/common-types';
-import type { FooterStoreValue } from '../../stores';
-import { getFooterStoreDefaultValue } from '../../stores';
+import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
+import {
+  getFooterStoreDefaultValue,
+  getSearchBarStoreDefaultValue
+} from '../../stores';
 import type { Writable } from 'svelte/store';
 import {
   downloadJSON,
@@ -130,6 +133,8 @@ export class Embedding {
   // Stores
   footerStore: Writable<FooterStoreValue>;
   footerStoreValue: FooterStoreValue;
+  searchBarStore: Writable<SearchBarStoreValue>;
+  searchBarStoreValue: SearchBarStoreValue;
 
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
@@ -175,19 +180,25 @@ export class Embedding {
     updateEmbedding,
     defaultSetting,
     embeddingName,
-    footerStore
+    footerStore,
+    searchBarStore
   }: {
     component: HTMLElement;
     updateEmbedding: () => void;
     defaultSetting: EmbeddingInitSetting;
     embeddingName: string;
     footerStore: Writable<FooterStoreValue>;
+    searchBarStore: Writable<SearchBarStoreValue>;
   }) {
     this.component = component;
     this.updateEmbedding = updateEmbedding;
     this.embeddingName = embeddingName;
+
     this.footerStore = footerStore;
     this.footerStoreValue = getFooterStoreDefaultValue();
+
+    this.searchBarStore = searchBarStore;
+    this.searchBarStoreValue = getSearchBarStoreDefaultValue();
 
     // Figure out data urls based on the embedding name
     // const url = '/data/umap-1m.ndjson';
@@ -328,7 +339,7 @@ export class Embedding {
       .attr('height', `${this.svgFullSize.height}px`)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
-        // this.highlightPoint(undefined);
+        this.highlightPoint(undefined);
         this.mouseoverLabel(null, null);
       })
       .attr(
@@ -771,6 +782,12 @@ export class Embedding {
           if (this.showPoint) {
             this.drawScatterPlot();
           }
+
+          // TODO: Remove me
+          const results = this.promptPoints.map(d => d.prompt);
+          this.searchBarStoreValue.shown = true;
+          this.searchBarStoreValue.results = results;
+          this.searchBarStore.set(this.searchBarStoreValue);
         } else {
           // Batches after the first batch
           // Add the points to the the prompt point list
