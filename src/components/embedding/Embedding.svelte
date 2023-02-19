@@ -18,7 +18,7 @@
   let initialized = false;
   let embedding: Embedding | null = null;
   let showControl = false;
-  let controlDisplayItem = '';
+  let controlDisplayItem = 'time';
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -220,20 +220,6 @@
     </div>
   </div>
 
-  <div
-    class="setting-icon"
-    on:click="{() => {
-      showControl = !showControl;
-    }}"
-    on:keypress="{() => {
-      showControl = !showControl;
-    }}"
-  >
-    <div class="icon-wrapper svg-icon" class:activated="{showControl}">
-      {@html iconGear}
-    </div>
-  </div>
-
   <div class="control-bar">
     <button
       class="item-wrapper"
@@ -359,8 +345,17 @@
     </div>
     <div class="flex-gap"></div>
 
-    <div class="item-wrapper">
-      <div class="item">
+    <button class="item-wrapper">
+      <button
+        class="item"
+        on:click="{() => {
+          if (controlDisplayItem === 'time') {
+            controlDisplayItem = '';
+          } else {
+            controlDisplayItem = 'time';
+          }
+        }}"
+      >
         <div class="svg-icon">{@html iconTime}</div>
         <div class="name">Time</div>
         <div class="caret">
@@ -368,7 +363,21 @@
             {@html iconCaret}
           </div>
         </div>
-      </div>
-    </div>
+      </button>
+
+      <button
+        class="menu time-menu"
+        class:hidden="{controlDisplayItem !== 'time'}"
+        on:click="{e => {
+          e.stopPropagation();
+        }}"
+      >
+        <div class="control-row">
+          <div class="svg-icon">
+            {@html iconContour}
+          </div>
+        </div>
+      </button>
+    </button>
   </div>
 </div>

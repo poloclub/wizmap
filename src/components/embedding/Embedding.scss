@@ -556,5 +556,13 @@ $search-panel-width: 348px;
         accent-color: $pink-500;
       }
     }
+
+    .time-menu {
+      top: calc(100% + 10px);
+      left: unset;
+      right: 0px;
+      width: 500px;
+      height: 20px;
+    }
   }
 }

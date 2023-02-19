@@ -10,6 +10,7 @@
   import iconGithub from '../../imgs/icon-github.svg?raw';
   import iconFile from '../../imgs/icon-file.svg?raw';
   import iconPlay from '../../imgs/icon-play.svg?raw';
+  import iconWizmap from '../../imgs/icon-wizmap.svg?raw';
 
   export let footerStore: Writable<FooterStoreValue>;
 
@@ -62,7 +63,9 @@
   </div>
 
   <div class="footer">
-    <span class="name">WizMap </span>
+    <span class="name"
+      ><span class="svg-icon">{@html iconWizmap}</span>WizMap
+    </span>
     <div class="splitter"></div>
 
     <a href="https://github.com/poloclub/wizmap"
