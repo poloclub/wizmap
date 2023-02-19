@@ -8,6 +8,7 @@ $button-border-radius: 8px;
   flex-direction: column;
   align-items: center;
   height: 100vh;
+  font-size: $font-d1;
 }
 
 .svg-icon {
@@ -33,7 +34,7 @@ $search-h-margin: 10px;
 $search-input-width: 250px;
 $search-input-height: 18px;
 
-$search-icon-width: 18px;
+$search-icon-width: 16px;
 $cancel-icon-width: 14px;
 $cancel-icon-margin: 8px;
 
@@ -45,7 +46,6 @@ $search-bar-gap: 8px;
   position: absolute;
   top: $search-h-margin;
   left: $search-h-margin;
-  font-size: $font-d1;
   color: $gray-600;
 
   display: flex;
@@ -151,25 +151,39 @@ $search-bar-gap: 8px;
   .result-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     width: 100%;
     flex-grow: 1;
+
     overflow-y: auto;
+    overflow-x: hidden;
 
     .item {
-      font-size: $font-d1;
       line-height: 1.2;
       width: 100%;
       padding: 5px ($search-h-margin + $search-bar-h-padding);
-
       border-bottom: 1px solid $gray-200;
+      cursor: default;
+    }
+
+    .count-label {
+      font-size: $font-d1;
+      line-height: 1;
+      width: 100%;
+      padding: 5px ($search-h-margin + $search-bar-h-padding);
+      color: $gray-500;
     }
 
     .add-more-button {
-      padding: 5px;
+      padding: 8px;
       font-weight: 600;
       cursor: pointer;
+      width: 100%;
+      text-align: center;
+
       color: $blue-700;
+      background-color: $gray-50;
+
       user-select: none;
       -webkit-user-select: none;
       transition: color 100ms ease-in-out;

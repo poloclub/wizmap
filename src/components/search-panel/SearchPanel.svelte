@@ -3,6 +3,7 @@
   import { SearchPanel } from './SearchPanel';
   import type { Writable } from 'svelte/store';
   import type { SearchBarStoreValue } from '../../stores';
+  import d3 from '../../utils/d3-import';
   import iconPlus from '../../imgs/icon-plus.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
   import iconSearch from '../../imgs/icon-search.svg?raw';
@@ -19,6 +20,7 @@
   let inputFocused = false;
   let searchScrolled = false;
   let maxListLength = 100;
+  const numberFormatter = d3.format(',');
 
   const searchPanelUpdated = () => {
     mySearchPanel = mySearchPanel;
@@ -62,11 +64,22 @@
             searchScrolled = e.target.scrollTop > 0;
           }}"
         >
+          <div class="count-label">
+            {numberFormatter(mySearchPanel.searchBarStoreValue.results.length)} Search
+            Rsults
+          </div>
           {#each mySearchPanel.searchBarStoreValue.results.slice(0, maxListLength) as result, i}
             <div class="item">{result} {i}</div>
           {/each}
 
-          <div class="add-more-button">Show more</div>
+          <div
+            class="add-more-button"
+            on:click="{() => {
+              maxListLength += 100;
+            }}"
+          >
+            Show more
+          </div>
         </div>
       {/if}
     </div>
