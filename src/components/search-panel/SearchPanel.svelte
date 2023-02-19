@@ -4,7 +4,7 @@
   import type { Writable } from 'svelte/store';
   import type { SearchBarStoreValue } from '../../stores';
   import d3 from '../../utils/d3-import';
-  import iconPlus from '../../imgs/icon-plus.svg?raw';
+  import iconTop from '../../imgs/icon-top.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
   import iconSearch from '../../imgs/icon-search.svg?raw';
 
@@ -15,10 +15,13 @@
   let mounted = false;
   let initialized = false;
   let mySearchPanel: SearchPanel | null = null;
+  let resultListElement: HTMLElement | null = null;
 
   // Component states
   let inputFocused = false;
   let searchScrolled = false;
+  let showScrollTopButton = false;
+
   let maxListLength = 100;
   const numberFormatter = d3.format(',');
 
@@ -60,13 +63,15 @@
       {#if mySearchPanel !== null}
         <div
           class="result-list"
+          bind:this="{resultListElement}"
           on:scroll="{e => {
             searchScrolled = e.target.scrollTop > 0;
+            showScrollTopButton = e.target.scrollTop > 3000;
           }}"
         >
           <div class="count-label">
             {numberFormatter(mySearchPanel.searchBarStoreValue.results.length)} Search
-            Rsults
+            Results
           </div>
           {#each mySearchPanel.searchBarStoreValue.results.slice(0, maxListLength) as result, i}
             <div class="item">{result} {i}</div>
@@ -78,10 +83,25 @@
               maxListLength += 100;
             }}"
           >
-            Show more
+            Show More
           </div>
         </div>
       {/if}
+
+      <div
+        class="scroll-up-button"
+        class:hidden="{!showScrollTopButton}"
+        on:click="{() => {
+          if (resultListElement !== null) {
+            resultListElement.scrollTop = 0;
+          }
+        }}"
+      >
+        <div class="svg-icon">
+          {@html iconTop}
+        </div>
+        Back to top
+      </div>
     </div>
   </div>
 

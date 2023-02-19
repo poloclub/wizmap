@@ -157,6 +157,8 @@ $search-bar-gap: 8px;
 
     overflow-y: auto;
     overflow-x: hidden;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
 
     .item {
       line-height: 1.2;
@@ -175,7 +177,7 @@ $search-bar-gap: 8px;
     }
 
     .add-more-button {
-      padding: 8px;
+      padding: 12px;
       font-weight: 600;
       cursor: pointer;
       width: 100%;
@@ -186,15 +188,58 @@ $search-bar-gap: 8px;
 
       user-select: none;
       -webkit-user-select: none;
-      transition: color 100ms ease-in-out;
+      transition: color 150ms ease-in-out, background-color 150ms ease-in-out;
 
       &:hover {
+        background-color: $gray-100;
         color: $blue-600;
       }
 
       &:active {
         color: $blue-800;
       }
+    }
+  }
+
+  .scroll-up-button {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    pointer-events: all;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+
+    background-color: white;
+    box-shadow: 0 1px 2px hsla(0, 0%, 0%, 0.25),
+      0 1px 3px 1px hsla(0, 0%, 0%, 0.1);
+    border-radius: 8px;
+    padding: 4px 8px;
+    opacity: 1;
+
+    transition: opacity 150ms ease-in-out;
+
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+      color: $gray-700;
+    }
+
+    &.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:hover {
+      background-color: $gray-100;
+    }
+
+    &:active {
+      background-color: $gray-200;
     }
   }
 }
