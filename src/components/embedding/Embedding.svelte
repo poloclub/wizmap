@@ -235,7 +235,7 @@
         }
       }}"
     >
-      <div class="item">
+      <div class="item" class:activated="{defaultSetting.showContour}">
         <div class="svg-icon">{@html iconContour}</div>
         <div class="name">Contour</div>
         <div class="caret" class:activated="{controlDisplayItem === 'contour'}">
@@ -289,7 +289,7 @@
         }
       }}"
     >
-      <div class="item">
+      <div class="item" class:activated="{defaultSetting.showPoint}">
         <div class="svg-icon">{@html iconPoint}</div>
         <div class="name">Point</div>
         <div class="caret" class:activated="{controlDisplayItem === 'point'}">
@@ -334,32 +334,37 @@
     <div class="flex-gap"></div>
 
     <div class="item-wrapper">
-      <div class="item">
-        <div class="svg-icon">{@html iconLabel}</div>
-        <div class="name">Label</div>
-      </div>
-    </div>
-    <div class="flex-gap"></div>
-
-    <div class="item-wrapper">
-      <div class="item">
+      <div class="item" class:activated="{defaultSetting.showGrid}">
         <div class="svg-icon">{@html iconGrid}</div>
         <div class="name">Grid</div>
       </div>
     </div>
     <div class="flex-gap"></div>
 
-    <button class="item-wrapper">
-      <button
-        class="item"
-        on:click="{() => {
-          if (controlDisplayItem === 'time') {
-            controlDisplayItem = '';
-          } else {
-            controlDisplayItem = 'time';
-          }
-        }}"
-      >
+    <div class="item-wrapper">
+      <div class="item" class:activated="{defaultSetting.showLabel}">
+        <div class="svg-icon">{@html iconLabel}</div>
+        <div class="name">Label</div>
+        <div class="caret">
+          <div class="svg-icon">
+            {@html iconCaret}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex-gap"></div>
+
+    <button
+      class="item-wrapper"
+      on:click="{() => {
+        if (controlDisplayItem === 'time') {
+          controlDisplayItem = '';
+        } else {
+          controlDisplayItem = 'time';
+        }
+      }}"
+    >
+      <button class="item">
         <div class="svg-icon">{@html iconTime}</div>
         <div class="name">Time</div>
         <div class="caret">

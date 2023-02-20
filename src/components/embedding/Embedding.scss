@@ -475,7 +475,17 @@ $search-panel-width: 348px;
         background-color: $gray-200;
       }
 
-      .item {
+      &.activated {
+        background-color: $blue-50;
+        color: $blue-800;
+
+        &:hover {
+          background-color: change-color($color: $blue-100, $lightness: 90%);
+        }
+
+        &:active {
+          background-color: change-color($color: $blue-100, $lightness: 87%);
+        }
       }
 
       .caret {
