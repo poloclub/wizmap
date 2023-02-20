@@ -1,5 +1,7 @@
 const layout = {
-  scatterDotRadius: 1
+  scatterDotRadius: 1,
+  searchPanelWidth: 350,
+  topBarHeight: 52
 };
 
 const time = {

@@ -247,7 +247,8 @@
 
 .setting-icon {
   position: absolute;
-  top: 6px;
+  opacity: 0;
+  top: 50px;
   right: 12px;
   z-index: 5;
   border-radius: $border-radius;

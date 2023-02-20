@@ -662,15 +662,21 @@ export class Embedding {
     }
 
     const screenPadding = 10;
+    const viewAreaWidth = this.svgFullSize.width;
+    const viewAreaHeight = this.svgFullSize.height;
+
     const initZoomK = Math.min(
-      this.svgFullSize.width / (x1 - x0 + screenPadding),
-      this.svgFullSize.height / (y1 - y0 + screenPadding)
+      viewAreaWidth / (x1 - x0 + screenPadding),
+      viewAreaHeight / (y1 - y0 + screenPadding)
     );
 
     this.initZoomTransform = d3.zoomIdentity
-      .translate(this.svgFullSize.width / 2, this.svgFullSize.height / 2)
+      .translate(
+        (this.svgFullSize.width + config.layout.searchPanelWidth) / 2,
+        (this.svgFullSize.height + config.layout.topBarHeight) / 2
+      )
       .scale(initZoomK)
-      .translate(-x0 - (x1 - x0) / 2, -y0 - (y1 - y0) / 2);
+      .translate(-(x0 + (x1 - x0) / 2), -(y0 + (y1 - y0) / 2));
 
     // Trigger the first zoom
     this.topSvg

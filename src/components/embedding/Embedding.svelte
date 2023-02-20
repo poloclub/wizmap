@@ -20,7 +20,7 @@
   let initialized = false;
   let embedding: Embedding | null = null;
 
-  const showControl = false;
+  let showControl = false;
   let controlDisplayItem = '';
   let playingTimeSlider = true;
 
@@ -394,5 +394,19 @@
         </div>
       </button>
     </button>
+  </div>
+
+  <div
+    class="setting-icon"
+    on:click="{() => {
+      showControl = !showControl;
+    }}"
+    on:keypress="{() => {
+      showControl = !showControl;
+    }}"
+  >
+    <div class="icon-wrapper svg-icon" class:activated="{showControl}">
+      {@html iconGear}
+    </div>
   </div>
 </div>
