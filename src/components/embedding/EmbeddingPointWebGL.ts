@@ -68,7 +68,7 @@ export function initWebGLBuffers(this: Embedding) {
 
   for (const point of this.promptPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push([0.2, 0.2, 0.2]);
+    frontColors.push([0, 0, 0]);
   }
 
   this.frontPositionBuffer = this.pointRegl.buffer({
@@ -98,9 +98,14 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
   const positions: number[][] = [];
   const frontColors: number[][] = [];
 
+  const frontColor = d3.color(config.colors['indigo-700'])!.rgb()!;
   for (const point of newPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push([0.2, 0.2, 0.2]);
+    frontColors.push([
+      frontColor.r / 255,
+      frontColor.g / 255,
+      frontColor.b / 255
+    ]);
   }
 
   // Update the buffer using byte offsets
@@ -129,7 +134,11 @@ export function drawScatterPlot(this: Embedding) {
   const ys = [1.0, 0.5];
   const b = Math.pow(ys[1] / ys[0], 1 / (xs[1] - xs[0]));
   const a = ys[0] / Math.pow(b, xs[0]);
-  this.curPointWidth = a * Math.pow(b, this.loadedPointCount);
+  this.curPointWidth =
+    config.layout.scatterDotRadius *
+    (this.svgFullSize.height / 760) *
+    a *
+    Math.pow(b, this.loadedPointCount);
 
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
@@ -164,14 +173,10 @@ export function drawScatterPlot(this: Embedding) {
     blend: {
       enable: true,
       func: {
-        srcRGB: 'src alpha',
-        dstRGB: 1,
-        srcAlpha: 1,
-        dstAlpha: 1
-      },
-      equation: {
-        rgb: 'reverse subtract',
-        alpha: 'add'
+        srcRGB: 'one',
+        srcAlpha: 'one',
+        dstRGB: 'one minus src alpha',
+        dstAlpha: 'one minus src alpha'
       }
     },
 

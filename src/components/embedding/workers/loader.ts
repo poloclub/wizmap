@@ -73,7 +73,7 @@ const startLoadData = (url: string) => {
         processPointStream(point);
 
         // TODO: Remove me in prod
-        if (loadedPointCount >= 200300) {
+        if (loadedPointCount >= 300300) {
           pointStreamFinished();
           timeit('Stream data', DEBUG);
           break;

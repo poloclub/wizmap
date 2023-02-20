@@ -16,5 +16,7 @@ void main() {
   //   return;
   // }
 
-  gl_FragColor = vec4(fragColor, fragAlpha);
+  // Need to pre-compute alpha
+  // https://medium.com/david-guan/alpha-blending-and-webgl-823d86de00d8
+  gl_FragColor = vec4(fragColor * fragAlpha, fragAlpha);
 }
