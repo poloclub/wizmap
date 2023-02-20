@@ -122,6 +122,15 @@ export function drawScatterPlot(this: Embedding) {
     depth: 1
   });
 
+  // Fit a exponential function so set the point width based on number of points
+  // to draw, here we want the curve to pass two points:
+  // (num of point: 2e5, width: 1.0) and (1.8e6, 0.5)
+  const xs = [2e5, 1.8e6];
+  const ys = [1.0, 0.5];
+  const b = Math.pow(ys[1] / ys[0], 1 / (xs[1] - xs[0]));
+  const a = ys[0] / Math.pow(b, xs[0]);
+  this.curPointWidth = a * Math.pow(b, this.loadedPointCount);
+
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
   const drawPoints = this.pointRegl({
@@ -145,11 +154,25 @@ export function drawScatterPlot(this: Embedding) {
 
     uniforms: {
       // Placeholder for function parameters
-      pointWidth: config.layout.scatterDotRadius,
+      pointWidth: this.curPointWidth,
       dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
-      alpha: 1
+      alpha: 1 / (Math.log(this.loadedPointCount) / Math.log(500))
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        srcRGB: 'src alpha',
+        dstRGB: 1,
+        srcAlpha: 1,
+        dstAlpha: 1
+      },
+      equation: {
+        rgb: 'reverse subtract',
+        alpha: 'add'
+      }
     },
 
     count: this.bufferPointSize,
@@ -174,8 +197,7 @@ export function updateHighlightPoint(this: Embedding) {
   // There is no point highlighted yet
   const highlightRadius = Math.max(
     10 / this.curZoomTransform.k,
-    (config.layout.scatterDotRadius *
-      Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
+    (this.curPointWidth * Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
       this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;
@@ -241,8 +263,7 @@ export function highlightPoint(
 
   const highlightRadius = Math.max(
     10 / this.curZoomTransform.k,
-    (config.layout.scatterDotRadius *
-      Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
+    (this.curPointWidth * Math.exp(Math.log(this.curZoomTransform.k) * 0.55)) /
       this.curZoomTransform.k
   );
   const highlightStroke = 1.2 / this.curZoomTransform.k;

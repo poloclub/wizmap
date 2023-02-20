@@ -26,7 +26,6 @@ export class SearchPanel {
     this.searchBarStore.subscribe(value => {
       this.searchBarStoreValue = value;
       this.SearchPanelUpdated();
-      console.log(this.searchBarStoreValue);
     });
   };
 }

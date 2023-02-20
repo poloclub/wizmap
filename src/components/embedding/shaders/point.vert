@@ -23,15 +23,19 @@ uniform float alpha;
 varying vec3 fragColor;
 varying float fragAlpha;
 
-mat3 transformMatrix = dataScaleMatrix * zoomMatrix * normalizeMatrix;
-
 void main() {
-  fragColor = color;
-  fragAlpha = alpha;
+
+  // Init variables in main
+  // https://stackoverflow.com/questions/61765147/initializing-global-variables-in-glsl
+  mat3 transformMatrix = dataScaleMatrix * zoomMatrix * normalizeMatrix;
 
   // Scale the point based on the zoom level
   // https://observablehq.com/@bmschmidt/zoom-strategies-for-huge-scatterplots-with-three-js
   float dynamicSize = pointWidth * (exp(log(zoomMatrix[0][0]) * 0.55));
+  float dynamicAlpha = min(0.4, max(0.1, alpha * log(zoomMatrix[0][0]) / 2.0));
+
+  fragColor = color;
+  fragAlpha = dynamicAlpha;
   gl_PointSize = dynamicSize;
 
   // Normalize the vertex position

@@ -58,6 +58,7 @@ export type LoaderWorkerMessage =
         isFirstBatch: boolean;
         isLastBatch: boolean;
         points: PromptPoint[];
+        loadedPointCount: number;
       };
     };
 

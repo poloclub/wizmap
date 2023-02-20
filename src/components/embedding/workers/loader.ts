@@ -105,7 +105,8 @@ const processPointStream = (point: UMAPPointStreamData) => {
       payload: {
         isFirstBatch: lastDrawnPoints === null,
         isLastBatch: false,
-        points: pendingDataPoints
+        points: pendingDataPoints,
+        loadedPointCount
       }
     };
     postMessage(result);
@@ -127,7 +128,8 @@ const pointStreamFinished = () => {
     payload: {
       isFirstBatch: false,
       isLastBatch: true,
-      points: pendingDataPoints
+      points: pendingDataPoints,
+      loadedPointCount
     }
   };
   postMessage(result);

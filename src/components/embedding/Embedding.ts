@@ -55,6 +55,8 @@ import {
   updateHighlightPoint
 } from './EmbeddingPointWebGL';
 import { config } from '../../config/config';
+import LoaderWorker from './workers/loader?worker';
+import TreeWorker from './workers/tree?worker';
 
 const DEBUG = config.debug;
 const REFILL_TIME_GAP = 300;
@@ -124,11 +126,13 @@ export class Embedding {
   tileData: LevelTileMap | null = null;
   contours: d3.ContourMultiPolygon[] | null = null;
   contoursInitialized = false;
+  loadedPointCount = 1;
 
   // Scatter plot
   lastRefillID = 0;
   lsatRefillTime = 0;
   webGLMatrices: WebGLMatrices | null = null;
+  curPointWidth = 1;
 
   // Stores
   footerStore: Writable<FooterStoreValue>;
@@ -220,18 +224,12 @@ export class Embedding {
     this.showLabel = defaultSetting.showLabel;
 
     // Initialize the web worker to load data and deal with the quadtree
-    this.loaderWorker = new Worker(
-      new URL('./workers/loader.ts', import.meta.url),
-      { type: 'module' }
-    );
+    this.loaderWorker = new LoaderWorker();
     this.loaderWorker.onmessage = (e: MessageEvent<LoaderWorkerMessage>) => {
       this.loaderWorkerMessageHandler(e);
     };
 
-    this.treeWorker = new Worker(
-      new URL('./workers/tree.ts', import.meta.url),
-      { type: 'module' }
-    );
+    this.treeWorker = new TreeWorker();
     this.treeWorker.onmessage = (e: MessageEvent<TreeWorkerMessage>) => {
       this.treeWorkerMessageHandler(e);
     };
@@ -750,7 +748,7 @@ export class Embedding {
 
     await yieldToMain();
 
-    // === TTask (2) ===
+    // === Task (2) ===
     // Update the footer with the new zoom level
     if (scaleChanged) {
       this.footerStoreValue.curZoomTransform = this.curZoomTransform;
@@ -789,7 +787,7 @@ export class Embedding {
             this.drawScatterPlot();
           }
 
-          // TODO: Remove me
+          // TODO: Remove me (testing search panel)
           const results = this.promptPoints.map(d => d.prompt);
           this.searchBarStoreValue.shown = true;
           this.searchBarStoreValue.results = results;
@@ -812,6 +810,9 @@ export class Embedding {
             console.log('Finished loading all data.');
           }
         }
+
+        // Update the data point count
+        this.loadedPointCount = e.data.payload.loadedPointCount;
 
         // Update the footer
         this.footerStoreValue.numPoints = this.promptPoints.length;
