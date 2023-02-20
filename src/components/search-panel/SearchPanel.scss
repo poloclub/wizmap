@@ -34,7 +34,7 @@ $search-h-margin: 10px;
 $search-input-width: 250px;
 $search-input-height: 18px;
 
-$search-icon-width: 16px;
+$logo-icon-width: 24px;
 $cancel-icon-width: 14px;
 $cancel-icon-margin: 8px;
 
@@ -54,7 +54,7 @@ $search-bar-gap: 8px;
   align-items: center;
   pointer-events: all;
 
-  padding: $search-bar-v-padding $search-bar-h-padding;
+  padding: 0 $search-bar-h-padding;
   border-radius: $button-border-radius;
   background-color: change-color($color: white, $alpha: 1);
   transition: box-shadow 150ms ease-in-out;
@@ -70,6 +70,7 @@ $search-bar-gap: 8px;
 
   #search-bar-input {
     border: none;
+    margin: $search-bar-v-padding 0;
     width: $search-input-width;
     height: $search-input-height;
 
@@ -83,30 +84,59 @@ $search-bar-gap: 8px;
     }
   }
 
-  .search-icon {
-    width: $search-icon-width;
-    height: $search-icon-width;
+  .logo-icon {
+    width: $logo-icon-width;
+    height: $logo-icon-width;
   }
 
-  .cancel-icon {
-    width: $cancel-icon-width;
-    height: $cancel-icon-width;
+  .end-button {
+    position: relative;
     margin-left: $cancel-icon-margin;
-    color: $gray-500;
-    transition: color 150ms ease-in-out, opacity 150ms ease-in-out;
-    opacity: 1;
+    width: 1em;
+    height: 1em;
 
-    &:hover {
-      color: adjust-color($color: $gray-500, $lightness: -10%);
+    .search-icon {
+      position: absolute;
+      width: 1em;
+      height: 1em;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+
+      color: currentColor;
+      transition: color 150ms ease-in-out, opacity 150ms ease-in-out;
+      opacity: 1;
+
+      &.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
     }
 
-    &:active {
-      color: adjust-color($color: $gray-500, $lightness: 10%);
-    }
+    .cancel-icon {
+      position: absolute;
+      width: $cancel-icon-width;
+      height: $cancel-icon-width;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
 
-    &.hidden {
-      opacity: 0;
-      pointer-events: none;
+      color: $gray-500;
+      transition: color 150ms ease-in-out, opacity 150ms ease-in-out;
+      opacity: 1;
+
+      &:hover {
+        color: adjust-color($color: $gray-500, $lightness: -10%);
+      }
+
+      &:active {
+        color: adjust-color($color: $gray-500, $lightness: 10%);
+      }
+
+      &.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
     }
   }
 }
@@ -121,7 +151,7 @@ $search-bar-gap: 8px;
 
   height: 100%;
   width: $search-input-width + $search-bar-gap * 2 + $search-h-margin * 2 +
-    $search-bar-h-padding * 2 + $search-icon-width + $cancel-icon-margin +
+    $search-bar-h-padding * 2 + $logo-icon-width + $cancel-icon-margin +
     $cancel-icon-width;
 
   opacity: 1;
@@ -194,11 +224,14 @@ $search-bar-gap: 8px;
     }
 
     .add-more-button {
-      padding: 12px;
       font-weight: 600;
       cursor: pointer;
       width: 100%;
       text-align: center;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
       color: $blue-700;
       background-color: $gray-50;
@@ -214,6 +247,10 @@ $search-bar-gap: 8px;
 
       &:active {
         color: $blue-800;
+      }
+
+      span {
+        padding: 12px;
       }
     }
   }

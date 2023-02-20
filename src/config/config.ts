@@ -1,6 +1,6 @@
 const layout = {
   scatterDotRadius: 1,
-  searchPanelWidth: 350,
+  searchPanelWidth: 356,
   topBarHeight: 52
 };
 

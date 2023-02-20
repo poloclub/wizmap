@@ -7,6 +7,7 @@
   import iconTop from '../../imgs/icon-top.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
   import iconSearch from '../../imgs/icon-search.svg?raw';
+  import iconWizmap from '../../imgs/icon-wizmap.svg?raw';
 
   export let searchPanelStore: Writable<SearchBarStoreValue>;
 
@@ -74,25 +75,25 @@
           }}"
         >
           <div class="count-label">
-            {numberFormatter(mySearchPanel.searchBarStoreValue.results.length)} Search
-            Results
+            {numberFormatter(mySearchPanel.searchBarStoreValue.results.length)}
+            Search Results
           </div>
           {#each mySearchPanel.searchBarStoreValue.results.slice(0, maxListLength) as result, i}
             <div class="item">{result} {i}</div>
           {/each}
 
-          <div
+          <button
             class="add-more-button"
             on:click="{() => {
               maxListLength += 100;
             }}"
           >
-            Show More
-          </div>
+            <span>Show More</span>
+          </button>
         </div>
       {/if}
 
-      <div
+      <button
         class="scroll-up-button"
         class:hidden="{!showScrollTopButton}"
         on:click="{() => {
@@ -105,20 +106,18 @@
           {@html iconTop}
         </div>
         Back to top
-      </div>
+      </button>
     </div>
   </div>
 
   <div class="search-bar" class:focused="{inputFocused}">
-    <div class="svg-icon search-icon">
-      {@html iconSearch}
-    </div>
+    <div class="svg-icon logo-icon">{@html iconWizmap}</div>
     <input
       type="text"
       id="search-bar-input"
       name="search-query"
       bind:value="{searchInputValue}"
-      placeholder="Search Embeddings"
+      placeholder="Search WizMap Embeddings"
       spellcheck="false"
       on:focus="{() => {
         inputFocused = true;
@@ -127,14 +126,24 @@
         inputFocused = false;
       }}"
     />
-    <div
-      class="svg-icon cancel-icon"
-      class:hidden="{searchInputValue.length === 0}"
-      on:click="{() => {
-        searchInputValue = '';
-      }}"
-    >
-      {@html iconCancel}
+
+    <div class="end-button">
+      <div
+        class="svg-icon search-icon"
+        class:hidden="{searchInputValue.length !== 0}"
+      >
+        {@html iconSearch}
+      </div>
+
+      <button
+        class="svg-icon cancel-icon"
+        class:hidden="{searchInputValue.length === 0}"
+        on:click="{() => {
+          searchInputValue = '';
+        }}"
+      >
+        {@html iconCancel}
+      </button>
     </div>
   </div>
 </div>

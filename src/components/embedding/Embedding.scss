@@ -415,7 +415,7 @@
   }
 }
 
-$search-panel-width: 348px;
+$search-panel-width: 356px;
 
 .control-bar {
   position: absolute;
@@ -426,7 +426,7 @@ $search-panel-width: 348px;
 
   width: calc(100vw - $search-panel-width);
   height: 42px;
-  padding-left: 10px;
+  padding-left: 16px;
 
   display: flex;
   flex-direction: row;
@@ -450,13 +450,13 @@ $search-panel-width: 348px;
       align-items: center;
       gap: 6px;
       font-size: $font-d1;
+      font-weight: 600;
       // color: $red-400;
 
       background-color: white;
-      box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
-        0 1px 3px 1px hsla(0, 6%, 25%, 0.15);
+      box-shadow: 0 1px 2px hsla(0, 9%, 25%, 0.3),
+        0 0 0.5px hsla(0, 9%, 25%, 0.5), 0 1px 3px 1px hsla(0, 9%, 25%, 0.15);
       border-radius: 8px;
-      font-weight: 500;
       padding: 6px 12px;
 
       display: flex;
@@ -477,15 +477,15 @@ $search-panel-width: 348px;
       }
 
       &.activated {
-        background-color: $blue-50;
-        color: $blue-800;
+        background-color: change-color($color: $purple-50, $lightness: 95%);
+        color: $purple-600;
 
         &:hover {
-          background-color: change-color($color: $blue-100, $lightness: 90%);
+          background-color: change-color($color: $purple-50, $lightness: 92%);
         }
 
         &:active {
-          background-color: change-color($color: $blue-100, $lightness: 87%);
+          background-color: change-color($color: $purple-50, $lightness: 88%);
         }
       }
 
