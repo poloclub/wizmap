@@ -11,14 +11,18 @@
   import iconGrid from '../../imgs/icon-grid.svg?raw';
   import iconTime from '../../imgs/icon-time.svg?raw';
   import iconCaret from '../../imgs/icon-caret-down.svg?raw';
+  import iconPlay from '../../imgs/icon-play-solid.svg?raw';
+  import iconPause from '../../imgs/icon-pause-solid.svg?raw';
   const iconContour = iconContour2.replaceAll('black', 'currentColor');
 
   let component: HTMLElement | null = null;
   let mounted = false;
   let initialized = false;
   let embedding: Embedding | null = null;
-  let showControl = false;
-  let controlDisplayItem = 'time';
+
+  const showControl = false;
+  let controlDisplayItem = '';
+  let playingTimeSlider = true;
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -373,9 +377,15 @@
         }}"
       >
         <div class="control-row">
-          <div class="svg-icon">
-            {@html iconContour}
-          </div>
+          {#if playingTimeSlider}
+            <div class="svg-icon">
+              {@html iconPlay}
+            </div>
+          {:else}
+            <div class="svg-icon">
+              {@html iconPause}
+            </div>
+          {/if}
         </div>
       </button>
     </button>

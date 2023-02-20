@@ -235,6 +235,7 @@
   color: currentColor;
   cursor: pointer;
   pointer-events: fill;
+  transition: color 100ms ease-in-out;
 
   :global(svg) {
     fill: currentColor;
@@ -561,8 +562,25 @@ $search-panel-width: 348px;
       top: calc(100% + 10px);
       left: unset;
       right: 0px;
-      width: 500px;
-      height: 20px;
+      width: 400px;
+
+      .control-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .svg-icon {
+        color: $gray-600;
+
+        &:hover {
+          color: $gray-700;
+        }
+
+        &:active {
+          color: $gray-800;
+        }
+      }
     }
   }
 }
