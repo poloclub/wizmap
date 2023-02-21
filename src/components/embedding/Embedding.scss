@@ -454,8 +454,8 @@ $search-panel-width: 356px;
       // color: $red-400;
 
       background-color: white;
-      box-shadow: 0 1px 2px hsla(0, 9%, 25%, 0.3),
-        0 0 0.5px hsla(0, 9%, 25%, 0.5), 0 1px 3px 1px hsla(0, 9%, 25%, 0.15);
+      box-shadow: 0 1px 2px hsla(0, 9%, 25%, 0.3), 0 0 1px hsla(0, 9%, 25%, 0.3),
+        0 1px 3px 1px hsla(0, 9%, 25%, 0.15);
       border-radius: 8px;
       padding: 6px 12px;
 
@@ -511,7 +511,6 @@ $search-panel-width: 356px;
     .menu {
       position: absolute;
       top: calc(100% + 10px);
-      left: 0px;
 
       background-color: white;
       box-shadow: 0 1px 2px hsla(0, 6%, 25%, 0.3),
@@ -550,6 +549,7 @@ $search-panel-width: 356px;
     }
 
     .contour-menu {
+      left: 0px;
       .control-row:nth-child(1) {
         accent-color: $blue-500;
       }
@@ -560,6 +560,7 @@ $search-panel-width: 356px;
     }
 
     .point-menu {
+      left: 0px;
       .control-row:nth-child(1) {
         accent-color: $blue-500;
       }
@@ -569,29 +570,173 @@ $search-panel-width: 356px;
       }
     }
 
+    $thumb-width: 14px;
+
     .time-menu {
       top: calc(100% + 10px);
-      left: unset;
       right: 0px;
-      width: 400px;
+      padding-right: 12px + $thumb-width / 2;
 
       .control-row {
         display: flex;
         flex-direction: row;
         align-items: center;
+        gap: 5px + $thumb-width / 2;
       }
 
-      .svg-icon {
-        color: $gray-600;
+      .play-pause-button {
+        position: relative;
+        color: $purple-300;
+        width: 16px;
+        height: 16px;
 
         &:hover {
-          color: $gray-700;
+          color: $purple-400;
         }
 
         &:active {
-          color: $gray-800;
+          color: $purple-500;
+        }
+
+        .svg-icon {
+          width: 16px;
+          height: 16px;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          transition: color 150ms ease-in-out, opacity 150ms ease-in-out;
+
+          &.hidden {
+            opacity: 0;
+            pointer-events: none;
+          }
+        }
+      }
+
+      .slider {
+        height: 5px;
+        width: 400px;
+        background-color: $gray-100;
+        position: relative;
+
+        .range-track {
+          position: absolute;
+          left: 0px;
+          top: 0px;
+          height: 100%;
+          width: 0px;
+          background-color: $purple-100;
+        }
+
+        .middle-thumb {
+          position: absolute;
+          top: 50%;
+          left: -$thumb-width / 2;
+          transform: translateY(-50%);
+
+          width: $thumb-width;
+          height: $thumb-width;
+          background-color: $purple-500;
+          color: $purple-500;
+          border-radius: 100%;
+
+          cursor: grab;
+
+          &::before {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            z-index: 1;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.2;
+            left: 50%;
+            top: 50%;
+            margin-top: -2.5px;
+            margin-left: -2.5px;
+            -webkit-backface-visibility: hidden;
+            -webkit-transform: translateZ(0);
+            transform: scale(0.1);
+            transition: transform 300ms ease-in-out;
+          }
+
+          &:hover {
+            &::before {
+              transform: scale(5);
+            }
+
+            .thumb-label {
+              transition-delay: 200ms;
+              transform: translateX(-50%) translateY(100%) scale(1);
+            }
+          }
+
+          &:active {
+            cursor: grabbing;
+            &::before {
+              transform: scale(7);
+            }
+
+            .thumb-label {
+              transform: translateX(-50%) translateY(100%) scale(1);
+            }
+          }
         }
       }
     }
+  }
+}
+
+.event-blocker {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  z-index: 30;
+  pointer-events: none;
+
+  &:global(.activated) {
+    pointer-events: all;
+  }
+}
+
+.thumb-label {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+
+  font-size: 0.8rem;
+  border-radius: 2px;
+  line-height: 1.2;
+  white-space: nowrap;
+  background-color: $purple-700;
+  color: white;
+
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  transform-origin: top center;
+  transform: translateX(-50%) translateY(100%) scale(0);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+
+  &.thumb-label-middle {
+    top: 12px;
+  }
+
+  &::before {
+    position: absolute;
+    content: '';
+    width: 8px;
+    height: 8px;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, -220%) rotate(45deg);
+    background-color: inherit;
   }
 }

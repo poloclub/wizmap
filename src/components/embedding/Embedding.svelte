@@ -21,7 +21,7 @@
   let embedding: Embedding | null = null;
 
   let showControl = false;
-  let controlDisplayItem = '';
+  let controlDisplayItem = 'time';
   let playingTimeSlider = true;
 
   const defaultSetting: EmbeddingInitSetting = {
@@ -85,6 +85,7 @@
 </style>
 
 <div class="embedding-wrapper" bind:this="{component}">
+  <div class="event-blocker"></div>
   <div class="embedding">
     <svg class="top-svg"></svg>
     <canvas class="embedding-canvas"></canvas>
@@ -382,15 +383,39 @@
         }}"
       >
         <div class="control-row">
-          {#if playingTimeSlider}
-            <div class="svg-icon">
+          <div class="play-pause-button">
+            <button
+              class="svg-icon"
+              class:hidden="{!playingTimeSlider}"
+              on:click="{() => {
+                playingTimeSlider = false;
+              }}"
+            >
               {@html iconPlay}
-            </div>
-          {:else}
-            <div class="svg-icon">
+            </button>
+            <button
+              class="svg-icon"
+              class:hidden="{playingTimeSlider}"
+              on:click="{() => {
+                playingTimeSlider = true;
+              }}"
+            >
               {@html iconPause}
+            </button>
+          </div>
+
+          <div class="slider">
+            <div class="range-track"></div>
+            <div
+              class="middle-thumb"
+              id="time-slider-middle-thumb"
+              tabindex="-1"
+            >
+              <div class="thumb-label thumb-label-middle">
+                <span class="thumb-label-span"></span>
+              </div>
             </div>
-          {/if}
+          </div>
         </div>
       </button>
     </button>

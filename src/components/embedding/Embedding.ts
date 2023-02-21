@@ -54,6 +54,10 @@ import {
   updateWebGLBuffers,
   updateHighlightPoint
 } from './EmbeddingPointWebGL';
+import {
+  timeSliderMouseDownHandler,
+  initTopControlBar
+} from './EmbeddingControl';
 import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker';
 import TreeWorker from './workers/tree?worker';
@@ -157,6 +161,7 @@ export class Embedding {
   treeWorker: Worker;
 
   // Methods implemented in other files
+  // Labels
   drawLabels = drawLabels;
   layoutTopicLabels = layoutTopicLabels;
   addTileIndicatorPath = addTileIndicatorPath;
@@ -167,12 +172,17 @@ export class Embedding {
   redrawTopicGrid = redrawTopicGrid;
   drawTopicGridFrame = drawTopicGridFrame;
 
+  // Points
   initWebGLBuffers = initWebGLBuffers;
   updateWebGLBuffers = updateWebGLBuffers;
   drawScatterPlot = drawScatterPlot;
   initWebGLMatrices = initWebGLMatrices;
   highlightPoint = highlightPoint;
   updateHighlightPoint = updateHighlightPoint;
+
+  // Control
+  initTopControlBar = initTopControlBar;
+  timeSliderMouseDownHandler = timeSliderMouseDownHandler;
 
   /**
    *
@@ -323,6 +333,9 @@ export class Embedding {
     });
 
     this.initStore();
+
+    // Initialize the event handler for the top control bars
+    this.initTopControlBar();
   }
 
   /**
