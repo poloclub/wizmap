@@ -221,7 +221,7 @@
 :global(.top-svg g.topics-top) {
   :global(.highlight-tile) {
     fill: none;
-    stroke: $gray-900;
+    stroke: $purple-900;
     transition: opacity 100ms linear;
   }
 }
@@ -243,176 +243,6 @@
     stroke: currentColor;
     width: 100%;
     height: 100%;
-  }
-}
-
-.setting-icon {
-  position: absolute;
-  opacity: 0;
-  top: 50px;
-  right: 12px;
-  z-index: 5;
-  border-radius: $border-radius;
-  background-color: change-color($color: $gray-50, $alpha: 0.6);
-
-  .svg-icon {
-    width: 26px;
-    height: 26px;
-    padding: 4px;
-    border-radius: $border-radius;
-
-    fill: $gray-700;
-    color: $gray-700;
-    background-color: change-color($color: $gray-400, $alpha: 0);
-    transition: background-color 100ms $ease-cubic-in-out;
-
-    &.activated {
-      background-color: change-color($color: $gray-400, $alpha: 0.2);
-    }
-
-    &:hover {
-      background-color: change-color($color: $gray-400, $alpha: 0.2);
-    }
-
-    &:active {
-      background-color: change-color($color: $gray-400, $alpha: 0.4);
-    }
-  }
-}
-
-.control-panel {
-  position: absolute;
-  z-index: 4;
-  top: 0px;
-  right: 0px;
-  width: 185px;
-  background-color: change-color($color: white, $alpha: 0.95);
-  accent-color: $blue-600;
-
-  $border: 1px solid $gray-border;
-  // border-bottom: $border;
-  // border-left: $border;
-  // border-right: $border;
-  box-shadow: $shadow-border-light;
-  border-radius: $border-radius;
-
-  padding: $panel-v-padding $panel-h-padding 12px $panel-h-padding;
-
-  font-size: $font-d2;
-  line-height: 1;
-  display: none;
-  gap: 0px;
-  flex-direction: column;
-
-  &.shown {
-    display: flex;
-  }
-
-  .header {
-    display: flex;
-    justify-content: center;
-    font-size: $font-d1;
-    padding: 5px 0;
-    font-weight: 700;
-  }
-
-  .splitter {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin: 8px 0px;
-
-    &::after {
-      content: '';
-      width: 100%;
-      border-bottom: 1px solid $gray-300;
-    }
-  }
-
-  .control-item {
-    display: flex;
-    flex-direction: column;
-
-    &.slider-item {
-      margin-top: 2px;
-
-      .control-row {
-        justify-content: space-between;
-      }
-    }
-  }
-
-  .control-row {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-  }
-
-  .slider {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-
-  .item-header {
-    margin-bottom: 0.6em;
-    font-weight: 700;
-  }
-
-  .segmented-control {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    border: 1px solid $gray-300;
-    border-radius: $border-radius;
-
-    .segmented-control-option {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      line-height: 1;
-      width: 100%;
-      padding: 2px 0px 4px 0px;
-      cursor: pointer;
-      transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-
-      &:first-child {
-        border-top-left-radius: $border-radius;
-        border-bottom-left-radius: $border-radius;
-      }
-
-      &:last-child {
-        border-top-right-radius: $border-radius;
-        border-bottom-right-radius: $border-radius;
-      }
-
-      &:not(:last-child) {
-        border-right: 1px solid $gray-300;
-      }
-
-      &.selected {
-        background-color: $blue-600;
-        color: white;
-
-        &:hover {
-          background-color: adjust-color($color: $blue-600, $lightness: 8%);
-        }
-
-        &:active {
-          background-color: adjust-color($color: $blue-600, $lightness: -5%);
-        }
-      }
-
-      &:hover {
-        background-color: adjust-color($color: $gray-300, $lightness: 9%);
-      }
-
-      &:active {
-        background-color: adjust-color($color: $gray-300, $lightness: 7%);
-      }
-    }
   }
 }
 
@@ -493,13 +323,14 @@ $search-panel-width: 356px;
       // Safe area to avoid trigger point hover
       &::before {
         content: '';
-        width: 110%;
-        height: 140%;
+        width: calc(100% + 12px);
+        height: calc(100% + 13px);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         position: absolute;
         z-index: -1;
+        // background-color: $pink-50;
       }
 
       .caret {
@@ -548,6 +379,19 @@ $search-panel-width: 356px;
       &.hidden {
         opacity: 0;
         pointer-events: none;
+      }
+
+      // Safe area to avoid trigger point hover
+      &::before {
+        content: '';
+        width: calc(100% + 15px);
+        height: calc(100% + 15px);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        position: absolute;
+        z-index: -1;
+        // background-color: $pink-50;
       }
 
       .control-row {

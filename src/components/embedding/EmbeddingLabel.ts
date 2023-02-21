@@ -1005,7 +1005,7 @@ export function mouseoverLabel(
   x: number | null,
   y: number | null
 ) {
-  if (this.hoverMode !== 'label') return;
+  if (!this.showGrid) return;
 
   const bottomGroup = this.topSvg.select('g.top-content g.topics-bottom');
   const labelGroup = this.topSvg.select('g.top-content g.topics');
@@ -1027,7 +1027,7 @@ export function mouseoverLabel(
       labelGroup.classed('faded', false);
       oldTopRect.interrupt('top-fade').remove();
       oldBottomRect.remove();
-      this.tooltip.classList.add('hidden');
+      this.tooltipBottom.classList.add('hidden');
       labelMouseleaveTimer = null;
     }, 50);
   };
@@ -1080,9 +1080,10 @@ export function mouseoverLabel(
 
     // Show the tooltip
     updatePopperTooltip(
-      this.tooltip,
+      this.tooltipBottom,
       rect.node()! as unknown as HTMLElement,
-      tile[2]
+      tile[2],
+      'bottom'
     );
 
     // Insert a clone to the top layer
@@ -1100,7 +1101,7 @@ export function mouseoverLabel(
       .on('end', () => {
         topRect.style('opacity', 1);
         labelGroup.classed('faded', true);
-        this.tooltip.classList.remove('hidden');
+        this.tooltipBottom.classList.remove('hidden');
         labelMouseenterTimer = null;
       });
   } else {
@@ -1125,13 +1126,14 @@ export function mouseoverLabel(
 
     // Show the tooltip
     updatePopperTooltip(
-      this.tooltip,
+      this.tooltipBottom,
       oldBottomRect.node()! as unknown as HTMLElement,
-      tile[2]
+      tile[2],
+      'bottom'
     );
 
     if (labelMouseenterTimer === null) {
-      this.tooltip.classList.remove('hidden');
+      this.tooltipBottom.classList.remove('hidden');
     } else {
       labelMouseenterTimer = tile[2];
       oldTopRect
@@ -1143,7 +1145,7 @@ export function mouseoverLabel(
         .on('end', () => {
           oldTopRect.style('opacity', 1);
           labelGroup.classed('faded', true);
-          this.tooltip.classList.remove('hidden');
+          this.tooltipBottom.classList.remove('hidden');
           labelMouseenterTimer = null;
         });
     }
@@ -1156,19 +1158,20 @@ export function mouseoverLabel(
  * @param anchor Anchor point for the tooltip
  * @param point The prompt point
  */
-const updatePopperTooltip = (
+export const updatePopperTooltip = (
   tooltip: HTMLElement,
   anchor: HTMLElement,
-  text: string
+  text: string,
+  placement: 'bottom' | 'left' | 'top' | 'right'
 ) => {
-  const arrowElement = tooltip.querySelector('#popper-arrow')! as HTMLElement;
+  const arrowElement = tooltip.querySelector('.popper-arrow')! as HTMLElement;
   const contentElement = tooltip.querySelector(
-    '#popper-content'
+    '.popper-content'
   )! as HTMLElement;
   contentElement.innerText = text;
 
   computePosition(anchor, tooltip, {
-    placement: 'top',
+    placement: placement,
     middleware: [offset(6), flip(), shift(), arrow({ element: arrowElement })]
   }).then(({ x, y, placement, middlewareData }) => {
     tooltip.style.left = `${x}px`;

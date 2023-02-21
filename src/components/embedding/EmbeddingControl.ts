@@ -136,8 +136,6 @@ export function initTopControlBar(this: Embedding) {
     axisGroup.call(d3.axisBottom(this.timeScale).ticks(5).tickSize(9));
 
     this.moveTimeSliderThumb(0);
-
-    console.log(this.timeScale.invert(400));
   }
 }
 

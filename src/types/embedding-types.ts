@@ -13,7 +13,6 @@ export type EmbeddingInitSetting = {
   showPoint: boolean;
   showGrid: boolean;
   showLabel: boolean;
-  hover: 'point' | 'label' | 'none';
   timeInspectMode: boolean;
 };
 

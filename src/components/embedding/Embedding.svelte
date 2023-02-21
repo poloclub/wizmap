@@ -19,8 +19,6 @@
   let mounted = false;
   let initialized = false;
   let myEmbedding: Embedding | null = null;
-
-  let showControl = false;
   let controlDisplayItem = '';
 
   const defaultSetting: EmbeddingInitSetting = {
@@ -28,7 +26,6 @@
     showPoint: true,
     showGrid: false,
     showLabel: false,
-    hover: 'point',
     timeInspectMode: false
   };
 
@@ -42,16 +39,6 @@
 
   const updateEmbedding = () => {
     myEmbedding = myEmbedding;
-  };
-
-  const hoverModeClicked = (mode: string) => {
-    if (defaultSetting.hover !== mode) {
-      myEmbedding?.hoverModeChanged(mode);
-    }
-
-    if (mode === 'point' || mode === 'label' || mode === 'none') {
-      defaultSetting.hover = mode;
-    }
   };
 
   const displayCheckboxChanged = (e: InputEvent, checkbox: string) => {
@@ -93,136 +80,6 @@
     <canvas class="topic-grid-canvas top"></canvas>
     <canvas class="topic-grid-canvas bottom"></canvas>
     <svg class="embedding-svg"></svg>
-  </div>
-
-  <div class="control-panel" class:shown="{showControl}">
-    <div class="header">Setting</div>
-
-    <div class="splitter"></div>
-
-    <div class="control-item">
-      <div class="item-header">Display</div>
-
-      <div class="control-row">
-        <input
-          type="checkbox"
-          class="checkbox"
-          id="checkbox-contour"
-          name="checkbox-contour"
-          bind:checked="{defaultSetting.showContour}"
-          on:input="{e => displayCheckboxChanged(e, 'contour')}"
-        />
-        <label for="checkbox-contour">Density Contour</label>
-      </div>
-
-      <div class="control-row">
-        <input
-          type="checkbox"
-          class="checkbox"
-          id="checkbox-point"
-          name="checkbox-point"
-          bind:checked="{defaultSetting.showPoint}"
-          on:input="{e => displayCheckboxChanged(e, 'point')}"
-        />
-        <label for="checkbox-point">Data Points</label>
-      </div>
-
-      <div class="control-row">
-        <input
-          type="checkbox"
-          class="checkbox"
-          id="checkbox-grid"
-          name="checkbox-grid"
-          bind:checked="{defaultSetting.showGrid}"
-          on:input="{e => displayCheckboxChanged(e, 'grid')}"
-        />
-        <label for="checkbox-grid">Label Grid</label>
-      </div>
-    </div>
-
-    <div class="splitter"></div>
-
-    <div class="control-item">
-      <div class="item-header">Automatic Labeling</div>
-
-      <div class="control-row">
-        <input
-          type="checkbox"
-          class="checkbox"
-          id="checkbox-label"
-          name="checkbox-label"
-          bind:checked="{defaultSetting.showLabel}"
-          on:input="{e => displayCheckboxChanged(e, 'label')}"
-        />
-        <label for="checkbox-label">High Density Region</label>
-      </div>
-    </div>
-
-    <div class="control-item slider-item">
-      <div class="control-row">
-        <label class="slider-label" for="slider-label-num"
-          >Number of Labels</label
-        >
-        <span class="slider-count">0</span>
-      </div>
-
-      <input
-        type="range"
-        class="slider"
-        id="slider-label-num"
-        name="label-num"
-        disabled="{!defaultSetting.showLabel}"
-        min="0"
-        max="0"
-        on:input="{e =>
-          myEmbedding ? myEmbedding.labelNumSliderChanged(e) : () => {}}"
-      />
-    </div>
-
-    <div class="splitter"></div>
-
-    <div class="control-item">
-      <div class="item-header">Mouse Hover Mode</div>
-
-      <div class="segmented-control">
-        <div
-          class="segmented-control-option"
-          class:selected="{defaultSetting.hover === 'label'}"
-          on:click="{() => {
-            hoverModeClicked('label');
-          }}"
-          on:keypress="{() => {
-            hoverModeClicked('label');
-          }}"
-        >
-          Label
-        </div>
-        <div
-          class="segmented-control-option"
-          class:selected="{defaultSetting.hover === 'point'}"
-          on:click="{() => {
-            hoverModeClicked('point');
-          }}"
-          on:keypress="{() => {
-            hoverModeClicked('point');
-          }}"
-        >
-          Point
-        </div>
-        <div
-          class="segmented-control-option"
-          class:selected="{defaultSetting.hover === 'none'}"
-          on:click="{() => {
-            hoverModeClicked('none');
-          }}"
-          on:keypress="{() => {
-            hoverModeClicked('none');
-          }}"
-        >
-          None
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="control-bar">
@@ -492,19 +349,5 @@
         </div>
       </button>
     </button>
-  </div>
-
-  <div
-    class="setting-icon"
-    on:click="{() => {
-      showControl = !showControl;
-    }}"
-    on:keypress="{() => {
-      showControl = !showControl;
-    }}"
-  >
-    <div class="icon-wrapper svg-icon" class:activated="{showControl}">
-      {@html iconGear}
-    </div>
   </div>
 </div>

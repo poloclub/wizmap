@@ -1,7 +1,7 @@
 import { config } from '../../config/config';
 import { timeit, rgbToHex } from '../../utils/utils';
 import d3 from '../../utils/d3-import';
-import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
+import { updatePopperTooltip } from './EmbeddingLabel';
 import type { Embedding } from './Embedding';
 import type { PromptPoint } from '../../types/embedding-types';
 import fragmentShader from './shaders/point.frag?raw';
@@ -192,7 +192,6 @@ export function drawScatterPlot(this: Embedding) {
  */
 export function updateHighlightPoint(this: Embedding) {
   if (this.hoverPoint === null) return;
-  if (this.hoverMode !== 'point') return;
   if (!this.showPoint) return;
 
   // Draw the point on the top svg
@@ -212,9 +211,10 @@ export function updateHighlightPoint(this: Embedding) {
     .style('stroke-width', highlightStroke);
 
   updatePopperTooltip(
-    this.tooltip,
+    this.tooltipTop,
     oldHighlightPoint.node()! as unknown as HTMLElement,
-    this.hoverPoint
+    this.hoverPoint.prompt,
+    'top'
   );
 }
 
@@ -226,7 +226,6 @@ export function highlightPoint(
   this: Embedding,
   point: PromptPoint | undefined
 ) {
-  if (this.hoverMode !== 'point') return;
   if (!this.showPoint) return;
   if (point === this.hoverPoint) return;
 
@@ -251,7 +250,7 @@ export function highlightPoint(
     // Clear the highlight and tooltip in a short delay
     pointMouseleaveTimer = setTimeout(() => {
       this.hoverPoint = null;
-      this.tooltip.classList.add('hidden');
+      this.tooltipTop.classList.add('hidden');
       oldHighlightPoint.remove();
       pointMouseleaveTimer = null;
     }, 50);
@@ -298,58 +297,20 @@ export function highlightPoint(
   }
 
   updatePopperTooltip(
-    this.tooltip,
+    this.tooltipTop,
     curHighlightPoint.node()! as unknown as HTMLElement,
-    point
+    point.prompt,
+    'top'
   );
 
   if (pointMouseenterTimer !== null) {
     clearTimeout(pointMouseenterTimer);
   }
   pointMouseenterTimer = setTimeout(() => {
-    this.tooltip.classList.remove('hidden');
+    this.tooltipTop.classList.remove('hidden');
     pointMouseenterTimer = null;
   }, 300);
 }
-
-/**
- * Update the popper tooltip for the highlighted prompt point
- * @param tooltip Tooltip element
- * @param anchor Anchor point for the tooltip
- * @param point The prompt point
- */
-const updatePopperTooltip = (
-  tooltip: HTMLElement,
-  anchor: HTMLElement,
-  point: PromptPoint
-) => {
-  const arrowElement = tooltip.querySelector('#popper-arrow')! as HTMLElement;
-  const contentElement = tooltip.querySelector(
-    '#popper-content'
-  )! as HTMLElement;
-  contentElement.innerText = point.prompt;
-
-  computePosition(anchor, tooltip, {
-    placement: 'top',
-    middleware: [offset(6), flip(), shift(), arrow({ element: arrowElement })]
-  }).then(({ x, y, placement, middlewareData }) => {
-    tooltip.style.left = `${x}px`;
-    tooltip.style.top = `${y}px`;
-
-    const { x: arrowX, y: arrowY } = middlewareData.arrow!;
-    let staticSide: 'bottom' | 'left' | 'top' | 'right' = 'bottom';
-    if (placement.includes('top')) staticSide = 'bottom';
-    if (placement.includes('right')) staticSide = 'left';
-    if (placement.includes('bottom')) staticSide = 'top';
-    if (placement.includes('left')) staticSide = 'right';
-
-    arrowElement.style.left = arrowX ? `${arrowX}px` : '';
-    arrowElement.style.top = arrowY ? `${arrowY}px` : '';
-    arrowElement.style.right = '';
-    arrowElement.style.bottom = '';
-    arrowElement.style[staticSide] = '-4px';
-  });
-};
 
 /**
  * Convert the current zoom transform into a matrix

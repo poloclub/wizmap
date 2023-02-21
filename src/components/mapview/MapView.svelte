@@ -46,9 +46,14 @@
 </style>
 
 <div class="mapview-page">
-  <div id="popper-tooltip" class="hidden" role="tooltip">
-    <span id="popper-content"></span>
-    <div id="popper-arrow"></div>
+  <div id="popper-tooltip-top" class="popper-tooltip hidden" role="tooltip">
+    <span class="popper-content"></span>
+    <div class="popper-arrow"></div>
+  </div>
+
+  <div id="popper-tooltip-bottom" class="popper-tooltip hidden" role="tooltip">
+    <span class="popper-content"></span>
+    <div class="popper-arrow"></div>
   </div>
 
   <div class="app-wrapper">

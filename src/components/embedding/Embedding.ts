@@ -34,46 +34,21 @@ import {
   rectsIntersect,
   yieldToMain
 } from '../../utils/utils';
-import {
-  drawLabels,
-  layoutTopicLabels,
-  addTileIndicatorPath,
-  getIdealTopicTreeLevel,
-  labelNumSliderChanged,
-  mouseoverLabel,
-  drawTopicGrid,
-  redrawTopicGrid,
-  drawTopicGridFrame
-} from './EmbeddingLabel';
+import * as Labeler from './EmbeddingLabel';
 import createRegl from 'regl';
-import {
-  initWebGLMatrices,
-  drawScatterPlot,
-  highlightPoint,
-  initWebGLBuffers,
-  updateWebGLBuffers,
-  updateHighlightPoint
-} from './EmbeddingPointWebGL';
-// import {
-//   timeSliderMouseDownHandler,
-//   initTopControlBar,
-//   moveTimeSliderThumb
-// } from './EmbeddingControl';
-import * as controller from './EmbeddingControl';
+import * as PointDrawer from './EmbeddingPointWebGL';
+import * as Controller from './EmbeddingControl';
 import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker';
 import TreeWorker from './workers/tree?worker';
 
 const DEBUG = config.debug;
-const REFILL_TIME_GAP = 300;
 const HOVER_RADIUS = 3;
 
 let DATA_BASE = `${import.meta.env.BASE_URL}data`;
 if (import.meta.env.PROD) {
   DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
 }
-
-type HoverMode = 'point' | 'label' | 'none';
 
 /**
  * Class for the Embedding view
@@ -97,7 +72,8 @@ export class Embedding {
   bufferPointSize = 0;
 
   // Tooltips
-  tooltip: HTMLElement;
+  tooltipTop: HTMLElement;
+  tooltipBottom: HTMLElement;
   hoverPoint: PromptPoint | null = null;
 
   xScale: d3.ScaleLinear<number, number, never>;
@@ -120,7 +96,6 @@ export class Embedding {
   lastMouseClientPosition: Point | null = null;
 
   // User settings
-  hoverMode: HoverMode = 'label';
   showContour: boolean;
   showGrid: boolean;
   showPoint: boolean;
@@ -170,29 +145,29 @@ export class Embedding {
 
   // Methods implemented in other files
   // Labels
-  drawLabels = drawLabels;
-  layoutTopicLabels = layoutTopicLabels;
-  addTileIndicatorPath = addTileIndicatorPath;
-  getIdealTopicTreeLevel = getIdealTopicTreeLevel;
-  labelNumSliderChanged = labelNumSliderChanged;
-  mouseoverLabel = mouseoverLabel;
-  drawTopicGrid = drawTopicGrid;
-  redrawTopicGrid = redrawTopicGrid;
-  drawTopicGridFrame = drawTopicGridFrame;
+  drawLabels = Labeler.drawLabels;
+  layoutTopicLabels = Labeler.layoutTopicLabels;
+  addTileIndicatorPath = Labeler.addTileIndicatorPath;
+  getIdealTopicTreeLevel = Labeler.getIdealTopicTreeLevel;
+  labelNumSliderChanged = Labeler.labelNumSliderChanged;
+  mouseoverLabel = Labeler.mouseoverLabel;
+  drawTopicGrid = Labeler.drawTopicGrid;
+  redrawTopicGrid = Labeler.redrawTopicGrid;
+  drawTopicGridFrame = Labeler.drawTopicGridFrame;
 
   // Points
-  initWebGLBuffers = initWebGLBuffers;
-  updateWebGLBuffers = updateWebGLBuffers;
-  drawScatterPlot = drawScatterPlot;
-  initWebGLMatrices = initWebGLMatrices;
-  highlightPoint = highlightPoint;
-  updateHighlightPoint = updateHighlightPoint;
+  initWebGLBuffers = PointDrawer.initWebGLBuffers;
+  updateWebGLBuffers = PointDrawer.updateWebGLBuffers;
+  drawScatterPlot = PointDrawer.drawScatterPlot;
+  initWebGLMatrices = PointDrawer.initWebGLMatrices;
+  highlightPoint = PointDrawer.highlightPoint;
+  updateHighlightPoint = PointDrawer.updateHighlightPoint;
 
   // Control
-  initTopControlBar = controller.initTopControlBar;
-  timeSliderMouseDownHandler = controller.timeSliderMouseDownHandler;
-  moveTimeSliderThumb = controller.moveTimeSliderThumb;
-  startTimeSliderAnimation = controller.startTimeSliderAnimation;
+  initTopControlBar = Controller.initTopControlBar;
+  timeSliderMouseDownHandler = Controller.timeSliderMouseDownHandler;
+  moveTimeSliderThumb = Controller.moveTimeSliderThumb;
+  startTimeSliderAnimation = Controller.startTimeSliderAnimation;
 
   /**
    *
@@ -237,7 +212,6 @@ export class Embedding {
     }
 
     // Init some properties based on the default setting
-    this.hoverMode = defaultSetting.hover;
     this.showContour = defaultSetting.showContour;
     this.showGrid = defaultSetting.showGrid;
     this.showPoint = defaultSetting.showPoint;
@@ -334,7 +308,8 @@ export class Embedding {
 
     this.topSvg.call(this.zoom).on('dblclick.zoom', null);
 
-    this.tooltip = document.querySelector('#popper-tooltip')!;
+    this.tooltipTop = document.querySelector('#popper-tooltip-top')!;
+    this.tooltipBottom = document.querySelector('#popper-tooltip-bottom')!;
 
     // Initialize the data
     timeit('Init data', DEBUG);
@@ -777,7 +752,7 @@ export class Embedding {
     }
 
     // Adjust the highlighted tile
-    if (this.hoverMode === 'label' && this.lastMouseClientPosition) {
+    if (this.showGrid && this.lastMouseClientPosition) {
       this.mouseoverLabel(
         this.lastMouseClientPosition.x,
         this.lastMouseClientPosition.y
@@ -785,7 +760,9 @@ export class Embedding {
     }
 
     // Adjust the highlighted point
-    if (this.hoverMode === 'point') {
+    if (this.showPoint && this.lastMouseClientPosition) {
+      const { x, y } = this.lastMouseClientPosition;
+      this.mouseoverPoint(x, y);
       this.updateHighlightPoint();
     }
 
@@ -923,16 +900,11 @@ export class Embedding {
   };
 
   /**
-   * Event handler for mousemove
-   * @param e Mouse event
+   * Start a query for mouse overed point
+   * @param x Mouse x coordinate
+   * @param y Mouse y coordinate
    */
-  mousemoveHandler = (e: MouseEvent) => {
-    // Show tooltip when mouse over a data point on canvas
-    // We need to use color picking to figure out which point is hovered over
-    const x = e.offsetX;
-    const y = e.offsetY;
-    this.lastMouseClientPosition = { x: x, y: y };
-
+  mouseoverPoint = (x: number, y: number) => {
     // Invert to the stage scale => invert to the data scale
     const dataX = this.xScale.invert(this.curZoomTransform.invertX(x));
     const dataY = this.yScale.invert(this.curZoomTransform.invertY(y));
@@ -946,6 +918,23 @@ export class Embedding {
       }
     };
     this.treeWorker.postMessage(message);
+  };
+
+  /**
+   * Event handler for mousemove
+   * @param e Mouse event
+   */
+  mousemoveHandler = (e: MouseEvent) => {
+    // Show tooltip when mouse over a data point on canvas
+    // We need to use color picking to figure out which point is hovered over
+    const x = e.offsetX;
+    const y = e.offsetY;
+    this.lastMouseClientPosition = { x: x, y: y };
+
+    // Show point highlight
+    if (this.showPoint) {
+      this.mouseoverPoint(x, y);
+    }
 
     // Show labels
     this.mouseoverLabel(x, y);
@@ -985,14 +974,6 @@ export class Embedding {
 
     const result: [number, number, number, number] = [xMin, xMax, yMin, yMax];
     return result;
-  };
-
-  /**
-   * User chooses a new hover mode
-   * @param mode New mode ('point', 'label', or 'none')
-   */
-  hoverModeChanged = (mode: string) => {
-    this.hoverMode = mode as HoverMode;
   };
 
   /**
