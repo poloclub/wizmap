@@ -21,7 +21,7 @@
   let myEmbedding: Embedding | null = null;
 
   let showControl = false;
-  let controlDisplayItem = '';
+  let controlDisplayItem = 'label';
   let playingTimeSlider = false;
 
   const defaultSetting: EmbeddingInitSetting = {
@@ -343,17 +343,71 @@
     </div>
     <div class="flex-gap"></div>
 
-    <div class="item-wrapper">
+    <button
+      class="item-wrapper"
+      on:click="{() => {
+        if (controlDisplayItem === 'label') {
+          controlDisplayItem = '';
+        } else {
+          controlDisplayItem = 'label';
+        }
+      }}"
+    >
       <div class="item" class:activated="{defaultSetting.showLabel}">
         <div class="svg-icon">{@html iconLabel}</div>
         <div class="name">Label</div>
-        <div class="caret">
+        <div class="caret" class:activated="{controlDisplayItem === 'label'}">
           <div class="svg-icon">
             {@html iconCaret}
           </div>
         </div>
       </div>
-    </div>
+
+      <button
+        class="menu label-menu"
+        class:hidden="{controlDisplayItem !== 'label'}"
+        on:click="{e => {
+          e.stopPropagation();
+        }}"
+      >
+        <div class="control-item">
+          <div class="item-header">Automatic Labeling</div>
+
+          <div class="control-row">
+            <input
+              type="checkbox"
+              class="checkbox"
+              id="checkbox-label"
+              name="checkbox-label"
+              bind:checked="{defaultSetting.showLabel}"
+              on:input="{e => displayCheckboxChanged(e, 'label')}"
+            />
+            <label for="checkbox-label">High Density Region</label>
+          </div>
+        </div>
+
+        <div class="control-item slider-item">
+          <div class="control-row">
+            <label class="slider-label" for="slider-label-num"
+              >Number of Labels</label
+            >
+            <span class="slider-count">0</span>
+          </div>
+
+          <input
+            type="range"
+            class="slider"
+            id="slider-label-num"
+            name="label-num"
+            disabled="{!defaultSetting.showLabel}"
+            min="0"
+            max="0"
+            on:input="{e =>
+              myEmbedding ? myEmbedding.labelNumSliderChanged(e) : () => {}}"
+          />
+        </div>
+      </button>
+    </button>
     <div class="flex-gap"></div>
 
     <button
@@ -371,7 +425,7 @@
       <button class="item" class:activated="{defaultSetting.timeInspectMode}">
         <div class="svg-icon">{@html iconTime}</div>
         <div class="name">Time</div>
-        <div class="caret">
+        <div class="caret" class:activated="{controlDisplayItem === 'time'}">
           <div class="svg-icon">
             {@html iconCaret}
           </div>

@@ -571,6 +571,30 @@ $search-panel-width: 356px;
       }
     }
 
+    .label-menu {
+      gap: 6px;
+      accent-color: $purple-300;
+
+      .item-header {
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .slider-item {
+        margin-top: 2px;
+
+        .slider {
+          width: 100%;
+          padding: 0;
+          margin: 0;
+        }
+
+        .control-row {
+          justify-content: space-between;
+        }
+      }
+    }
+
     $thumb-width: 14px;
     $play-button-width: 26px;
     $slider-height: 5px;

@@ -884,13 +884,13 @@ export function layoutTopicLabels(
   this.curLabelNum = shownLabelNum;
 
   const sliderElem = this.component.querySelector(
-    'input#slider-label-num'
+    '.label-menu input#slider-label-num'
   ) as HTMLInputElement;
   sliderElem.max = `${this.maxLabelNum}`;
   sliderElem.value = `${this.curLabelNum}`;
 
   const sliderCountElem = this.component.querySelector(
-    'span.slider-count'
+    '.label-menu span.slider-count'
   ) as HTMLSpanElement;
   sliderCountElem.innerText = `${this.curLabelNum}`;
 }
