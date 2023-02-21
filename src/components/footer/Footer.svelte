@@ -48,17 +48,26 @@
 
 <div class="footer-wrapper" bind:this="{component}">
   <div class="zoom-control">
-    <button class="zoom-button zoom-button-reset"
-      ><div class="svg-icon">{@html iconHome}</div></button
+    <button
+      class="zoom-button zoom-button-reset"
+      on:click="{() => {
+        myFooter?.zoomResetClicked();
+      }}"><div class="svg-icon">{@html iconHome}</div></button
     >
   </div>
 
   <div class="zoom-control">
-    <button class="zoom-button zoom-button-plus"
-      ><div class="svg-icon">{@html iconPlus}</div></button
+    <button
+      class="zoom-button zoom-button-plus"
+      on:click="{() => {
+        myFooter?.zoomInClicked();
+      }}"><div class="svg-icon">{@html iconPlus}</div></button
     >
-    <button class="zoom-button zoom-button-minus"
-      ><div class="svg-icon">{@html iconMinus}</div></button
+    <button
+      class="zoom-button zoom-button-minus"
+      on:click="{() => {
+        myFooter?.zoomOutClicked();
+      }}"><div class="svg-icon">{@html iconMinus}</div></button
     >
   </div>
 

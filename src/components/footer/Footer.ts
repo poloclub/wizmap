@@ -53,4 +53,31 @@ export class Footer {
       this.footerUpdated();
     });
   };
+
+  /**
+   * Event handler for clicking the zoom in button
+   */
+  zoomInClicked = () => {
+    this.footerStoreValue.messageID += 1;
+    this.footerStoreValue.messageCommand = 'zoomIn';
+    this.footerStore.set(this.footerStoreValue);
+  };
+
+  /**
+   * Event handler for clicking the zoom out button
+   */
+  zoomOutClicked = () => {
+    this.footerStoreValue.messageID += 1;
+    this.footerStoreValue.messageCommand = 'zoomOut';
+    this.footerStore.set(this.footerStoreValue);
+  };
+
+  /**
+   * Event handler for clicking the zoom reset button
+   */
+  zoomResetClicked = () => {
+    this.footerStoreValue.messageID += 1;
+    this.footerStoreValue.messageCommand = 'zoomReset';
+    this.footerStore.set(this.footerStoreValue);
+  };
 }

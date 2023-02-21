@@ -10,6 +10,8 @@ export interface FooterStoreValue {
   numPoints: number;
   curZoomTransform: d3.ZoomTransform;
   xScale: d3.ScaleLinear<number, number, never>;
+  messageID: number;
+  messageCommand: 'zoomIn' | 'zoomOut' | 'zoomReset' | '';
 }
 
 export interface TooltipStoreValue {
@@ -35,7 +37,9 @@ export const getFooterStoreDefaultValue = (): FooterStoreValue => {
   return {
     numPoints: 0,
     curZoomTransform: d3.zoomIdentity,
-    xScale: d3.scaleLinear()
+    xScale: d3.scaleLinear(),
+    messageID: 0,
+    messageCommand: ''
   };
 };
 

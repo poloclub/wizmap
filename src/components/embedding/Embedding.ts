@@ -44,6 +44,7 @@ import TreeWorker from './workers/tree?worker';
 
 const DEBUG = config.debug;
 const HOVER_RADIUS = 3;
+let handledFooterMessageID = 0;
 
 let DATA_BASE = `${import.meta.env.BASE_URL}data`;
 if (import.meta.env.PROD) {
@@ -297,7 +298,7 @@ export class Embedding {
         [0, 0],
         [this.svgSize.width, this.svgSize.height]
       ])
-      .scaleExtent([1, 1000])
+      .scaleExtent([config.layout.zoomScale[0], config.layout.zoomScale[1]])
       .interpolate(d3.interpolate)
       .on('zoom', (g: d3.D3ZoomEvent<HTMLElement, unknown>) => {
         (async () => {
@@ -365,6 +366,84 @@ export class Embedding {
   initStore = () => {
     this.footerStore.subscribe(value => {
       this.footerStoreValue = value;
+
+      // Handle message requests from the footer zoom buttons
+      if (this.footerStoreValue.messageID !== handledFooterMessageID) {
+        handledFooterMessageID = this.footerStoreValue.messageID;
+
+        const zoomBox = this.getCurViewingZoomBox();
+        const centerX = zoomBox.x + zoomBox.width / 2;
+        const centerY = zoomBox.y + zoomBox.height / 2;
+
+        switch (this.footerStoreValue.messageCommand) {
+          case 'zoomIn': {
+            // Create a zoomIn transform matrix
+            const transform = d3.zoomIdentity
+              .translate(
+                (this.svgFullSize.width + config.layout.searchPanelWidth) / 2,
+                (this.svgFullSize.height + config.layout.topBarHeight) / 2
+              )
+              .scale(
+                Math.min(
+                  config.layout.zoomScale[1],
+                  this.curZoomTransform.k * 2
+                )
+              )
+              .translate(-centerX, -centerY);
+
+            this.topSvg
+              .transition()
+              .duration(300)
+              .call(selection => this.zoom?.transform(selection, transform));
+            break;
+          }
+
+          case 'zoomOut': {
+            // Create a zoomIn transform matrix
+            const transform = d3.zoomIdentity
+              .translate(
+                (this.svgFullSize.width + config.layout.searchPanelWidth) / 2,
+                (this.svgFullSize.height + config.layout.topBarHeight) / 2
+              )
+              .scale(
+                Math.max(
+                  config.layout.zoomScale[0],
+                  this.curZoomTransform.k * 0.5
+                )
+              )
+              .translate(-centerX, -centerY);
+
+            this.topSvg
+              .transition()
+              .duration(300)
+              .call(selection => this.zoom?.transform(selection, transform));
+
+            break;
+          }
+
+          case 'zoomReset': {
+            this.topSvg
+              .transition()
+              .duration(700)
+              .call(selection => {
+                this.zoom?.transform(selection, this.initZoomTransform);
+              });
+            break;
+          }
+
+          case '': {
+            break;
+          }
+
+          default: {
+            console.error(
+              'Unknown message',
+              this.footerStoreValue.messageCommand
+            );
+            break;
+          }
+        }
+      }
     });
   };
 
@@ -955,6 +1034,26 @@ export class Embedding {
       height: Math.abs(
         this.curZoomTransform.invertY(this.svgFullSize.height) -
           this.curZoomTransform.invertY(0)
+      )
+    };
+    return box;
+  };
+
+  /**
+   * Get the current viewing area's zoom viewing box
+   * @returns Current zoom view box
+   */
+  getCurViewingZoomBox = () => {
+    const box: Rect = {
+      x: this.curZoomTransform.invertX(config.layout.searchPanelWidth),
+      y: this.curZoomTransform.invertY(config.layout.topBarHeight),
+      width: Math.abs(
+        this.curZoomTransform.invertX(this.svgFullSize.width) -
+          this.curZoomTransform.invertX(config.layout.searchPanelWidth)
+      ),
+      height: Math.abs(
+        this.curZoomTransform.invertY(this.svgFullSize.height) -
+          this.curZoomTransform.invertY(config.layout.topBarHeight)
       )
     };
     return box;
