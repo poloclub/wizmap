@@ -14,6 +14,7 @@ export type EmbeddingInitSetting = {
   showGrid: boolean;
   showLabel: boolean;
   hover: 'point' | 'label' | 'none';
+  timeInspectMode: boolean;
 };
 
 export type TreeWorkerMessage =

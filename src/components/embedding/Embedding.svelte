@@ -21,7 +21,7 @@
   let myEmbedding: Embedding | null = null;
 
   let showControl = false;
-  let controlDisplayItem = 'time';
+  let controlDisplayItem = '';
   let playingTimeSlider = false;
 
   const defaultSetting: EmbeddingInitSetting = {
@@ -29,7 +29,8 @@
     showPoint: true,
     showGrid: false,
     showLabel: false,
-    hover: 'point'
+    hover: 'point',
+    timeInspectMode: false
   };
 
   export let embeddingName = 'prompt';
@@ -360,12 +361,14 @@
       on:click="{() => {
         if (controlDisplayItem === 'time') {
           controlDisplayItem = '';
+          defaultSetting.timeInspectMode = false;
         } else {
           controlDisplayItem = 'time';
+          defaultSetting.timeInspectMode = true;
         }
       }}"
     >
-      <button class="item">
+      <button class="item" class:activated="{defaultSetting.timeInspectMode}">
         <div class="svg-icon">{@html iconTime}</div>
         <div class="name">Time</div>
         <div class="caret">
