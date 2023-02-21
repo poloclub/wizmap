@@ -8,8 +8,11 @@ import fragmentShader from './shaders/point.frag?raw';
 import vertexShader from './shaders/point.vert?raw';
 
 const DEBUG = config.debug;
+let sliderAnimationStartTime: number | null = null;
+let curSliderProgress = 0;
 
 /**
+ * Event handler for the thumb mouse down on time slider
  * @param this Embedding object
  */
 export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
@@ -65,8 +68,15 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
   document.addEventListener('mouseup', mouseUpHandler);
 }
 
+/**
+ * Move the thumb on the time slider
+ * @param this Embedding
+ * @param progress Slider progress
+ */
 export function moveTimeSliderThumb(this: Embedding, progress: number) {
   if (this.timeScale === null || this.timeFormatter === null) return;
+
+  curSliderProgress = progress;
 
   const thumb = this.component.querySelector(
     '.time-menu .middle-thumb'
@@ -85,18 +95,39 @@ export function moveTimeSliderThumb(this: Embedding, progress: number) {
 
   // Update the label
   const curTime = this.timeScale.invert(
-    progress * config.layout.searchPanelWidth
+    progress * config.layout.timeSliderWidth
   );
   thumbLabel!.textContent = this.timeFormatter(curTime);
+  this.curTime = this.timeFormatter(curTime);
 }
 
+/**
+ * Initialize the top control bar
+ * @param this Embedding
+ */
 export function initTopControlBar(this: Embedding) {
   if (this.timeScale) {
     // Initialize the time slider
-    const timeSlider = d3.select(this.component).select('.time-menu .slider');
+    const timeMenu = d3.select(this.component).select('.time-menu');
 
-    timeSlider.select('.middle-thumb').on('mousedown', e => {
+    // Bind event handlers
+    timeMenu.select('.middle-thumb').on('mousedown', e => {
       this.timeSliderMouseDownHandler(e as MouseEvent);
+    });
+
+    timeMenu.select('.play-pause-button').on('click', () => {
+      if (this.playingTimeSlider) {
+        this.playingTimeSlider = false;
+        // Hide the thumb label
+        d3.select(this.component)
+          .select('.time-menu .middle-thumb')
+          .classed('animating', false);
+      } else {
+        this.playingTimeSlider = true;
+        sliderAnimationStartTime = null;
+        this.startTimeSliderAnimation();
+      }
+      this.updateEmbedding();
     });
 
     // Initialize the slider label svg
@@ -105,5 +136,45 @@ export function initTopControlBar(this: Embedding) {
     axisGroup.call(d3.axisBottom(this.timeScale).ticks(5).tickSize(9));
 
     this.moveTimeSliderThumb(0);
+
+    console.log(this.timeScale.invert(400));
   }
+}
+
+/**
+ * Start to play the time slider animation
+ * @param this Embedding
+ */
+export function startTimeSliderAnimation(this: Embedding) {
+  const oneLoopMS = 5000;
+
+  const loop = (timestamp: number) => {
+    if (sliderAnimationStartTime === null) {
+      // Fake the start time so that animation starts at the current progress
+      const progressMS = curSliderProgress * oneLoopMS;
+      sliderAnimationStartTime = timestamp - progressMS;
+    }
+
+    const elapsed = timestamp - sliderAnimationStartTime;
+    let progress = elapsed / oneLoopMS;
+
+    // Restart if we overshoot the slider
+    if (progress > 1) {
+      sliderAnimationStartTime = timestamp;
+      progress = 0;
+    }
+
+    this.moveTimeSliderThumb(progress);
+
+    if (this.playingTimeSlider) {
+      window.requestAnimationFrame(loop);
+    }
+  };
+
+  // Show the thumb label
+  d3.select(this.component)
+    .select('.time-menu .middle-thumb')
+    .classed('animating', true);
+
+  window.requestAnimationFrame(loop);
 }

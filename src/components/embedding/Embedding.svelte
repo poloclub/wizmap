@@ -18,11 +18,11 @@
   let component: HTMLElement | null = null;
   let mounted = false;
   let initialized = false;
-  let embedding: Embedding | null = null;
+  let myEmbedding: Embedding | null = null;
 
   let showControl = false;
   let controlDisplayItem = 'time';
-  let playingTimeSlider = true;
+  let playingTimeSlider = false;
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -41,12 +41,12 @@
   });
 
   const updateEmbedding = () => {
-    embedding = embedding;
+    myEmbedding = myEmbedding;
   };
 
   const hoverModeClicked = (mode: string) => {
     if (defaultSetting.hover !== mode) {
-      embedding?.hoverModeChanged(mode);
+      myEmbedding?.hoverModeChanged(mode);
     }
 
     if (mode === 'point' || mode === 'label' || mode === 'none') {
@@ -56,7 +56,7 @@
 
   const displayCheckboxChanged = (e: InputEvent, checkbox: string) => {
     const newValue = (e.target as HTMLInputElement).checked;
-    embedding?.displayCheckboxChanged(checkbox, newValue);
+    myEmbedding?.displayCheckboxChanged(checkbox, newValue);
   };
 
   /**
@@ -66,7 +66,7 @@
     initialized = true;
 
     if (component) {
-      embedding = new Embedding({
+      myEmbedding = new Embedding({
         component,
         updateEmbedding,
         defaultSetting,
@@ -175,7 +175,7 @@
         min="0"
         max="0"
         on:input="{e =>
-          embedding ? embedding.labelNumSliderChanged(e) : () => {}}"
+          myEmbedding ? myEmbedding.labelNumSliderChanged(e) : () => {}}"
       />
     </div>
 
@@ -386,7 +386,9 @@
           <div class="play-pause-button">
             <button
               class="svg-icon"
-              class:hidden="{!playingTimeSlider}"
+              class:hidden="{myEmbedding
+                ? myEmbedding.playingTimeSlider
+                : false}"
               on:click="{() => {
                 playingTimeSlider = false;
               }}"
@@ -395,7 +397,9 @@
             </button>
             <button
               class="svg-icon"
-              class:hidden="{playingTimeSlider}"
+              class:hidden="{myEmbedding
+                ? !myEmbedding.playingTimeSlider
+                : true}"
               on:click="{() => {
                 playingTimeSlider = true;
               }}"

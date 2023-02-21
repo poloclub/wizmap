@@ -54,11 +54,12 @@ import {
   updateWebGLBuffers,
   updateHighlightPoint
 } from './EmbeddingPointWebGL';
-import {
-  timeSliderMouseDownHandler,
-  initTopControlBar,
-  moveTimeSliderThumb
-} from './EmbeddingControl';
+// import {
+//   timeSliderMouseDownHandler,
+//   initTopControlBar,
+//   moveTimeSliderThumb
+// } from './EmbeddingControl';
+import * as controller from './EmbeddingControl';
 import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker';
 import TreeWorker from './workers/tree?worker';
@@ -132,8 +133,12 @@ export class Embedding {
   contours: d3.ContourMultiPolygon[] | null = null;
   contoursInitialized = false;
   loadedPointCount = 1;
+
+  // Time
+  playingTimeSlider = false;
   timeScale: d3.ScaleTime<number, number, never> | null = null;
   timeFormatter: ((x: Date) => string) | null = null;
+  curTime: string | null = null;
 
   // Scatter plot
   lastRefillID = 0;
@@ -184,9 +189,10 @@ export class Embedding {
   updateHighlightPoint = updateHighlightPoint;
 
   // Control
-  initTopControlBar = initTopControlBar;
-  timeSliderMouseDownHandler = timeSliderMouseDownHandler;
-  moveTimeSliderThumb = moveTimeSliderThumb;
+  initTopControlBar = controller.initTopControlBar;
+  timeSliderMouseDownHandler = controller.timeSliderMouseDownHandler;
+  moveTimeSliderThumb = controller.moveTimeSliderThumb;
+  startTimeSliderAnimation = controller.startTimeSliderAnimation;
 
   /**
    *
@@ -474,6 +480,7 @@ export class Embedding {
       .scaleUtc()
       .domain([minDate, maxDate])
       .range([0, config.layout.timeSliderWidth]);
+    this.curTime = '1997';
 
     // Read the topic label data
     const topicPromise = d3
