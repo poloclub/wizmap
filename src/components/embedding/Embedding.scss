@@ -1,3 +1,4 @@
+@use 'sass:math';
 @import '../../define.scss';
 
 .embedding-wrapper {
@@ -579,13 +580,13 @@ $search-panel-width: 356px;
     .time-menu {
       top: calc(100% + 10px);
       right: 0px;
-      padding-right: 12px + $thumb-width / 2;
+      padding-right: 12px + calc($thumb-width / 2);
 
       .control-row {
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 8px + $thumb-width / 2;
+        gap: 8px + calc($thumb-width / 2);
       }
 
       .play-pause-button {
@@ -679,7 +680,7 @@ $search-panel-width: 356px;
           position: absolute;
           z-index: 3;
           top: 50%;
-          left: -calc($thumb-width / 2);
+          left: calc($thumb-width / -2);
           transform: translateY(-50%);
 
           width: $thumb-width;
@@ -737,11 +738,12 @@ $search-panel-width: 356px;
   }
 }
 
-.event-blocker {
+.grab-blocker {
   position: absolute;
   width: 100vw;
   height: 100vh;
   z-index: 30;
+  cursor: grabbing;
   pointer-events: none;
 
   &:global(.activated) {

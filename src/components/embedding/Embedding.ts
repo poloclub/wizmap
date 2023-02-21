@@ -56,7 +56,8 @@ import {
 } from './EmbeddingPointWebGL';
 import {
   timeSliderMouseDownHandler,
-  initTopControlBar
+  initTopControlBar,
+  moveTimeSliderThumb
 } from './EmbeddingControl';
 import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker';
@@ -131,6 +132,8 @@ export class Embedding {
   contours: d3.ContourMultiPolygon[] | null = null;
   contoursInitialized = false;
   loadedPointCount = 1;
+  timeScale: d3.ScaleTime<number, number, never> | null = null;
+  timeFormatter: ((x: Date) => string) | null = null;
 
   // Scatter plot
   lastRefillID = 0;
@@ -183,6 +186,7 @@ export class Embedding {
   // Control
   initTopControlBar = initTopControlBar;
   timeSliderMouseDownHandler = timeSliderMouseDownHandler;
+  moveTimeSliderThumb = moveTimeSliderThumb;
 
   /**
    *
@@ -330,12 +334,11 @@ export class Embedding {
     timeit('Init data', DEBUG);
     this.initData().then(() => {
       timeit('Init data', DEBUG);
+      // Initialize the event handler for the top control bars
+      this.initTopControlBar();
     });
 
     this.initStore();
-
-    // Initialize the event handler for the top control bars
-    this.initTopControlBar();
   }
 
   /**
@@ -451,6 +454,26 @@ export class Embedding {
       .range([this.svgSize.height, 0]);
 
     this.contours = this.drawContour();
+
+    // Create time scale if the data has time info
+    const minDateString = '1997';
+    const maxDateString = '2023';
+    let minDate = new Date(minDateString);
+    let maxDate = new Date(maxDateString);
+
+    // If the user doesn't specify a time zone, treat the date in UTC
+    if (!minDateString.includes('T')) {
+      minDate = new Date(minDateString + 'T00:00:00.000Z');
+    }
+    if (!maxDateString.includes('T')) {
+      maxDate = new Date(maxDateString + 'T00:00:00.000Z');
+    }
+
+    this.timeFormatter = d3.utcFormat('%Y');
+    this.timeScale = d3
+      .scaleUtc()
+      .domain([minDate, maxDate])
+      .range([0, config.layout.timeSliderWidth]);
 
     // Read the topic label data
     const topicPromise = d3

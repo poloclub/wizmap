@@ -85,7 +85,7 @@
 </style>
 
 <div class="embedding-wrapper" bind:this="{component}">
-  <div class="event-blocker"></div>
+  <div class="grab-blocker"></div>
   <div class="embedding">
     <svg class="top-svg"></svg>
     <canvas class="embedding-canvas"></canvas>

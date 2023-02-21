@@ -21,8 +21,7 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
     console.error('Thumb event target is not thumb itself.');
   }
 
-  const eventBlocker = this.component.querySelector('.event-blocker')!;
-  const thumbLabel = thumb.querySelector('.thumb-label-span');
+  const eventBlocker = this.component.querySelector('.grab-blocker')!;
   const track = thumb.parentElement!;
   const rangeTrack = track.querySelector('.range-track') as HTMLElement;
 
@@ -34,6 +33,7 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
   const mouseMoveHandler = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (this.timeScale === null || this.timeFormatter === null) return;
 
     // Block the mouse event outside the slider
     eventBlocker.classList.add('activated');
@@ -50,38 +50,60 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
     rangeTrack.style.width = `${Math.max(0, xPos)}px`;
 
     // Update the label
-    thumbLabel!.textContent = String(progress);
+    this.moveTimeSliderThumb(progress);
   };
 
   const mouseUpHandler = () => {
     document.removeEventListener('mousemove', mouseMoveHandler);
     document.removeEventListener('mouseup', mouseUpHandler);
     eventBlocker.classList.remove('activated');
-    document.body.style.cursor = 'default';
   };
 
   // Listen to mouse move on the whole page (users can drag outside of the
   // thumb, track, or even WizMap!)
   document.addEventListener('mousemove', mouseMoveHandler);
   document.addEventListener('mouseup', mouseUpHandler);
-  document.body.style.cursor = 'grabbing';
+}
+
+export function moveTimeSliderThumb(this: Embedding, progress: number) {
+  if (this.timeScale === null || this.timeFormatter === null) return;
+
+  const thumb = this.component.querySelector(
+    '.time-menu .middle-thumb'
+  ) as HTMLElement;
+  const thumbLabel = thumb.querySelector('.thumb-label-span');
+  const track = thumb.parentElement!;
+  const rangeTrack = track.querySelector('.range-track') as HTMLElement;
+
+  const thumbBBox = thumb.getBoundingClientRect();
+  const trackBBox = track.getBoundingClientRect();
+
+  // Compute the position to move the thumb to
+  const xPos = progress * trackBBox.width - thumbBBox.width / 2;
+  thumb.style.left = `${xPos}px`;
+  rangeTrack.style.width = `${Math.max(0, xPos)}px`;
+
+  // Update the label
+  const curTime = this.timeScale.invert(
+    progress * config.layout.searchPanelWidth
+  );
+  thumbLabel!.textContent = this.timeFormatter(curTime);
 }
 
 export function initTopControlBar(this: Embedding) {
-  // Initialize the time slider
-  const timeSlider = d3.select(this.component).select('.time-menu .slider');
+  if (this.timeScale) {
+    // Initialize the time slider
+    const timeSlider = d3.select(this.component).select('.time-menu .slider');
 
-  timeSlider.select('.middle-thumb').on('mousedown', e => {
-    this.timeSliderMouseDownHandler(e as MouseEvent);
-  });
+    timeSlider.select('.middle-thumb').on('mousedown', e => {
+      this.timeSliderMouseDownHandler(e as MouseEvent);
+    });
 
-  // Initialize the slider label svg
-  const labelSVG = d3.select(this.component).select('.time-menu .slider-svg');
+    // Initialize the slider label svg
+    const labelSVG = d3.select(this.component).select('.time-menu .slider-svg');
+    const axisGroup = labelSVG.append('g').attr('class', 'axis-group');
+    axisGroup.call(d3.axisBottom(this.timeScale).ticks(5).tickSize(9));
 
-  const minDate = new Date('1997-01-01');
-  const maxDate = new Date('2023-01-01');
-  const timeScale = d3.scaleUtc().domain([minDate, maxDate]).range([0, 400]);
-
-  const axisGroup = labelSVG.append('g').attr('class', 'axis-group');
-  axisGroup.call(d3.axisBottom(timeScale).ticks(5).tickSize(9));
+    this.moveTimeSliderThumb(0);
+  }
 }

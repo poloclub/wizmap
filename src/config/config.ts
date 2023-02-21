@@ -1,7 +1,8 @@
 const layout = {
   scatterDotRadius: 1,
   searchPanelWidth: 356,
-  topBarHeight: 52
+  topBarHeight: 52,
+  timeSliderWidth: 400
 };
 
 const time = {

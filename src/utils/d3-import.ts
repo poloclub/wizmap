@@ -83,7 +83,7 @@ import { drag } from 'd3-drag';
 
 import { format } from 'd3-format';
 
-import { timeFormat } from 'd3-time-format';
+import { timeFormat, utcFormat } from 'd3-time-format';
 
 import { randomLcg, randomUniform, randomInt } from 'd3-random';
 
@@ -151,6 +151,7 @@ export default {
   curveMonotoneY,
   curveBasis,
   timeFormat,
+  utcFormat,
   hierarchy,
   partition,
   tree,
