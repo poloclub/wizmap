@@ -404,16 +404,24 @@
             </button>
           </div>
 
-          <div class="slider">
-            <div class="range-track"></div>
-            <div
-              class="middle-thumb"
-              id="time-slider-middle-thumb"
-              tabindex="-1"
-            >
-              <div class="thumb-label thumb-label-middle">
-                <span class="thumb-label-span"></span>
+          <div class="slider-container">
+            <div class="back-slider"></div>
+
+            <div class="slider">
+              <div class="range-track"></div>
+              <div
+                class="middle-thumb"
+                id="time-slider-middle-thumb"
+                tabindex="-1"
+              >
+                <div class="thumb-label thumb-label-middle">
+                  <span class="thumb-label-span"></span>
+                </div>
               </div>
+            </div>
+
+            <div class="slider-svg-container">
+              <svg class="slider-svg"> </svg>
             </div>
           </div>
         </div>

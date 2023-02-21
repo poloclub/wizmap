@@ -47,7 +47,7 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
     // Compute the position to move the thumb to
     const xPos = progress * trackBBox.width - thumbBBox.width / 2;
     thumb.style.left = `${xPos}px`;
-    rangeTrack.style.width = `${xPos}px`;
+    rangeTrack.style.width = `${Math.max(0, xPos)}px`;
 
     // Update the label
     thumbLabel!.textContent = String(progress);
@@ -74,4 +74,14 @@ export function initTopControlBar(this: Embedding) {
   timeSlider.select('.middle-thumb').on('mousedown', e => {
     this.timeSliderMouseDownHandler(e as MouseEvent);
   });
+
+  // Initialize the slider label svg
+  const labelSVG = d3.select(this.component).select('.time-menu .slider-svg');
+
+  const minDate = new Date('1997-01-01');
+  const maxDate = new Date('2023-01-01');
+  const timeScale = d3.scaleUtc().domain([minDate, maxDate]).range([0, 400]);
+
+  const axisGroup = labelSVG.append('g').attr('class', 'axis-group');
+  axisGroup.call(d3.axisBottom(timeScale).ticks(5).tickSize(9));
 }

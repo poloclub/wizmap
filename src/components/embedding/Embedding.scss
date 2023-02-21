@@ -571,6 +571,10 @@ $search-panel-width: 356px;
     }
 
     $thumb-width: 14px;
+    $play-button-width: 26px;
+    $slider-height: 5px;
+    $slider-width: 400px;
+    $slider-top: 11px;
 
     .time-menu {
       top: calc(100% + 10px);
@@ -581,14 +585,14 @@ $search-panel-width: 356px;
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 5px + $thumb-width / 2;
+        gap: 8px + $thumb-width / 2;
       }
 
       .play-pause-button {
         position: relative;
         color: $purple-300;
-        width: 16px;
-        height: 16px;
+        width: $play-button-width;
+        height: $play-button-width;
 
         &:hover {
           color: $purple-400;
@@ -599,8 +603,8 @@ $search-panel-width: 356px;
         }
 
         .svg-icon {
-          width: 16px;
-          height: 16px;
+          width: $play-button-width;
+          height: $play-button-width;
           position: absolute;
           left: 50%;
           top: 50%;
@@ -614,11 +618,53 @@ $search-panel-width: 356px;
         }
       }
 
+      .slider-container {
+        width: $slider-width;
+        height: 25px;
+      }
+
+      .slider-svg-container {
+        position: absolute;
+        top: $slider-top;
+        z-index: 2;
+        pointer-events: none;
+
+        .slider-svg {
+          height: 25px;
+          width: $slider-width;
+          color: $gray-600;
+
+          :global(text) {
+            font-size: 12px;
+            fill: $gray-600;
+          }
+
+          :global(path.domain) {
+            visibility: hidden;
+          }
+
+          :global(g.tick line) {
+            stroke: $gray-400;
+            stroke: white;
+          }
+        }
+      }
+
+      .back-slider {
+        height: $slider-height;
+        width: $slider-width;
+        background-color: $gray-400;
+        position: absolute;
+        top: $slider-top;
+        z-index: 1;
+      }
+
       .slider {
-        height: 5px;
-        width: 400px;
-        background-color: $gray-100;
-        position: relative;
+        position: absolute;
+        height: $slider-height;
+        width: $slider-width;
+        top: $slider-top;
+        z-index: 3;
 
         .range-track {
           position: absolute;
@@ -626,13 +672,14 @@ $search-panel-width: 356px;
           top: 0px;
           height: 100%;
           width: 0px;
-          background-color: $purple-100;
+          background-color: $purple-200;
         }
 
         .middle-thumb {
           position: absolute;
+          z-index: 3;
           top: 50%;
-          left: -$thumb-width / 2;
+          left: -calc($thumb-width / 2);
           transform: translateY(-50%);
 
           width: $thumb-width;

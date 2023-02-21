@@ -10,7 +10,9 @@ import {
   scalePow,
   scaleOrdinal,
   scaleLog,
-  scaleSequential
+  scaleSequential,
+  scaleTime,
+  scaleUtc
 } from 'd3-scale';
 
 import {
@@ -103,6 +105,8 @@ export default {
   scaleOrdinal,
   scaleLog,
   scaleSequential,
+  scaleTime,
+  scaleUtc,
   schemeTableau10,
   schemePastel1,
   interpolateRainbow,
