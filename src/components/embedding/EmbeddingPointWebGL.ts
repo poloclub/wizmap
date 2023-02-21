@@ -193,6 +193,7 @@ export function drawScatterPlot(this: Embedding) {
 export function updateHighlightPoint(this: Embedding) {
   if (this.hoverPoint === null) return;
   if (!this.showPoint) return;
+  if (this.hideHighlights) return;
 
   // Draw the point on the top svg
   const group = this.topSvg.select('g.top-content g.highlights');
@@ -228,6 +229,7 @@ export function highlightPoint(
 ) {
   if (!this.showPoint) return;
   if (point === this.hoverPoint) return;
+  if (this.hideHighlights) return;
 
   // Draw the point on the top svg
   const group = this.topSvg.select('g.top-content g.highlights');

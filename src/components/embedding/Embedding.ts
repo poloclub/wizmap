@@ -95,6 +95,7 @@ export class Embedding {
 
   // Interactions
   lastMouseClientPosition: Point | null = null;
+  hideHighlights = false;
 
   // User settings
   showContour: boolean;
@@ -391,10 +392,15 @@ export class Embedding {
               )
               .translate(-centerX, -centerY);
 
+            this.hideHighlights = true;
             this.topSvg
               .transition()
               .duration(300)
-              .call(selection => this.zoom?.transform(selection, transform));
+              .call(selection => this.zoom?.transform(selection, transform))
+              .on('end', () => {
+                this.hideHighlights = false;
+              });
+
             break;
           }
 
@@ -413,20 +419,28 @@ export class Embedding {
               )
               .translate(-centerX, -centerY);
 
+            this.hideHighlights = true;
             this.topSvg
               .transition()
               .duration(300)
-              .call(selection => this.zoom?.transform(selection, transform));
+              .call(selection => this.zoom?.transform(selection, transform))
+              .on('end', () => {
+                this.hideHighlights = false;
+              });
 
             break;
           }
 
           case 'zoomReset': {
+            this.hideHighlights = true;
             this.topSvg
               .transition()
               .duration(700)
               .call(selection => {
                 this.zoom?.transform(selection, this.initZoomTransform);
+              })
+              .on('end', () => {
+                this.hideHighlights = false;
               });
             break;
           }
@@ -831,7 +845,7 @@ export class Embedding {
     }
 
     // Adjust the highlighted tile
-    if (this.showGrid && this.lastMouseClientPosition) {
+    if (this.showGrid && this.lastMouseClientPosition && !this.hideHighlights) {
       this.mouseoverLabel(
         this.lastMouseClientPosition.x,
         this.lastMouseClientPosition.y
@@ -839,7 +853,11 @@ export class Embedding {
     }
 
     // Adjust the highlighted point
-    if (this.showPoint && this.lastMouseClientPosition) {
+    if (
+      this.showPoint &&
+      this.lastMouseClientPosition &&
+      !this.hideHighlights
+    ) {
       const { x, y } = this.lastMouseClientPosition;
       this.mouseoverPoint(x, y);
       this.updateHighlightPoint();
@@ -1011,12 +1029,14 @@ export class Embedding {
     this.lastMouseClientPosition = { x: x, y: y };
 
     // Show point highlight
-    if (this.showPoint) {
+    if (this.showPoint && !this.hideHighlights) {
       this.mouseoverPoint(x, y);
     }
 
     // Show labels
-    this.mouseoverLabel(x, y);
+    if (!this.hideHighlights) {
+      this.mouseoverLabel(x, y);
+    }
   };
 
   /**

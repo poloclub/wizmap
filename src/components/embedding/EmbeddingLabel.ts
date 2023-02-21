@@ -1006,6 +1006,7 @@ export function mouseoverLabel(
   y: number | null
 ) {
   if (!this.showGrid) return;
+  if (this.hideHighlights) return;
 
   const bottomGroup = this.topSvg.select('g.top-content g.topics-bottom');
   const labelGroup = this.topSvg.select('g.top-content g.topics');
