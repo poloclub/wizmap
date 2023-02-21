@@ -21,8 +21,7 @@
   let myEmbedding: Embedding | null = null;
 
   let showControl = false;
-  let controlDisplayItem = 'label';
-  let playingTimeSlider = false;
+  let controlDisplayItem = '';
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -335,12 +334,23 @@
     </button>
     <div class="flex-gap"></div>
 
-    <div class="item-wrapper">
+    <button
+      class="item-wrapper"
+      on:click="{() => {
+        if (defaultSetting.showGrid) {
+          defaultSetting.showGrid = false;
+          myEmbedding?.displayCheckboxChanged('grid', false);
+        } else {
+          defaultSetting.showGrid = true;
+          myEmbedding?.displayCheckboxChanged('grid', true);
+        }
+      }}"
+    >
       <div class="item" class:activated="{defaultSetting.showGrid}">
         <div class="svg-icon">{@html iconGrid}</div>
         <div class="name">Grid</div>
       </div>
-    </div>
+    </button>
     <div class="flex-gap"></div>
 
     <button
@@ -446,9 +456,6 @@
               class:hidden="{myEmbedding
                 ? myEmbedding.playingTimeSlider
                 : false}"
-              on:click="{() => {
-                playingTimeSlider = false;
-              }}"
             >
               {@html iconPlay}
             </button>
@@ -457,9 +464,6 @@
               class:hidden="{myEmbedding
                 ? !myEmbedding.playingTimeSlider
                 : true}"
-              on:click="{() => {
-                playingTimeSlider = true;
-              }}"
             >
               {@html iconPause}
             </button>
