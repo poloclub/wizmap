@@ -1,7 +1,8 @@
 const layout = {
   scatterDotRadius: 1,
   searchPanelWidth: 356,
-  topBarHeight: 52,
+  topBarHeight: 30,
+  footerHeight: 30,
   timeSliderWidth: 400,
   zoomScale: [0.5, 1000],
   defaultPointColor: [48 / 255, 65 / 255, 159 / 255],

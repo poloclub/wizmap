@@ -770,9 +770,13 @@ export class Embedding {
       }
     }
 
-    const screenPadding = 10;
-    const viewAreaWidth = this.svgFullSize.width;
-    const viewAreaHeight = this.svgFullSize.height;
+    const screenPadding = 20;
+    const viewAreaWidth =
+      this.svgFullSize.width - config.layout.searchPanelWidth;
+    const viewAreaHeight =
+      this.svgFullSize.height -
+      config.layout.topBarHeight -
+      config.layout.footerHeight;
 
     const initZoomK = Math.min(
       viewAreaWidth / (x1 - x0 + screenPadding),

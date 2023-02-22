@@ -144,6 +144,14 @@ export function drawScatterPlot(this: Embedding) {
     depth: 1
   });
 
+  // Adjust point width based on the number of points to draw
+  let pointCount = this.loadedPointCount;
+  if (this.timeInspectMode && this.timeCountMap && this.curTime) {
+    if (this.timeCountMap.has(this.curTime)) {
+      pointCount = this.timeCountMap.get(this.curTime)!;
+    }
+  }
+
   // Logarithmic regression by fitting the following three points
   // https://keisan.casio.com/exec/system/14059930226691
   // [(6e4, 2), (3e5, 1), [1.8e6, 0.5]]
@@ -155,9 +163,10 @@ export function drawScatterPlot(this: Embedding) {
       Math.log(
         config.layout.scatterDotRadius *
           (this.svgFullSize.height / 760) *
-          this.loadedPointCount
+          pointCount
       );
-  this.curPointWidth = Math.min(2, this.curPointWidth);
+  this.curPointWidth = Math.min(5, this.curPointWidth);
+  const alpha = 1 / (Math.log(pointCount) / Math.log(500));
 
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
@@ -234,7 +243,7 @@ export function drawScatterPlot(this: Embedding) {
       dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
-      alpha: 1 / (Math.log(this.loadedPointCount) / Math.log(500)),
+      alpha: alpha,
       texture: texture
     },
 
