@@ -9,6 +9,7 @@
 
   let component: HTMLElement | null = null;
   let view = 'prompt-embedding';
+  let datasetName = 'diffusiondb';
 
   // Check for url hash (/#phrase)
   if (window.location.hash) {
@@ -63,7 +64,7 @@
         class:hidden="{view !== 'prompt-embedding'}"
       >
         <Embedding
-          embeddingName="{'prompt'}"
+          datasetName="{datasetName}"
           footerStore="{footerStore}"
           searchBarStore="{searchBarStore}"
         />

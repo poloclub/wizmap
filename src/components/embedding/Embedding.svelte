@@ -1,10 +1,12 @@
 <script lang="ts">
   import { Embedding } from './Embedding';
   import { onMount } from 'svelte';
-  import type { EmbeddingInitSetting } from '../../types/embedding-types';
+  import type {
+    EmbeddingInitSetting,
+    DataURLs
+  } from '../../types/embedding-types';
   import type { Writable } from 'svelte/store';
   import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
-  import iconGear from '../../imgs/icon-gear.svg?raw';
   import iconContour2 from '../../imgs/icon-contour.svg?raw';
   import iconPoint from '../../imgs/icon-point.svg?raw';
   import iconLabel from '../../imgs/icon-label.svg?raw';
@@ -29,9 +31,41 @@
     timeInspectMode: false
   };
 
-  export let embeddingName = 'prompt';
+  export let datasetName = 'prompt';
   export let footerStore: Writable<FooterStoreValue>;
   export let searchBarStore: Writable<SearchBarStoreValue>;
+
+  // Resolve the embedding data files based on the embedding
+  let DATA_BASE = `${import.meta.env.BASE_URL}data`;
+  if (import.meta.env.PROD) {
+    DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
+  }
+
+  const dataURLs: DataURLs = {
+    point: '',
+    grid: '',
+    topic: ''
+  };
+
+  switch (datasetName) {
+    case 'diffusiondb': {
+      dataURLs.point = DATA_BASE + '/diffusiondb/umap-1m.ndjson';
+      dataURLs.grid = DATA_BASE + '/diffusiondb/umap-1m-grid.json';
+      dataURLs.topic = DATA_BASE + '/diffusiondb/umap-1m-topic-data.json';
+      break;
+    }
+
+    case 'acl-papers': {
+      dataURLs.point = DATA_BASE + '/acl-papers/umap.ndjson';
+      dataURLs.grid = DATA_BASE + '/acl-papers/grid.json';
+      dataURLs.topic = DATA_BASE + '/acl-papers/topic.json';
+      break;
+    }
+
+    default: {
+      throw Error(`Unknown dataset name: ${datasetName}`);
+    }
+  }
 
   onMount(() => {
     mounted = true;
@@ -57,7 +91,7 @@
         component,
         updateEmbedding,
         defaultSetting,
-        embeddingName,
+        dataURLs,
         footerStore,
         searchBarStore
       });

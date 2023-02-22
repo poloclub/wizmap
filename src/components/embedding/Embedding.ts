@@ -11,6 +11,7 @@ import type {
   TopicDataJSON,
   DrawnLabel,
   LabelData,
+  DataURLs,
   Direction,
   LoaderWorkerMessage,
   TreeWorkerMessage,
@@ -82,11 +83,6 @@ export class Embedding {
   component: HTMLElement;
   updateEmbedding: () => void;
 
-  // Different settings based on the embedding type (prompt, image)
-  embeddingName: string;
-  pointURL: string;
-  gridURL: string;
-
   // Zooming
   zoom: d3.ZoomBehavior<HTMLElement, unknown> | null = null;
   initZoomTransform = d3.zoomIdentity;
@@ -104,6 +100,7 @@ export class Embedding {
   showLabel: boolean;
 
   // Data
+  dataURLs: DataURLs;
   promptPoints: PromptPoint[] = [];
   gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
@@ -180,38 +177,26 @@ export class Embedding {
     component,
     updateEmbedding,
     defaultSetting,
-    embeddingName,
+    dataURLs,
     footerStore,
     searchBarStore
   }: {
     component: HTMLElement;
     updateEmbedding: () => void;
     defaultSetting: EmbeddingInitSetting;
-    embeddingName: string;
+    dataURLs: DataURLs;
     footerStore: Writable<FooterStoreValue>;
     searchBarStore: Writable<SearchBarStoreValue>;
   }) {
     this.component = component;
     this.updateEmbedding = updateEmbedding;
-    this.embeddingName = embeddingName;
+    this.dataURLs = dataURLs;
 
     this.footerStore = footerStore;
     this.footerStoreValue = getFooterStoreDefaultValue();
 
     this.searchBarStore = searchBarStore;
     this.searchBarStoreValue = getSearchBarStoreDefaultValue();
-
-    // Figure out data urls based on the embedding name
-    // const url = '/data/umap-1m.ndjson';
-    this.pointURL = DATA_BASE + '/umap-1m.ndjson';
-    this.gridURL = `${import.meta.env.BASE_URL}data/umap-1m-grid.json`;
-
-    if (embeddingName === 'image') {
-      // this.pointURL = `${import.meta.env.BASE_URL}data/umap-image-150k.ndjson`;
-      // this.pointURL = new URL('umap-image-150k.ndjson', DATA_BASE).href;
-      this.pointURL = DATA_BASE + '/umap-image-150k.ndjson';
-      this.gridURL = `${import.meta.env.BASE_URL}data/umap-image-1m-grid.json`;
-    }
 
     // Init some properties based on the default setting
     this.showContour = defaultSetting.showContour;
@@ -467,7 +452,7 @@ export class Embedding {
   initData = async () => {
     // Read the grid data for contour background
     // Await the data to load to get the range for x and y
-    const gridData = await d3.json<GridData>(this.gridURL);
+    const gridData = await d3.json<GridData>(this.dataURLs.grid);
 
     if (gridData === undefined) {
       throw Error('Fail to load grid data.');
@@ -506,7 +491,7 @@ export class Embedding {
     // (need to wait to get the xRange and yRange)
     const message: LoaderWorkerMessage = {
       command: 'startLoadData',
-      payload: { url: this.pointURL }
+      payload: { url: this.dataURLs.point }
     };
     this.loaderWorker.postMessage(message);
 
@@ -552,9 +537,7 @@ export class Embedding {
 
     // Read the topic label data
     const topicPromise = d3
-      .json<TopicDataJSON>(
-        `${import.meta.env.BASE_URL}data/umap-1m-topic-data.json`
-      )
+      .json<TopicDataJSON>(this.dataURLs.topic)
       .then(topicData => {
         if (topicData) {
           // Create a quad tree at each level
@@ -728,19 +711,18 @@ export class Embedding {
       '#ffffff',
       config.colors['light-blue-800']
     );
-    let colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
-      blueScale(d / 1)
+    const colorScale = d3.scaleSequential(
+      d3.extent(thresholds) as number[],
+      d => blueScale(d / 1)
     );
 
-    if (this.embeddingName === 'image') {
-      const purpleScale = d3.interpolateLab(
-        '#ffffff',
-        config.colors['pink-900']
-      );
-      colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
-        purpleScale(d / 1)
-      );
-    }
+    // const purpleScale = d3.interpolateLab(
+    //   '#ffffff',
+    //   config.colors['pink-900']
+    // );
+    // colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
+    //   purpleScale(d / 1)
+    // );
 
     // Draw the contours
     contourGroup

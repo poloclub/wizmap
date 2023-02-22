@@ -3,6 +3,15 @@
  */
 import type { Point, Rect } from './common-types';
 
+/**
+ * A collection of data files to set up WizMap
+ */
+export interface DataURLs {
+  point: string;
+  grid: string;
+  topic: string;
+}
+
 export interface WebGLMatrices {
   dataScaleMatrix: number[];
   normalizeMatrix: number[];
