@@ -64,11 +64,11 @@ export function initWebGLBuffers(this: Embedding) {
 
   // Get the position and color of each point
   const positions: number[][] = [];
-  const frontColors: number[][] = [];
+  const textureCoords: number[][] = [];
 
   for (const point of this.promptPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push(config.layout.defaultPointColor);
+    textureCoords.push([0, 0]);
   }
 
   this.frontPositionBuffer = this.pointRegl.buffer({
@@ -78,12 +78,12 @@ export function initWebGLBuffers(this: Embedding) {
   });
   this.frontPositionBuffer.subdata(positions, 0);
 
-  this.frontColorBuffer = this.pointRegl.buffer({
-    length: this.gridData.totalPointSize * 4 * 3,
-    type: 'float',
+  this.frontTextureCoordinateBuffer = this.pointRegl.buffer({
+    length: this.gridData.totalPointSize * 1 * 2,
+    type: 'uint8',
     usage: 'dynamic'
   });
-  this.frontColorBuffer.subdata(frontColors, 0);
+  this.frontTextureCoordinateBuffer.subdata(textureCoords, 0);
 
   this.bufferPointSize = this.promptPoints.length;
 }
@@ -96,16 +96,19 @@ export function initWebGLBuffers(this: Embedding) {
 export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
   // Get the position and color of each new point
   const positions: number[][] = [];
-  const frontColors: number[][] = [];
+  const textureCoords: number[][] = [];
 
   for (const point of newPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push(config.layout.defaultPointColor);
+    textureCoords.push([0, 0]);
   }
 
   // Update the buffer using byte offsets
   this.frontPositionBuffer!.subdata(positions, this.bufferPointSize * 2 * 4);
-  this.frontColorBuffer!.subdata(frontColors, this.bufferPointSize * 3 * 4);
+  this.frontTextureCoordinateBuffer!.subdata(
+    textureCoords,
+    this.bufferPointSize * 2 * 1
+  );
   this.bufferPointSize += newPoints.length;
 }
 
@@ -139,6 +142,33 @@ export function drawScatterPlot(this: Embedding) {
 
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
+
+  // Create a texture array 4x2x2
+  // [default color, transparent, empty, empty]
+  const texture = this.pointRegl.texture({
+    width: 2,
+    height: 2,
+    data: [
+      config.layout.defaultPointColorInt[0],
+      config.layout.defaultPointColorInt[1],
+      config.layout.defaultPointColorInt[2],
+      255,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    format: 'rgba'
+  });
+
   const drawPoints = this.pointRegl({
     depth: { enable: false },
     stencil: { enable: false },
@@ -151,9 +181,9 @@ export function drawScatterPlot(this: Embedding) {
         stride: 2 * 4,
         offset: 0
       },
-      color: {
-        buffer: this.frontColorBuffer,
-        stride: 3 * 4,
+      textureCoord: {
+        buffer: this.frontTextureCoordinateBuffer,
+        stride: 2 * 1,
         offset: 0
       }
     },
@@ -164,7 +194,8 @@ export function drawScatterPlot(this: Embedding) {
       dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
-      alpha: 1 / (Math.log(this.loadedPointCount) / Math.log(500))
+      alpha: 1 / (Math.log(this.loadedPointCount) / Math.log(500)),
+      texture: texture
     },
 
     blend: {

@@ -4,7 +4,8 @@ const layout = {
   topBarHeight: 52,
   timeSliderWidth: 400,
   zoomScale: [0.5, 1000],
-  defaultPointColor: [48 / 255, 65 / 255, 159 / 255]
+  defaultPointColor: [48 / 255, 65 / 255, 159 / 255],
+  defaultPointColorInt: [48, 65, 159]
 };
 
 const time = {

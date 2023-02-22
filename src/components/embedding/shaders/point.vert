@@ -2,7 +2,7 @@ precision highp float;
 
 // Vertex variables from JS
 attribute vec2 position;
-attribute vec3 color;
+attribute vec2 textureCoord;
 
 // Constant values from JS
 uniform float pointWidth;
@@ -20,7 +20,7 @@ uniform mat3 normalizeMatrix;
 uniform float alpha;
 
 // Values sent to the fragment shader
-varying vec3 fragColor;
+varying vec2 fragTextureCoord;
 varying float fragAlpha;
 
 void main() {
@@ -34,7 +34,7 @@ void main() {
   float dynamicSize = pointWidth * (exp(log(zoomMatrix[0][0]) * 0.55));
   float dynamicAlpha = min(0.4, max(0.1, alpha * log(zoomMatrix[0][0]) / 2.0));
 
-  fragColor = color;
+  fragTextureCoord = textureCoord;
   fragAlpha = dynamicAlpha;
   gl_PointSize = dynamicSize;
 

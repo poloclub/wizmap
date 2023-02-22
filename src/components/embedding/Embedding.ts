@@ -70,7 +70,8 @@ export class Embedding {
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointRegl: createRegl.Regl;
   frontPositionBuffer: createRegl.Buffer | null = null;
-  frontColorBuffer: createRegl.Buffer | null = null;
+  // frontColorBuffer: createRegl.Buffer | null = null;
+  frontTextureCoordinateBuffer: createRegl.Buffer | null = null;
   bufferPointSize = 0;
 
   // Tooltips
@@ -811,7 +812,7 @@ export class Embedding {
 
     // Transform the visible canvas elements
     if (this.showPoint) {
-      if (this.frontPositionBuffer && this.frontColorBuffer) {
+      if (this.frontPositionBuffer && this.frontTextureCoordinateBuffer) {
         this.drawScatterPlot();
       }
     }
