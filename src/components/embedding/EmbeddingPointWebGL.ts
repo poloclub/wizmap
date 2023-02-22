@@ -68,7 +68,7 @@ export function initWebGLBuffers(this: Embedding) {
 
   for (const point of this.promptPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push([0, 0, 0]);
+    frontColors.push(config.layout.defaultPointColor);
   }
 
   this.frontPositionBuffer = this.pointRegl.buffer({
@@ -98,14 +98,9 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
   const positions: number[][] = [];
   const frontColors: number[][] = [];
 
-  const frontColor = d3.color(config.colors['indigo-700'])!.rgb()!;
   for (const point of newPoints) {
     positions.push([point.x, point.y]);
-    frontColors.push([
-      frontColor.r / 255,
-      frontColor.g / 255,
-      frontColor.b / 255
-    ]);
+    frontColors.push(config.layout.defaultPointColor);
   }
 
   // Update the buffer using byte offsets
@@ -127,18 +122,20 @@ export function drawScatterPlot(this: Embedding) {
     depth: 1
   });
 
-  // Fit a exponential function so set the point width based on number of points
-  // to draw, here we want the curve to pass two points:
-  // (num of point: 2e5, width: 1.0) and (1.8e6, 0.5)
-  const xs = [2e5, 1.8e6];
-  const ys = [1.0, 0.5];
-  const b = Math.pow(ys[1] / ys[0], 1 / (xs[1] - xs[0]));
-  const a = ys[0] / Math.pow(b, xs[0]);
+  // Logarithmic regression by fitting the following three points
+  // https://keisan.casio.com/exec/system/14059930226691
+  // [(6e4, 2), (3e5, 1), [1.8e6, 0.5]]
+  const a = 6.71682071;
+  const b = -0.437974871;
   this.curPointWidth =
-    config.layout.scatterDotRadius *
-    (this.svgFullSize.height / 760) *
-    a *
-    Math.pow(b, this.loadedPointCount);
+    a +
+    b *
+      Math.log(
+        config.layout.scatterDotRadius *
+          (this.svgFullSize.height / 760) *
+          this.loadedPointCount
+      );
+  this.curPointWidth = Math.min(2, this.curPointWidth);
 
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);

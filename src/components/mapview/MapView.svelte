@@ -11,29 +11,11 @@
   let view = 'prompt-embedding';
   let datasetName = 'diffusiondb';
 
-  // Check for url hash (/#phrase)
-  if (window.location.hash) {
-    const hash = window.location.hash.slice(1);
-
-    switch (hash) {
-      case 'phrase': {
-        view = 'phrase';
-        break;
-      }
-
-      case 'prompt-embedding': {
-        view = 'prompt-embedding';
-        break;
-      }
-
-      case 'image-embedding': {
-        view = 'image-embedding';
-        break;
-      }
-
-      default: {
-        break;
-      }
+  // Check url query to change dataset names
+  if (window.location.search !== '') {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.has('dataset')) {
+      datasetName = searchParams.get('dataset')!;
     }
   }
 

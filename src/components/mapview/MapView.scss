@@ -54,7 +54,6 @@
 .popper-tooltip {
   position: absolute;
   width: max-content;
-  max-width: 300px;
   left: 0px;
   top: 0px;
   z-index: 20;
@@ -64,6 +63,12 @@
   padding: 2px 6px 4px 6px;
   border-radius: 4px;
   font-size: $font-d2;
+
+  max-width: 300px;
+  max-height: 200px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  overflow: hidden;
 
   display: flex;
   justify-content: center;

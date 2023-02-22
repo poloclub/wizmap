@@ -3,7 +3,8 @@ const layout = {
   searchPanelWidth: 356,
   topBarHeight: 52,
   timeSliderWidth: 400,
-  zoomScale: [0.5, 1000]
+  zoomScale: [0.5, 1000],
+  defaultPointColor: [48 / 255, 65 / 255, 159 / 255]
 };
 
 const time = {

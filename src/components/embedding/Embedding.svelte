@@ -31,7 +31,7 @@
     timeInspectMode: false
   };
 
-  export let datasetName = 'prompt';
+  export let datasetName = 'diffusiondb';
   export let footerStore: Writable<FooterStoreValue>;
   export let searchBarStore: Writable<SearchBarStoreValue>;
 
@@ -55,15 +55,15 @@
       break;
     }
 
-    case 'acl-papers': {
-      dataURLs.point = DATA_BASE + '/acl-papers/umap.ndjson';
-      dataURLs.grid = DATA_BASE + '/acl-papers/grid.json';
-      dataURLs.topic = DATA_BASE + '/acl-papers/topic.json';
+    case 'acl-abstracts': {
+      dataURLs.point = DATA_BASE + '/acl-abstracts/umap.ndjson';
+      dataURLs.grid = DATA_BASE + '/acl-abstracts/grid.json';
+      dataURLs.topic = DATA_BASE + '/acl-abstracts/topic.json';
       break;
     }
 
     default: {
-      throw Error(`Unknown dataset name: ${datasetName}`);
+      console.error(`Unknown dataset name: ${datasetName}`);
     }
   }
 
