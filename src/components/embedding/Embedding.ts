@@ -114,6 +114,9 @@ export class Embedding {
   timeScale: d3.ScaleTime<number, number, never> | null = null;
   timeFormatter: ((x: Date) => string) | null = null;
   curTime: string | null = null;
+  timeTextureMap: Map<string, number> | null = null;
+  timeCountMap: Map<string, number> | null = null;
+  timeInspectMode = true;
 
   // Scatter plot
   lastRefillID = 0;
@@ -488,21 +491,6 @@ export class Embedding {
       }
     }
 
-    // Tell the loader worker to start loading data
-    // (need to wait to get the xRange and yRange)
-    const message: LoaderWorkerMessage = {
-      command: 'startLoadData',
-      payload: { url: this.dataURLs.point }
-    };
-    this.loaderWorker.postMessage(message);
-
-    // Tell the tree worker to prepare to add points to the tree
-    const treeMessage: TreeWorkerMessage = {
-      command: 'initQuadtree',
-      payload: { xRange, yRange }
-    };
-    this.treeWorker.postMessage(treeMessage);
-
     this.xScale = d3
       .scaleLinear()
       .domain(xRange)
@@ -516,25 +504,54 @@ export class Embedding {
     this.contours = this.drawContour();
 
     // Create time scale if the data has time info
-    const minDateString = '1997';
-    const maxDateString = '2023';
-    let minDate = new Date(minDateString);
-    let maxDate = new Date(maxDateString);
+    if (this.gridData.timeGrids) {
+      const dates: Date[] = [];
+      this.timeTextureMap = new Map<string, number>();
+      this.timeCountMap = new Map<string, number>();
 
-    // If the user doesn't specify a time zone, treat the date in UTC
-    if (!minDateString.includes('T')) {
-      minDate = new Date(minDateString + 'T00:00:00.000Z');
-    }
-    if (!maxDateString.includes('T')) {
-      maxDate = new Date(maxDateString + 'T00:00:00.000Z');
+      let curI = 0;
+
+      for (const key of Object.keys(this.gridData.timeGrids)) {
+        let curDate = new Date(key);
+        // If the user doesn't specify a time zone, treat the date in UTC
+        if (!key.includes('T')) {
+          curDate = new Date(key + 'T00:00:00.000Z');
+        }
+        dates.push(curDate);
+
+        // Create a map to map time string to texture coordinate
+        this.timeTextureMap.set(key, curI);
+        curI += 1;
+
+        // Initialize the time counter
+        this.timeCountMap.set(key, this.gridData.timeCounter![key]);
+      }
+
+      // Add an extra key for rows with invalid time
+      this.timeTextureMap.set('bad', curI);
+
+      const minDate = d3.min(dates)!;
+      const maxDate = d3.max(dates)!;
+
+      this.timeFormatter = d3.utcFormat(this.gridData.timeFormat!);
+      this.timeScale = d3
+        .scaleUtc()
+        .domain([minDate, maxDate])
+        .range([0, config.layout.timeSliderWidth]);
+      this.curTime = this.timeFormatter(minDate);
     }
 
-    this.timeFormatter = d3.utcFormat('%Y');
-    this.timeScale = d3
-      .scaleUtc()
-      .domain([minDate, maxDate])
-      .range([0, config.layout.timeSliderWidth]);
-    this.curTime = '1997';
+    // Tell the tree worker to prepare to add points to the tree
+    const treeMessage: TreeWorkerMessage = {
+      command: 'initQuadtree',
+      payload: {
+        xRange,
+        yRange,
+        groups: [],
+        times: this.timeCountMap ? [...this.timeCountMap.keys()] : []
+      }
+    };
+    this.treeWorker.postMessage(treeMessage);
 
     // Read the topic label data
     const topicPromise = d3
@@ -933,6 +950,17 @@ export class Embedding {
    */
   treeWorkerMessageHandler = (e: MessageEvent<TreeWorkerMessage>) => {
     switch (e.data.command) {
+      case 'finishInitQuadtree': {
+        // Tell the loader worker to start loading data
+        // (need to wait to set up the quadtree)
+        const message: LoaderWorkerMessage = {
+          command: 'startLoadData',
+          payload: { url: this.dataURLs.point }
+        };
+        this.loaderWorker.postMessage(message);
+        break;
+      }
+
       case 'finishQuadtreeSearch': {
         if (this.lastMouseClientPosition === null) {
           throw Error('lastMouseClientPosition is null');
@@ -994,7 +1022,9 @@ export class Embedding {
       command: 'startQuadtreeSearch',
       payload: {
         x: dataX,
-        y: dataY
+        y: dataY,
+        time: this.timeInspectMode && this.curTime ? this.curTime : '',
+        group: ''
       }
     };
     this.treeWorker.postMessage(message);

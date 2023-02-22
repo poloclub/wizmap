@@ -455,7 +455,8 @@ $search-panel-width: 356px;
     $play-button-width: 26px;
     $slider-height: 5px;
     $slider-width: 400px;
-    $slider-top: 11px;
+    $slider-top: 4px;
+    $svg-padding: 10px;
 
     .time-menu {
       top: calc(100% + 10px);
@@ -466,7 +467,7 @@ $search-panel-width: 356px;
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 8px + calc($thumb-width / 2);
+        gap: 14px + calc($thumb-width / 2);
       }
 
       .play-pause-button {
@@ -500,6 +501,7 @@ $search-panel-width: 356px;
       }
 
       .slider-container {
+        position: relative;
         width: $slider-width;
         height: 25px;
       }
@@ -507,13 +509,18 @@ $search-panel-width: 356px;
       .slider-svg-container {
         position: absolute;
         top: $slider-top;
+        left: -$svg-padding;
         z-index: 2;
         pointer-events: none;
 
         .slider-svg {
           height: 25px;
-          width: $slider-width;
+          width: $slider-width + $svg-padding * 2;
           color: $gray-600;
+
+          :global(g.axis-group) {
+            transform: translate($svg-padding, 0);
+          }
 
           :global(text) {
             font-size: 12px;

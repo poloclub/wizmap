@@ -22,7 +22,6 @@ export type EmbeddingInitSetting = {
   showPoint: boolean;
   showGrid: boolean;
   showLabel: boolean;
-  timeInspectMode: boolean;
 };
 
 export type TreeWorkerMessage =
@@ -31,7 +30,13 @@ export type TreeWorkerMessage =
       payload: {
         xRange: [number, number];
         yRange: [number, number];
+        times: string[];
+        groups: string[];
       };
+    }
+  | {
+      command: 'finishInitQuadtree';
+      payload: null;
     }
   | {
       command: 'updateQuadtree';
@@ -44,6 +49,8 @@ export type TreeWorkerMessage =
       payload: {
         x: number;
         y: number;
+        time: string;
+        group: string;
       };
     }
   | {
@@ -153,7 +160,10 @@ export type TopicData = [number, number, string];
 /**
  * A UMAP data point (x, y, prompt)
  */
-export type UMAPPointStreamData = [number, number, string];
+export type UMAPPointStreamData =
+  | [number, number, string]
+  | [number, number, string, string]
+  | [number, number, string, string, string];
 
 export interface LevelTileMap {
   [level: string]: LevelTileDataItem[];
@@ -200,11 +210,16 @@ export interface GridData {
   padded: boolean;
   sampleSize: number;
   totalPointSize: number;
+  timeGrids?: { [key: string]: number[][] };
+  timeFormat?: string;
+  timeCounter?: { [key: string]: number };
 }
 
 export interface PromptPoint extends Point {
   prompt: string;
   id: number;
+  time?: string;
+  group?: string;
 }
 
 export interface PromptUMAPData {

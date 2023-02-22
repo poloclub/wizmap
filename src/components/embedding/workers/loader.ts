@@ -88,12 +88,20 @@ const startLoadData = (url: string) => {
  * @param point Loaded data point
  */
 const processPointStream = (point: UMAPPointStreamData) => {
-  const promptPoint = {
+  const promptPoint: PromptPoint = {
     x: point[0],
     y: point[1],
     prompt: point[2],
     id: loadedPointCount
   };
+
+  if (point.length > 3) {
+    promptPoint.time = point[3];
+  }
+
+  if (point.length > 4) {
+    promptPoint.group = point[4];
+  }
 
   pendingDataPoints.push(promptPoint);
   loadedPointCount += 1;

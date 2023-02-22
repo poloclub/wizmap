@@ -27,8 +27,7 @@
     showContour: true,
     showPoint: true,
     showGrid: false,
-    showLabel: false,
-    timeInspectMode: false
+    showLabel: false
   };
 
   export let datasetName = 'diffusiondb';
@@ -316,14 +315,18 @@
       on:click="{() => {
         if (controlDisplayItem === 'time') {
           controlDisplayItem = '';
-          defaultSetting.timeInspectMode = false;
+          if (myEmbedding) {
+            myEmbedding.timeInspectMode = false;
+          }
         } else {
           controlDisplayItem = 'time';
-          defaultSetting.timeInspectMode = true;
+          if (myEmbedding) {
+            myEmbedding.timeInspectMode = false;
+          }
         }
       }}"
     >
-      <button class="item" class:activated="{defaultSetting.timeInspectMode}">
+      <button class="item" class:activated="{controlDisplayItem === 'time'}">
         <div class="svg-icon">{@html iconTime}</div>
         <div class="name">Time</div>
         <div class="caret" class:activated="{controlDisplayItem === 'time'}">

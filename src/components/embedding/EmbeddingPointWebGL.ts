@@ -68,7 +68,17 @@ export function initWebGLBuffers(this: Embedding) {
 
   for (const point of this.promptPoints) {
     positions.push([point.x, point.y]);
-    textureCoords.push([0, 0]);
+
+    // Get the texture coordinate for this point
+    if (this.timeTextureMap === null) {
+      textureCoords.push([0, 0]);
+    } else {
+      if (this.timeTextureMap.has(point.time!)) {
+        textureCoords.push([this.timeTextureMap.get(point.time!)!, 0]);
+      } else {
+        textureCoords.push([this.timeTextureMap.get('bad')!, 0]);
+      }
+    }
   }
 
   this.frontPositionBuffer = this.pointRegl.buffer({
@@ -100,7 +110,16 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
 
   for (const point of newPoints) {
     positions.push([point.x, point.y]);
-    textureCoords.push([0, 0]);
+
+    if (this.timeTextureMap === null) {
+      textureCoords.push([0, 0]);
+    } else {
+      if (this.timeTextureMap.has(point.time!)) {
+        textureCoords.push([this.timeTextureMap.get(point.time!)!, 0]);
+      } else {
+        textureCoords.push([this.timeTextureMap.get('bad')!, 0]);
+      }
+    }
   }
 
   // Update the buffer using byte offsets
@@ -143,29 +162,50 @@ export function drawScatterPlot(this: Embedding) {
   // Get the current zoom
   const zoomMatrix = getZoomMatrix(this.curZoomTransform);
 
-  // Create a texture array 4x2x2
-  // [default color, transparent, empty, empty]
+  // Create a texture array (default 3x1)
+  let textureArray = [
+    config.layout.defaultPointColorInt[0],
+    config.layout.defaultPointColorInt[1],
+    config.layout.defaultPointColorInt[2],
+    255,
+    config.layout.secondPointColorInt[0],
+    config.layout.secondPointColorInt[1],
+    config.layout.secondPointColorInt[2],
+    255,
+    255,
+    255,
+    255,
+    0
+  ];
+
+  // If this dataset has time information (nx1), n is number of unique time
+  // strings
+  if (this.timeTextureMap !== null) {
+    textureArray = new Array<number>(this.timeTextureMap.size * 4).fill(0);
+
+    // Iterate through each time value and assign a color to it
+    for (const [key, value] of this.timeTextureMap.entries()) {
+      if (this.timeInspectMode) {
+        if (this.curTime === key) {
+          textureArray[value * 4] = config.layout.defaultPointColorInt[0];
+          textureArray[value * 4 + 1] = config.layout.defaultPointColorInt[1];
+          textureArray[value * 4 + 2] = config.layout.defaultPointColorInt[2];
+          textureArray[value * 4 + 3] = 255;
+        }
+      } else {
+        textureArray[value * 4] = config.layout.defaultPointColorInt[0];
+        textureArray[value * 4 + 1] = config.layout.defaultPointColorInt[1];
+        textureArray[value * 4 + 2] = config.layout.defaultPointColorInt[2];
+        textureArray[value * 4 + 3] = 255;
+      }
+    }
+  }
+
+  // [default color, second color, transparent, empty]
   const texture = this.pointRegl.texture({
-    width: 2,
-    height: 2,
-    data: [
-      config.layout.defaultPointColorInt[0],
-      config.layout.defaultPointColorInt[1],
-      config.layout.defaultPointColorInt[2],
-      255,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
+    width: this.timeTextureMap ? this.timeTextureMap.size : 3,
+    height: 1,
+    data: textureArray,
     format: 'rgba'
   });
 
