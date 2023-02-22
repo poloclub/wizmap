@@ -203,18 +203,22 @@ export function drawScatterPlot(this: Embedding) {
     textureArray = new Array<number>(this.timeTextureMap.size * 4).fill(0);
 
     // Iterate through each time value and assign a color to it
+    const pointColor = this.timeInspectMode
+      ? config.layout.timePointColorInt
+      : config.layout.defaultPointColorInt;
+
     for (const [key, value] of this.timeTextureMap.entries()) {
       if (this.timeInspectMode) {
         if (this.curTime === key) {
-          textureArray[value * 4] = config.layout.defaultPointColorInt[0];
-          textureArray[value * 4 + 1] = config.layout.defaultPointColorInt[1];
-          textureArray[value * 4 + 2] = config.layout.defaultPointColorInt[2];
+          textureArray[value * 4] = pointColor[0];
+          textureArray[value * 4 + 1] = pointColor[1];
+          textureArray[value * 4 + 2] = pointColor[2];
           textureArray[value * 4 + 3] = 255;
         }
       } else {
-        textureArray[value * 4] = config.layout.defaultPointColorInt[0];
-        textureArray[value * 4 + 1] = config.layout.defaultPointColorInt[1];
-        textureArray[value * 4 + 2] = config.layout.defaultPointColorInt[2];
+        textureArray[value * 4] = pointColor[0];
+        textureArray[value * 4 + 1] = pointColor[1];
+        textureArray[value * 4 + 2] = pointColor[2];
         textureArray[value * 4 + 3] = 255;
       }
     }

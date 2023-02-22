@@ -21,7 +21,7 @@
   let mounted = false;
   let initialized = false;
   let myEmbedding: Embedding | null = null;
-  let controlDisplayItem = 'time';
+  let controlDisplayItem = '';
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
@@ -122,6 +122,9 @@
         if (controlDisplayItem === 'contour') {
           controlDisplayItem = '';
         } else {
+          if (controlDisplayItem === 'time') {
+            myEmbedding?.displayCheckboxChanged('time', false);
+          }
           controlDisplayItem = 'contour';
         }
       }}"
@@ -176,6 +179,9 @@
         if (controlDisplayItem === 'point') {
           controlDisplayItem = '';
         } else {
+          if (controlDisplayItem === 'time') {
+            myEmbedding?.displayCheckboxChanged('time', false);
+          }
           controlDisplayItem = 'point';
         }
       }}"
@@ -249,6 +255,9 @@
         if (controlDisplayItem === 'label') {
           controlDisplayItem = '';
         } else {
+          if (controlDisplayItem === 'time') {
+            myEmbedding?.displayCheckboxChanged('time', false);
+          }
           controlDisplayItem = 'label';
         }
       }}"
@@ -315,14 +324,10 @@
       on:click="{() => {
         if (controlDisplayItem === 'time') {
           controlDisplayItem = '';
-          if (myEmbedding) {
-            myEmbedding.timeInspectMode = false;
-          }
+          myEmbedding?.displayCheckboxChanged('time', false);
         } else {
           controlDisplayItem = 'time';
-          if (myEmbedding) {
-            myEmbedding.timeInspectMode = false;
-          }
+          myEmbedding?.displayCheckboxChanged('time', true);
         }
       }}"
     >

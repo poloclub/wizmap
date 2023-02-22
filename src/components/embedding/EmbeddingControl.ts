@@ -75,6 +75,7 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
  */
 export function moveTimeSliderThumb(this: Embedding, progress: number) {
   if (this.timeScale === null || this.timeFormatter === null) return;
+  if (!this.timeInspectMode) return;
 
   curSliderProgress = progress;
 
@@ -106,6 +107,11 @@ export function moveTimeSliderThumb(this: Embedding, progress: number) {
       this.drawScatterPlot();
     }
   }
+
+  // Redraw the contour plot
+  if (this.showContour) {
+    this.drawContourTimeSlice();
+  }
 }
 
 /**
@@ -124,15 +130,9 @@ export function initTopControlBar(this: Embedding) {
 
     timeMenu.select('.play-pause-button').on('click', () => {
       if (this.playingTimeSlider) {
-        this.playingTimeSlider = false;
-        // Hide the thumb label
-        d3.select(this.component)
-          .select('.time-menu .middle-thumb')
-          .classed('animating', false);
+        this.playPauseClickHandler(false);
       } else {
-        this.playingTimeSlider = true;
-        sliderAnimationStartTime = null;
-        this.startTimeSliderAnimation();
+        this.playPauseClickHandler(true);
       }
       this.updateEmbedding();
     });
@@ -144,6 +144,21 @@ export function initTopControlBar(this: Embedding) {
 
     this.moveTimeSliderThumb(0);
   }
+}
+
+export function playPauseClickHandler(this: Embedding, play: boolean) {
+  if (!play) {
+    this.playingTimeSlider = false;
+    // Hide the thumb label
+    d3.select(this.component)
+      .select('.time-menu .middle-thumb')
+      .classed('animating', false);
+  } else {
+    this.playingTimeSlider = true;
+    sliderAnimationStartTime = null;
+    this.startTimeSliderAnimation();
+  }
+  this.updateEmbedding();
 }
 
 /**
@@ -182,4 +197,136 @@ export function startTimeSliderAnimation(this: Embedding) {
     .classed('animating', true);
 
   window.requestAnimationFrame(loop);
+}
+
+/**
+ * Draw the KDE contour in the background.
+ */
+export function drawContourTimeSlice(this: Embedding) {
+  if (this.gridData == null) {
+    throw Error('Grid data not initialized');
+  }
+
+  if (this.gridData.timeGrids === undefined) {
+    throw Error('Calling drawContourTimeSlice() when there is no time info');
+  }
+
+  if (!this.timeInspectMode || this.curTime === null) {
+    throw Error('Not in timeInspectMode.');
+  }
+
+  const contourGroup = this.svg.select<SVGGElement>('.contour-group-time');
+
+  const grid = this.gridData.timeGrids[this.curTime];
+  if (grid === undefined) return;
+
+  const gridData1D: number[] = [];
+  for (const row of grid) {
+    for (const item of row) {
+      gridData1D.push(item);
+    }
+  }
+
+  // Linear interpolate the levels to determine the thresholds
+  const levels = config.layout.contourLevels;
+  const thresholds: number[] = [];
+  const minValue = Math.min(...gridData1D);
+  const maxValue = Math.max(...gridData1D);
+  const step = (maxValue - minValue) / levels;
+  for (let i = 0; i < levels; i++) {
+    thresholds.push(minValue + step * i);
+  }
+
+  let contours = d3
+    .contours()
+    .thresholds(thresholds)
+    .size([this.gridData.grid.length, this.gridData.grid[0].length])(
+    gridData1D
+  );
+
+  // Convert the scale of the generated paths
+  const contourXScale = d3
+    .scaleLinear()
+    .domain([0, this.gridData.grid.length])
+    .range(this.gridData.xRange);
+
+  const contourYScale = d3
+    .scaleLinear()
+    .domain([0, this.gridData.grid[0].length])
+    .range(this.gridData.yRange);
+
+  contours = contours.map(item => {
+    item.coordinates = item.coordinates.map(coordinates => {
+      return coordinates.map(positions => {
+        return positions.map(point => {
+          return [
+            this.xScale(contourXScale(point[0])),
+            this.yScale(contourYScale(point[1]))
+          ];
+        });
+      });
+    });
+    return item;
+  });
+
+  // Create a new blue interpolator based on d3.interpolateBlues
+  // (starting from white here)
+  const colorInterpolate = d3.interpolateLab(
+    '#ffffff',
+    config.colors['purple-800']
+  );
+  const colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
+    colorInterpolate(d / 1)
+  );
+
+  // Draw the contours
+  contourGroup
+    .selectAll<SVGPathElement, d3.ContourMultiPolygon>('path')
+    .data(contours.slice(1))
+    .join('path')
+    .attr('fill', d => colorScale(d.value))
+    .attr('d', d3.geoPath());
+
+  // Animate the contours with Flubber (not working)
+  // contourGroup
+  //   .selectAll<SVGPathElement, d3.ContourMultiPolygon>('path')
+  //   .data(contours)
+  //   .join(
+  //     enter => {
+  //       const path = enter
+  //         .append('path')
+  //         .style('opacity', 0)
+  //         .attr('fill', d => colorScale(d.value))
+  //         .attr('d', d3.geoPath());
+
+  //       path.transition('update').duration(100).style('opacity', 1);
+
+  //       return path;
+  //     },
+  //     update => {
+  //       update.each((d, i, g) => {
+  //         const element = d3.select(g[i]);
+  //         const oldPath = element.attr('d');
+  //         const newPath = d3.geoPath()(d)!;
+  //         if (oldPath !== newPath) {
+  //           const interpolator = interpolate(oldPath, newPath);
+  //           element
+  //             .transition('update')
+  //             .duration(100)
+  //             .attrTween('d', () => interpolator);
+  //         }
+  //       });
+  //       return update;
+  //     },
+  //     exit => {
+  //       exit
+  //         .transition('update')
+  //         .duration(100)
+  //         .style('opacity', 0)
+  //         .on('end', () => {
+  //           exit.remove();
+  //         });
+  //       return exit;
+  //     }
+  //   );
 }

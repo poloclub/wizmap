@@ -31,6 +31,16 @@
   pointer-events: none;
 }
 
+:global(.embedding-svg .contour-group-time) {
+  transition: opacity, 300ms ease-in-out;
+  opacity: 0.5;
+}
+
+:global(.embedding-svg .contour-group-time.hidden) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 :global(.prompt-point) {
   fill: $gray-700;
   opacity: 0.4;

@@ -116,7 +116,7 @@ export class Embedding {
   curTime: string | null = null;
   timeTextureMap: Map<string, number> | null = null;
   timeCountMap: Map<string, number> | null = null;
-  timeInspectMode = true;
+  timeInspectMode = false;
 
   // Scatter plot
   lastRefillID = 0;
@@ -171,6 +171,8 @@ export class Embedding {
   timeSliderMouseDownHandler = Controller.timeSliderMouseDownHandler;
   moveTimeSliderThumb = Controller.moveTimeSliderThumb;
   startTimeSliderAnimation = Controller.startTimeSliderAnimation;
+  playPauseClickHandler = Controller.playPauseClickHandler;
+  drawContourTimeSlice = Controller.drawContourTimeSlice;
 
   /**
    *
@@ -611,6 +613,12 @@ export class Embedding {
       .append('g')
       .attr('class', 'contour-group')
       .classed('hidden', !this.showContour);
+
+    umapGroup
+      .append('g')
+      .attr('class', 'contour-group-time')
+      .classed('hidden', !this.timeInspectMode);
+
     umapGroup.append('g').attr('class', 'quad-group');
     umapGroup.append('g').attr('class', 'tile-group');
     umapGroup.append('g').attr('class', 'scatter-group');
@@ -682,7 +690,7 @@ export class Embedding {
     }
 
     // Linear interpolate the levels to determine the thresholds
-    const levels = 12;
+    const levels = config.layout.contourLevels;
     const thresholds: number[] = [];
     const minValue = Math.min(...gridData1D);
     const maxValue = Math.max(...gridData1D);
@@ -1181,6 +1189,30 @@ export class Embedding {
 
         if (this.showLabel) {
           this.layoutTopicLabels(this.userMaxLabelNum);
+        }
+        break;
+      }
+
+      case 'time': {
+        this.timeInspectMode = checked;
+
+        // Hide the old contour if it's shown
+        if (this.showContour) {
+          this.svg
+            .select('g.contour-group')
+            .style('opacity', this.timeInspectMode ? 0.3 : 1);
+
+          this.svg
+            .select('g.contour-group-time')
+            .classed('hidden', !this.timeInspectMode);
+        }
+
+        this.drawScatterPlot();
+
+        // If the user enters the time inspect mode, automatically start the
+        // slider animation
+        if (this.timeInspectMode) {
+          this.playPauseClickHandler(true);
         }
         break;
       }
