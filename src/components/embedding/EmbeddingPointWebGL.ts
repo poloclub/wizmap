@@ -74,9 +74,14 @@ export function initWebGLBuffers(this: Embedding) {
       textureCoords.push([0, 0]);
     } else {
       if (this.timeTextureMap.has(point.time!)) {
-        textureCoords.push([this.timeTextureMap.get(point.time!)!, 0]);
+        const u =
+          this.timeTextureMap.get(point.time!)! /
+          (this.timeTextureMap.size - 1);
+        textureCoords.push([u, 0]);
       } else {
-        textureCoords.push([this.timeTextureMap.get('bad')!, 0]);
+        // The last entry in the texture array is reserved for 'bad' points
+        // (e.g., wrong year)
+        textureCoords.push([1, 0]);
       }
     }
   }
@@ -89,8 +94,8 @@ export function initWebGLBuffers(this: Embedding) {
   this.frontPositionBuffer.subdata(positions, 0);
 
   this.frontTextureCoordinateBuffer = this.pointRegl.buffer({
-    length: this.gridData.totalPointSize * 1 * 2,
-    type: 'uint8',
+    length: this.gridData.totalPointSize * 4 * 2,
+    type: 'float',
     usage: 'dynamic'
   });
   this.frontTextureCoordinateBuffer.subdata(textureCoords, 0);
@@ -115,9 +120,14 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
       textureCoords.push([0, 0]);
     } else {
       if (this.timeTextureMap.has(point.time!)) {
-        textureCoords.push([this.timeTextureMap.get(point.time!)!, 0]);
+        const u =
+          this.timeTextureMap.get(point.time!)! /
+          (this.timeTextureMap.size - 1);
+        textureCoords.push([u, 0.5]);
       } else {
-        textureCoords.push([this.timeTextureMap.get('bad')!, 0]);
+        // The last entry in the texture array is reserved for 'bad' points
+        // (e.g., wrong year)
+        textureCoords.push([1, 0]);
       }
     }
   }
@@ -126,7 +136,7 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
   this.frontPositionBuffer!.subdata(positions, this.bufferPointSize * 2 * 4);
   this.frontTextureCoordinateBuffer!.subdata(
     textureCoords,
-    this.bufferPointSize * 2 * 1
+    this.bufferPointSize * 2 * 4
   );
   this.bufferPointSize += newPoints.length;
 }
@@ -232,7 +242,7 @@ export function drawScatterPlot(this: Embedding) {
       },
       textureCoord: {
         buffer: this.frontTextureCoordinateBuffer,
-        stride: 2 * 1,
+        stride: 2 * 4,
         offset: 0
       }
     },

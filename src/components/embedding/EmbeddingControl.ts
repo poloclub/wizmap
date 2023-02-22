@@ -99,6 +99,13 @@ export function moveTimeSliderThumb(this: Embedding, progress: number) {
   );
   thumbLabel!.textContent = this.timeFormatter(curTime);
   this.curTime = this.timeFormatter(curTime);
+
+  // Redraw the scatter plot
+  if (this.showPoint) {
+    if (this.frontPositionBuffer && this.frontTextureCoordinateBuffer) {
+      this.drawScatterPlot();
+    }
+  }
 }
 
 /**

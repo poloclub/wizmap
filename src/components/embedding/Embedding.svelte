@@ -21,7 +21,7 @@
   let mounted = false;
   let initialized = false;
   let myEmbedding: Embedding | null = null;
-  let controlDisplayItem = '';
+  let controlDisplayItem = 'time';
 
   const defaultSetting: EmbeddingInitSetting = {
     showContour: true,
