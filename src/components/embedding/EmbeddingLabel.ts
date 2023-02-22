@@ -1165,6 +1165,13 @@ export const updatePopperTooltip = (
   text: string,
   placement: 'bottom' | 'left' | 'top' | 'right'
 ) => {
+  // Truncate the text if it is too long
+  if (text.length > 300) {
+    text = text.slice(0, 300);
+    text = text.slice(0, text.lastIndexOf(' '));
+    text = text.concat('...');
+  }
+
   const arrowElement = tooltip.querySelector('.popper-arrow')! as HTMLElement;
   const contentElement = tooltip.querySelector(
     '.popper-content'
