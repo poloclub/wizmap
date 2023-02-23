@@ -9,7 +9,8 @@ const layout = {
   defaultPointColorInt: [48, 65, 159],
   secondPointColorInt: [48, 65, 159],
   timePointColorInt: [123, 31, 162],
-  contourLevels: 12
+  contourLevels: 12,
+  searchLimit: 5000
 };
 
 const time = {

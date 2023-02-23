@@ -282,10 +282,19 @@ $search-panel-width: 356px;
     display: flex;
 
     &:disabled {
+      display: none;
       .item {
         background-color: $gray-200;
-        color: $gray-500;
-        pointer-events: none;
+        color: $gray-600;
+        cursor: no-drop;
+
+        &:hover {
+          background-color: $gray-200;
+        }
+
+        &:active {
+          background-color: $gray-200;
+        }
       }
     }
 

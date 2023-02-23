@@ -3,6 +3,7 @@
   import { SearchPanel } from './SearchPanel';
   import type { Writable } from 'svelte/store';
   import type { SearchBarStoreValue } from '../../stores';
+  import { config } from '../../config/config';
   import d3 from '../../utils/d3-import';
   import iconTop from '../../imgs/icon-top.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
@@ -60,7 +61,7 @@
 <div class="search-panel-wrapper" bind:this="{component}">
   <div
     class="search-list-container"
-    class:shown="{searchInputValue.length > 0}"
+    class:shown="{mySearchPanel?.searchBarStoreValue.shown}"
   >
     <div class="search-list">
       <div class="header-gap" class:hidden="{!searchScrolled}"></div>
@@ -75,15 +76,22 @@
           }}"
         >
           <div class="count-label">
-            {numberFormatter(mySearchPanel.searchBarStoreValue.results.length)}
+            {mySearchPanel.searchBarStoreValue.results.length ===
+            config.layout.searchLimit
+              ? `${config.layout.searchLimit}+`
+              : numberFormatter(
+                  mySearchPanel.searchBarStoreValue.results.length
+                )}
             Search Results
           </div>
-          {#each mySearchPanel.searchBarStoreValue.results.slice(0, maxListLength) as result, i}
-            <div class="item">{result} {i}</div>
+          {#each mySearchPanel.formattedResults.slice(0, maxListLength) as result, i}
+            <div class="item">{@html result}</div>
           {/each}
 
           <button
             class="add-more-button"
+            class:hidden="{mySearchPanel.searchBarStoreValue.results.length <=
+              maxListLength}"
             on:click="{() => {
               maxListLength += 100;
             }}"
@@ -125,6 +133,7 @@
       on:blur="{() => {
         inputFocused = false;
       }}"
+      on:input="{e => mySearchPanel?.inputChanged(e)}"
     />
 
     <div class="end-button">
@@ -140,6 +149,7 @@
         class:hidden="{searchInputValue.length === 0}"
         on:click="{() => {
           searchInputValue = '';
+          mySearchPanel?.cancelSearch();
         }}"
       >
         {@html iconCancel}

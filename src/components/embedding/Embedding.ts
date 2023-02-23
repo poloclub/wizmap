@@ -15,6 +15,7 @@ import type {
   Direction,
   LoaderWorkerMessage,
   TreeWorkerMessage,
+  SearchWorkerMessage,
   EmbeddingInitSetting,
   WebGLMatrices
 } from '../../types/embedding-types';
@@ -36,12 +37,13 @@ import {
   yieldToMain
 } from '../../utils/utils';
 import * as Labeler from './EmbeddingLabel';
-import createRegl from 'regl';
 import * as PointDrawer from './EmbeddingPointWebGL';
 import * as Controller from './EmbeddingControl';
+import createRegl from 'regl';
 import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker';
 import TreeWorker from './workers/tree?worker';
+import SearchWorker from './workers/search?worker';
 
 const DEBUG = config.debug;
 const HOVER_RADIUS = 3;
@@ -118,6 +120,9 @@ export class Embedding {
   timeCountMap: Map<string, number> | null = null;
   timeInspectMode = false;
 
+  // Search
+  completedSearchQueryID = 0;
+
   // Scatter plot
   lastRefillID = 0;
   lsatRefillTime = 0;
@@ -145,6 +150,7 @@ export class Embedding {
   // Web workers
   loaderWorker: Worker;
   treeWorker: Worker;
+  searchWorker: Worker;
 
   // Methods implemented in other files
   // Labels
@@ -219,6 +225,11 @@ export class Embedding {
     this.treeWorker = new TreeWorker();
     this.treeWorker.onmessage = (e: MessageEvent<TreeWorkerMessage>) => {
       this.treeWorkerMessageHandler(e);
+    };
+
+    this.searchWorker = new SearchWorker();
+    this.searchWorker.onmessage = (e: MessageEvent<SearchWorkerMessage>) => {
+      this.searchWorkerMessageHandler(e);
     };
 
     // Initialize the SVG
@@ -448,6 +459,24 @@ export class Embedding {
             break;
           }
         }
+      }
+    });
+
+    this.searchBarStore.subscribe(value => {
+      this.searchBarStoreValue = value;
+
+      // Check if we need to query new results
+      if (this.searchBarStoreValue.queryID !== this.completedSearchQueryID) {
+        // Search new query
+        this.completedSearchQueryID = this.searchBarStoreValue.queryID;
+        const message: SearchWorkerMessage = {
+          command: 'startQuery',
+          payload: {
+            query: this.searchBarStoreValue.query,
+            queryID: this.searchBarStoreValue.queryID
+          }
+        };
+        this.searchWorker.postMessage(message);
       }
     });
   };
@@ -918,11 +947,20 @@ export class Embedding {
             this.drawScatterPlot();
           }
 
+          // Add the points to the search index
+          const searchMessage: SearchWorkerMessage = {
+            command: 'addPoints',
+            payload: {
+              points: e.data.payload.points
+            }
+          };
+          this.searchWorker.postMessage(searchMessage);
+
           // TODO: Remove me (testing search panel)
-          const results = this.promptPoints.map(d => d.prompt);
-          this.searchBarStoreValue.shown = true;
-          this.searchBarStoreValue.results = results;
-          this.searchBarStore.set(this.searchBarStoreValue);
+          // const results = this.promptPoints.map(d => d.prompt);
+          // this.searchBarStoreValue.shown = true;
+          // this.searchBarStoreValue.results = results;
+          // this.searchBarStore.set(this.searchBarStoreValue);
         } else {
           // Batches after the first batch
           // Add the points to the the prompt point list
@@ -930,6 +968,15 @@ export class Embedding {
           for (const point of newPoints) {
             this.promptPoints.push(point);
           }
+
+          // Add the points to the search index
+          const searchMessage: SearchWorkerMessage = {
+            command: 'addPoints',
+            payload: {
+              points: newPoints
+            }
+          };
+          this.searchWorker.postMessage(searchMessage);
 
           // Add the new points to the WebGL buffers
           this.updateWebGLBuffers(newPoints);
@@ -1011,6 +1058,31 @@ export class Embedding {
         } else {
           this.highlightPoint(undefined);
         }
+        break;
+      }
+
+      default: {
+        console.error('Unknown message', e.data.command);
+        break;
+      }
+    }
+  };
+
+  /**
+   * Handle messages from the embedding worker
+   * @param e Message event
+   */
+  searchWorkerMessageHandler = (e: MessageEvent<SearchWorkerMessage>) => {
+    switch (e.data.command) {
+      case 'finishQuery': {
+        const { queryID, resultIndexes } = e.data.payload;
+        const results = [];
+        for (const resultIndex of resultIndexes) {
+          results.push(this.promptPoints[resultIndex].prompt);
+        }
+        this.searchBarStoreValue.results = results;
+        this.searchBarStoreValue.shown = true;
+        this.searchBarStore.set(this.searchBarStoreValue);
         break;
       }
 

@@ -19,7 +19,6 @@ $button-border-radius: 8px;
   height: 1em;
   color: currentColor;
 
-  // cursor: pointer;
   pointer-events: fill;
 
   :global(svg) {
@@ -124,6 +123,7 @@ $search-bar-gap: 8px;
       color: $gray-500;
       transition: color 150ms ease-in-out, opacity 150ms ease-in-out;
       opacity: 1;
+      cursor: default;
 
       &:hover {
         color: adjust-color($color: $gray-500, $lightness: -10%);
@@ -215,6 +215,12 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
       padding: 5px ($search-h-margin + $search-bar-h-padding);
       border-bottom: 1px solid $gray-200;
       cursor: default;
+
+      :global(em) {
+        color: $purple-500;
+        font-style: normal;
+        font-weight: 600;
+      }
     }
 
     .count-label {
@@ -236,19 +242,23 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
       align-items: center;
 
       color: $purple-700;
-      background-color: $gray-50;
+      background-color: $gray-100;
 
       user-select: none;
       -webkit-user-select: none;
       transition: color 150ms ease-in-out, background-color 150ms ease-in-out;
 
       &:hover {
-        background-color: $gray-100;
+        background-color: $gray-200;
         color: $purple-600;
       }
 
       &:active {
         color: $purple-800;
+      }
+
+      &.hidden {
+        display: none;
       }
 
       span {

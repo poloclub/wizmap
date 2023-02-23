@@ -24,6 +24,28 @@ export type EmbeddingInitSetting = {
   showLabel: boolean;
 };
 
+export type SearchWorkerMessage =
+  | {
+      command: 'addPoints';
+      payload: {
+        points: PromptPoint[];
+      };
+    }
+  | {
+      command: 'startQuery';
+      payload: {
+        query: string;
+        queryID: number;
+      };
+    }
+  | {
+      command: 'finishQuery';
+      payload: {
+        queryID: number;
+        resultIndexes: number[];
+      };
+    };
+
 export type TreeWorkerMessage =
   | {
       command: 'initQuadtree';

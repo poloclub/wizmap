@@ -4,6 +4,8 @@ import d3 from './utils/d3-import';
 export interface SearchBarStoreValue {
   shown: boolean;
   results: string[];
+  query: string;
+  queryID: number;
 }
 
 export interface FooterStoreValue {
@@ -29,7 +31,9 @@ export interface TooltipStoreValue {
 export const getSearchBarStoreDefaultValue = (): SearchBarStoreValue => {
   return {
     shown: false,
-    results: []
+    results: [],
+    query: '',
+    queryID: 0
   };
 };
 
