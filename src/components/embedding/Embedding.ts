@@ -125,6 +125,9 @@ export class Embedding {
   timeCountMap: Map<string, number> | null = null;
   timeInspectMode = false;
 
+  // Group
+  groupNames: string[] | null = null;
+
   // Search
   completedSearchQueryID = 0;
 
@@ -353,7 +356,7 @@ export class Embedding {
       .attr('height', `${this.svgFullSize.height}px`)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
-        this.highlightPoint(undefined);
+        this.highlightPoint(undefined, true);
         this.mouseoverLabel(null, null);
       })
       .attr(
@@ -591,6 +594,11 @@ export class Embedding {
         .domain([minDate, maxDate])
         .range([0, config.layout.timeSliderWidth]);
       this.curTime = this.timeFormatter(minDate);
+    }
+
+    // Create group related structures if the data has groups
+    if (this.gridData.groupGrids) {
+      this.groupNames = [...Object.keys(this.gridData.groupGrids)];
     }
 
     // Tell the tree worker to prepare to add points to the tree
@@ -1080,9 +1088,9 @@ export class Embedding {
         );
 
         if (distance <= curHoverRadius) {
-          this.highlightPoint(closestPoint);
+          this.highlightPoint(closestPoint, true);
         } else {
-          this.highlightPoint(undefined);
+          this.highlightPoint(undefined, true);
         }
         break;
       }
@@ -1333,5 +1341,7 @@ export class Embedding {
         break;
       }
     }
+
+    this.updateEmbedding();
   };
 }

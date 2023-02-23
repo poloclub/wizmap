@@ -378,13 +378,17 @@ $search-panel-width: 356px;
       .caret {
         transition: transform 150ms ease-in-out;
 
+        &.activated {
+          transform: rotate(-180deg);
+        }
+
+        &.hidden {
+          display: none;
+        }
+
         .svg-icon {
           width: 13px;
           height: 13px;
-        }
-
-        &.activated {
-          transform: rotate(-180deg);
         }
       }
 

@@ -431,7 +431,8 @@ export function updateHighlightPoint(this: Embedding) {
  */
 export function highlightPoint(
   this: Embedding,
-  point: PromptPoint | undefined
+  point: PromptPoint | undefined,
+  showTooltip: boolean
 ) {
   if (!this.showPoint) return;
   if (point === this.hoverPoint) return;
@@ -514,10 +515,13 @@ export function highlightPoint(
   if (pointMouseenterTimer !== null) {
     clearTimeout(pointMouseenterTimer);
   }
-  pointMouseenterTimer = setTimeout(() => {
-    this.tooltipTop.classList.remove('hidden');
-    pointMouseenterTimer = null;
-  }, 300);
+
+  if (showTooltip) {
+    pointMouseenterTimer = setTimeout(() => {
+      this.tooltipTop.classList.remove('hidden');
+      pointMouseenterTimer = null;
+    }, 300);
+  }
 }
 
 /**

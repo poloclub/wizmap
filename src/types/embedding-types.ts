@@ -10,6 +10,7 @@ export interface DataURLs {
   point: string;
   grid: string;
   topic: string;
+  point2?: string;
 }
 
 export interface WebGLMatrices {
@@ -235,6 +236,9 @@ export interface GridData {
   timeGrids?: { [key: string]: number[][] };
   timeFormat?: string;
   timeCounter?: { [key: string]: number };
+  groupGrids?: { [key: string]: number[][] };
+  groupTotalPointSizes?: number[];
+  defaultGroup?: string;
 }
 
 export interface PromptPoint extends Point {

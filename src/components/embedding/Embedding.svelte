@@ -49,8 +49,9 @@
   switch (datasetName) {
     case 'diffusiondb': {
       dataURLs.point = DATA_BASE + '/diffusiondb/umap-1m.ndjson';
-      dataURLs.grid = DATA_BASE + '/diffusiondb/umap-1m-grid.json';
+      dataURLs.grid = DATA_BASE + '/diffusiondb/grid.json';
       dataURLs.topic = DATA_BASE + '/diffusiondb/umap-1m-topic-data.json';
+      dataURLs.point2 = DATA_BASE + '/diffusiondb/image-umap.ndjson';
       break;
     }
 
@@ -120,114 +121,137 @@
     <button
       class="item-wrapper"
       on:click="{() => {
-        if (controlDisplayItem === 'contour') {
-          controlDisplayItem = '';
+        if (!myEmbedding || myEmbedding.groupNames === null) {
+          myEmbedding?.displayCheckboxChanged(
+            'contour',
+            !myEmbedding.showContour
+          );
         } else {
-          if (controlDisplayItem === 'time') {
-            myEmbedding?.displayCheckboxChanged('time', false);
+          if (controlDisplayItem === 'contour') {
+            controlDisplayItem = '';
+          } else {
+            if (controlDisplayItem === 'time') {
+              myEmbedding?.displayCheckboxChanged('time', false);
+            }
+            controlDisplayItem = 'contour';
           }
-          controlDisplayItem = 'contour';
         }
       }}"
     >
-      <div class="item" class:activated="{defaultSetting.showContour}">
+      <div class="item" class:activated="{myEmbedding?.showContour}">
         <div class="svg-icon">{@html iconContour}</div>
         <div class="name">Contour</div>
-        <div class="caret" class:activated="{controlDisplayItem === 'contour'}">
+        <div
+          class="caret"
+          class:hidden="{!myEmbedding || myEmbedding.groupNames === null}"
+          class:activated="{controlDisplayItem === 'contour'}"
+        >
           <div class="svg-icon">
             {@html iconCaret}
           </div>
         </div>
       </div>
 
-      <button
-        class="menu contour-menu"
-        class:hidden="{controlDisplayItem !== 'contour'}"
-        on:click="{e => {
-          e.stopPropagation();
-        }}"
-      >
-        <div class="control-row">
-          <input
-            type="checkbox"
-            class="checkbox"
-            id="checkbox-contour-1"
-            name="checkbox-contour-1"
-            bind:checked="{defaultSetting.showContour}"
-            on:input="{e => displayCheckboxChanged(e, 'contour')}"
-          />
-          <label for="checkbox-contour-1">Prompts</label>
-        </div>
+      {#if myEmbedding?.groupNames !== null}
+        <button
+          class="menu contour-menu"
+          class:hidden="{controlDisplayItem !== 'contour'}"
+          on:click="{e => {
+            e.stopPropagation();
+          }}"
+        >
+          <div class="control-row">
+            <input
+              type="checkbox"
+              class="checkbox"
+              id="checkbox-contour-1"
+              name="checkbox-contour-1"
+              bind:checked="{defaultSetting.showContour}"
+              on:input="{e => displayCheckboxChanged(e, 'contour')}"
+            />
+            <label for="checkbox-contour-1">{myEmbedding?.groupNames[0]}</label>
+          </div>
 
-        <div class="control-row">
-          <input
-            type="checkbox"
-            class="checkbox"
-            id="checkbox-contour-2"
-            name="checkbox-contour-2"
-            bind:checked="{defaultSetting.showContour}"
-            on:input="{e => displayCheckboxChanged(e, 'contour')}"
-          />
-          <label for="checkbox-contour-2">Images</label>
-        </div>
-      </button>
+          <div class="control-row">
+            <input
+              type="checkbox"
+              class="checkbox"
+              id="checkbox-contour-2"
+              name="checkbox-contour-2"
+              bind:checked="{defaultSetting.showContour}"
+              on:input="{e => displayCheckboxChanged(e, 'contour')}"
+            />
+            <label for="checkbox-contour-2">Images</label>
+          </div>
+        </button>
+      {/if}
     </button>
     <div class="flex-gap"></div>
 
     <button
       class="item-wrapper"
       on:click="{() => {
-        if (controlDisplayItem === 'point') {
-          controlDisplayItem = '';
+        if (!myEmbedding || myEmbedding.groupNames === null) {
+          myEmbedding?.displayCheckboxChanged('point', !myEmbedding.showPoint);
         } else {
-          if (controlDisplayItem === 'time') {
-            myEmbedding?.displayCheckboxChanged('time', false);
+          if (controlDisplayItem === 'point') {
+            controlDisplayItem = '';
+          } else {
+            if (controlDisplayItem === 'time') {
+              myEmbedding?.displayCheckboxChanged('time', false);
+            }
+            controlDisplayItem = 'point';
           }
-          controlDisplayItem = 'point';
         }
       }}"
     >
       <div class="item" class:activated="{defaultSetting.showPoint}">
         <div class="svg-icon">{@html iconPoint}</div>
         <div class="name">Point</div>
-        <div class="caret" class:activated="{controlDisplayItem === 'point'}">
+        <div
+          class="caret"
+          class:hidden="{!myEmbedding || myEmbedding.groupNames === null}"
+          class:activated="{controlDisplayItem === 'point'}"
+        >
           <div class="svg-icon">
             {@html iconCaret}
           </div>
         </div>
       </div>
 
-      <button
-        class="menu point-menu"
-        class:hidden="{controlDisplayItem !== 'point'}"
-        on:click="{e => {
-          e.stopPropagation();
-        }}"
-      >
-        <div class="control-row">
-          <input
-            type="checkbox"
-            class="checkbox"
-            id="checkbox-point-1"
-            name="checkbox-point-1"
-            bind:checked="{defaultSetting.showPoint}"
-            on:input="{e => displayCheckboxChanged(e, 'point')}"
-          />
-          <label for="checkbox-point-1">Prompts</label>
-        </div>
+      {#if myEmbedding?.groupNames !== null}
+        <button
+          class="menu point-menu"
+          class:hidden="{controlDisplayItem !== 'point'}"
+          on:click="{e => {
+            e.stopPropagation();
+          }}"
+        >
+          <div class="control-row">
+            <input
+              type="checkbox"
+              class="checkbox"
+              id="checkbox-point-1"
+              name="checkbox-point-1"
+              bind:checked="{defaultSetting.showPoint}"
+              on:input="{e => displayCheckboxChanged(e, 'point')}"
+            />
+            <label for="checkbox-point-1">{myEmbedding?.groupNames[0]}</label>
+          </div>
 
-        <div class="control-row">
-          <input
-            type="checkbox"
-            class="checkbox"
-            id="checkbox-point-2"
-            name="checkbox-point-2"
-            bind:checked="{defaultSetting.showPoint}"
-            on:input="{e => displayCheckboxChanged(e, 'point')}"
-          />
-          <label for="checkbox-point-2">Images</label>
-        </div>
-      </button>
+          <div class="control-row">
+            <input
+              type="checkbox"
+              class="checkbox"
+              id="checkbox-point-2"
+              name="checkbox-point-2"
+              bind:checked="{defaultSetting.showPoint}"
+              on:input="{e => displayCheckboxChanged(e, 'point')}"
+            />
+            <label for="checkbox-point-2">{myEmbedding?.groupNames[1]}</label>
+          </div>
+        </button>
+      {/if}
     </button>
     <div class="flex-gap"></div>
 
