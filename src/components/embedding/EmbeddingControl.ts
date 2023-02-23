@@ -166,7 +166,7 @@ export function playPauseClickHandler(this: Embedding, play: boolean) {
  * @param this Embedding
  */
 export function startTimeSliderAnimation(this: Embedding) {
-  const oneLoopMS = 5000;
+  const oneLoopMS = 8000;
 
   const loop = (timestamp: number) => {
     if (sliderAnimationStartTime === null) {

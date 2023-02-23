@@ -72,6 +72,21 @@
       height: 1em;
     }
   }
+
+  .count {
+    position: relative;
+
+    span {
+      &.hidden {
+        visibility: hidden;
+      }
+    }
+
+    .subset-count {
+      position: absolute;
+      right: 0;
+    }
+  }
 }
 
 .svg-icon {

@@ -101,7 +101,12 @@
     >
     <div class="splitter"></div>
 
-    <span>{myFooter ? myFooter.numPoints : '0'} Data points</span>
+    <span class="count">
+      <span class="total-count" class:hidden="{false}"
+        >{myFooter ? myFooter.numPoints : '0'} Data Points
+      </span>
+      <span class="subset-count" class:hidden="{true}">0 Data Points</span>
+    </span>
     <div class="splitter"></div>
     <div class="scale-legend">
       <span class="sclae-num"
