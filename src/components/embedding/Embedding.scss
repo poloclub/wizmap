@@ -244,8 +244,6 @@
   height: 1rem;
 
   color: currentColor;
-  cursor: pointer;
-  pointer-events: fill;
   transition: color 100ms ease-in-out;
 
   :global(svg) {
@@ -282,6 +280,14 @@ $search-panel-width: 356px;
     pointer-events: none;
     position: relative;
     display: flex;
+
+    &:disabled {
+      .item {
+        background-color: $gray-200;
+        color: $gray-500;
+        pointer-events: none;
+      }
+    }
 
     .item {
       pointer-events: all;

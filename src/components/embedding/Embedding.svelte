@@ -321,6 +321,7 @@
 
     <button
       class="item-wrapper"
+      disabled="{myEmbedding ? myEmbedding.timeCountMap === null : true}"
       on:click="{() => {
         if (controlDisplayItem === 'time') {
           controlDisplayItem = '';

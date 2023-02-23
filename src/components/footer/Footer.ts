@@ -14,7 +14,6 @@ export class Footer {
   footerStore: Writable<FooterStoreValue>;
 
   numPoints: string;
-  numSlicePoints: string;
   scaleDataWidth: string;
   footerUpdated: () => void;
 

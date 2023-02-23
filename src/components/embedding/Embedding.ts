@@ -595,6 +595,8 @@ export class Embedding {
     // Send the xScale to the footer
     this.footerStoreValue.xScale = this.xScale;
     this.footerStore.set(this.footerStoreValue);
+
+    this.updateEmbedding();
   };
 
   /**
