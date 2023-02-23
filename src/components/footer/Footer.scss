@@ -154,3 +154,94 @@ $zoom-button-border-radius: 8px;
     background-color: adjust-color($color: $gray-200, $lightness: -2%);
   }
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+dialog[open] {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
+  pointer-events: all;
+
+  &::backdrop {
+    background-color: hsla(0, 0%, 0%, 0.55);
+    animation: fade-in 300ms;
+  }
+
+  .header {
+    padding: 16px 20px 0 20px;
+    margin: 0;
+    line-height: 1;
+    font-size: $font-u3;
+    font-weight: 600;
+    // background-color: change-color($color: $purple-100, $lightness: 96%);
+    width: 100%;
+  }
+
+  button {
+    background-color: $gray-200;
+    padding: 3px 8px;
+    border-radius: 8px;
+    display: flex;
+    flex-grow: 0;
+    transition: background-color 150ms ease-in-out;
+
+    &:hover {
+      background-color: $gray-300;
+    }
+
+    &:active {
+      background-color: $gray-400;
+    }
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    padding-left: 20px;
+  }
+
+  .row-block {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0px 20px;
+
+    .row-name {
+      color: $gray-500;
+      font-weight: 600;
+    }
+
+    a {
+      color: $purple-500;
+    }
+  }
+
+  .button-block {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    gap: 12px;
+    width: 100%;
+    padding: 0px 20px 16px 20px;
+
+    a {
+      color: currentColor;
+      font-style: normal;
+      text-decoration: none;
+    }
+  }
+}

@@ -11,10 +11,12 @@
   import iconFile from '../../imgs/icon-file.svg?raw';
   import iconPlay from '../../imgs/icon-play.svg?raw';
   import iconWizmap from '../../imgs/icon-wizmap.svg?raw';
+  import iconFolder from '../../imgs/icon-folder.svg?raw';
 
   export let footerStore: Writable<FooterStoreValue>;
 
   let component: HTMLElement | null = null;
+  let dialogElement: HTMLDialogElement | null = null;
   let mounted = false;
   let initialized = false;
   let myFooter: Footer | null = null;
@@ -24,8 +26,19 @@
     myFooter = myFooter;
   };
 
+  const datasetClicked = () => {
+    if (dialogElement === null) return;
+    // Show modal
+    try {
+      dialogElement.showModal();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   onMount(() => {
     mounted = true;
+    // datasetClicked();
   });
 
   /**
@@ -47,6 +60,49 @@
 </style>
 
 <div class="footer-wrapper" bind:this="{component}">
+  <dialog id="dataset-dialog" bind:this="{dialogElement}">
+    <div class="header">Choose Embeddings</div>
+
+    <div class="row-block">
+      <div class="dataset-list">
+        <ul>
+          <li>
+            <a href="/?dataset=diffusiondb"
+              >DiffusionDB (1.8M text + 1.8M images)</a
+            >
+          </li>
+          <li>
+            <a href="/?dataset=acl-abstracts"> ACL Abstracts (63k text) </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="button-block">
+      <a href="https://github.com/poloclub/wizmap">
+        <button class="close-button" on:click="{() => {}}"
+          >Use My Embedding</button
+        >
+      </a>
+
+      <button
+        class="close-button"
+        on:click="{() => {
+          dialogElement?.close();
+        }}">Close</button
+      >
+    </div>
+  </dialog>
+
+  <div class="zoom-control">
+    <button
+      class="zoom-button zoom-button-reset"
+      on:click="{() => {
+        datasetClicked();
+      }}"><div class="svg-icon">{@html iconFolder}</div></button
+    >
+  </div>
+
   <div class="zoom-control">
     <button
       class="zoom-button zoom-button-reset"
