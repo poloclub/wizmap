@@ -289,6 +289,111 @@ export function drawScatterPlot(this: Embedding) {
 }
 
 /**
+ * Draw a scatter plot for the search results.
+ */
+export function drawSearchScatterPlot(this: Embedding) {
+  if (!this.webGLMatrices) {
+    throw Error('webGLMatrices not initialized');
+  }
+
+  this.searchPointRegl.clear({
+    color: [0, 0, 0, 0],
+    depth: 1
+  });
+
+  // Adjust point width based on the number of points to draw
+  const pointCount = this.searchPointResults.length;
+
+  // Logarithmic regression by fitting the following three points
+  // https://keisan.casio.com/exec/system/14059930226691
+  // [(6e4, 2), (3e5, 1), [1.8e6, 0.5]]
+  const a = 6.71682071;
+  const b = -0.437974871;
+  let curPointWidth =
+    a +
+    b *
+      Math.log(
+        config.layout.scatterDotRadius *
+          (this.svgFullSize.height / 760) *
+          pointCount
+      );
+  curPointWidth = Math.min(5, curPointWidth);
+  const alpha = 1 / (Math.log(pointCount) / Math.log(500));
+
+  // Get the current zoom
+  const zoomMatrix = getZoomMatrix(this.curZoomTransform);
+
+  // Create a texture array (default 3x1)
+  const textureArray = [
+    config.layout.timePointColorInt[0],
+    config.layout.timePointColorInt[1],
+    config.layout.timePointColorInt[2],
+    255,
+    config.layout.secondPointColorInt[0],
+    config.layout.secondPointColorInt[1],
+    config.layout.secondPointColorInt[2],
+    255,
+    255,
+    255,
+    255,
+    0
+  ];
+
+  const texture = this.searchPointRegl.texture({
+    width: 3,
+    height: 1,
+    data: textureArray,
+    format: 'rgba'
+  });
+
+  // Collect position and color for each point
+  const positions: number[][] = [];
+  const uvs: number[][] = [];
+
+  for (const point of this.searchPointResults) {
+    positions.push([point.x, point.y]);
+    uvs.push([0, 0]);
+  }
+
+  const drawPoints = this.searchPointRegl({
+    depth: { enable: false },
+    stencil: { enable: false },
+    frag: fragmentShader,
+    vert: vertexShader,
+
+    attributes: {
+      position: positions,
+      textureCoord: uvs
+    },
+
+    uniforms: {
+      // Placeholder for function parameters
+      pointWidth: curPointWidth,
+      dataScaleMatrix: this.webGLMatrices.dataScaleMatrix,
+      zoomMatrix: zoomMatrix,
+      normalizeMatrix: this.webGLMatrices.normalizeMatrix,
+      alpha: alpha,
+      texture: texture
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        srcRGB: 'one',
+        srcAlpha: 'one',
+        dstRGB: 'one minus src alpha',
+        dstAlpha: 'one minus src alpha'
+      }
+    },
+
+    count: pointCount,
+    primitive: 'points'
+  });
+
+  drawPoints();
+}
+
+/**
  * Update the highlight point's annotation during zooming
  */
 export function updateHighlightPoint(this: Embedding) {

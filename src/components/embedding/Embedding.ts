@@ -72,9 +72,14 @@ export class Embedding {
   pointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   pointRegl: createRegl.Regl;
   frontPositionBuffer: createRegl.Buffer | null = null;
-  // frontColorBuffer: createRegl.Buffer | null = null;
   frontTextureCoordinateBuffer: createRegl.Buffer | null = null;
   bufferPointSize = 0;
+
+  searchPointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
+  searchPointRegl: createRegl.Regl;
+  searchPointPositionBuffer: createRegl.Buffer | null = null;
+  searchPointTextureCoordinateBuffer: createRegl.Buffer | null = null;
+  searchPointResults: PromptPoint[] = [];
 
   // Tooltips
   tooltipTop: HTMLElement;
@@ -171,6 +176,7 @@ export class Embedding {
   initWebGLMatrices = PointDrawer.initWebGLMatrices;
   highlightPoint = PointDrawer.highlightPoint;
   updateHighlightPoint = PointDrawer.updateHighlightPoint;
+  drawSearchScatterPlot = PointDrawer.drawSearchScatterPlot;
 
   // Control
   initTopControlBar = Controller.initTopControlBar;
@@ -281,6 +287,15 @@ export class Embedding {
       .attr('width', `${this.svgFullSize.width}px`)
       .attr('height', `${this.svgFullSize.height}px`);
     this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
+
+    this.searchPointCanvas = d3
+      .select(this.component)
+      .select<HTMLElement>('.search-point-canvas')
+      .attr('width', `${this.svgFullSize.width}px`)
+      .attr('height', `${this.svgFullSize.height}px`);
+    this.searchPointRegl = createRegl(
+      this.searchPointCanvas!.node() as HTMLCanvasElement
+    );
 
     this.topicCanvases = [];
     for (const pos of ['top', 'bottom']) {
@@ -477,6 +492,12 @@ export class Embedding {
           }
         };
         this.searchWorker.postMessage(message);
+      }
+
+      // Hide the search scatter plot
+      if (!this.searchBarStoreValue.shown) {
+        this.searchPointCanvas.classed('hidden', true);
+        this.searchPointResults = [];
       }
     });
   };
@@ -877,6 +898,11 @@ export class Embedding {
       }
     }
 
+    // Transform the search scatter plot
+    if (!this.searchPointCanvas.classed('hidden')) {
+      this.drawSearchScatterPlot();
+    }
+
     // Adjust the label size based on the zoom level
     if (this.showLabel) {
       this.layoutTopicLabels(this.userMaxLabelNum);
@@ -1075,14 +1101,25 @@ export class Embedding {
   searchWorkerMessageHandler = (e: MessageEvent<SearchWorkerMessage>) => {
     switch (e.data.command) {
       case 'finishQuery': {
-        const { queryID, resultIndexes } = e.data.payload;
-        const results = [];
+        const { resultIndexes } = e.data.payload;
+        const results: string[] = [];
+        const resultPoints: PromptPoint[] = [];
+
         for (const resultIndex of resultIndexes) {
-          results.push(this.promptPoints[resultIndex].prompt);
+          const curPoint = this.promptPoints[resultIndex];
+          results.push(curPoint.prompt);
+          resultPoints.push(curPoint);
         }
+
+        // Update the search panel
         this.searchBarStoreValue.results = results;
         this.searchBarStoreValue.shown = true;
         this.searchBarStore.set(this.searchBarStoreValue);
+
+        // Draw the scatter plot
+        this.searchPointCanvas.classed('hidden', false);
+        this.searchPointResults = resultPoints;
+        this.drawSearchScatterPlot();
         break;
       }
 

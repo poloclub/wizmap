@@ -108,6 +108,7 @@
   <div class="grab-blocker"></div>
   <div class="embedding">
     <svg class="top-svg"></svg>
+    <canvas class="search-point-canvas hidden"></canvas>
     <canvas class="embedding-canvas"></canvas>
     <canvas class="embedding-canvas-back"></canvas>
     <canvas class="topic-grid-canvas top"></canvas>

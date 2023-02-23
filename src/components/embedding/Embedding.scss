@@ -62,6 +62,23 @@
   opacity: 0.4;
 }
 
+.search-point-canvas {
+  transition: opacity, 300ms ease-in-out;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 3;
+  background: hsla(0, 100%, 100%, 0.6);
+}
+
+:global(.search-point-canvas.hidden) {
+  opacity: 0;
+}
+
+:global(.search-point-canvas.faded) {
+  opacity: 0.4;
+}
+
 .embedding-canvas-back {
   position: absolute;
   top: 0px;
@@ -92,7 +109,7 @@
   top: 0px;
   left: 0px;
   border-radius: $border-radius;
-  z-index: 3;
+  z-index: 4;
 }
 
 :global(.top-svg .mouse-track-rect) {
