@@ -90,15 +90,25 @@ export function initWebGLBuffers(this: Embedding) {
     }
   }
 
+  let totalPointSize = this.gridData.totalPointSize;
+  if (
+    this.groupNames !== null &&
+    this.gridData.groupTotalPointSizes !== undefined
+  ) {
+    for (const name of this.groupNames) {
+      totalPointSize += this.gridData.groupTotalPointSizes[name];
+    }
+  }
+
   this.frontPositionBuffer = this.pointRegl.buffer({
-    length: this.gridData.totalPointSize * 4 * 2,
+    length: totalPointSize * 4 * 2,
     type: 'float',
     usage: 'dynamic'
   });
   this.frontPositionBuffer.subdata(positions, 0);
 
   this.frontTextureCoordinateBuffer = this.pointRegl.buffer({
-    length: this.gridData.totalPointSize * 4 * 2,
+    length: totalPointSize * 4 * 2,
     type: 'float',
     usage: 'dynamic'
   });
@@ -197,6 +207,7 @@ export function drawScatterPlot(this: Embedding) {
           pointCount
       );
   this.curPointWidth = Math.min(5, this.curPointWidth);
+  this.curPointWidth = Math.max(0.4, this.curPointWidth);
   const alpha = 1 / (Math.log(pointCount) / Math.log(500));
 
   // Get the current zoom

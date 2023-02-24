@@ -797,7 +797,7 @@ export class Embedding {
     // Draw the contours
     contourGroup
       .selectAll('path')
-      .data(contours)
+      .data(contours.slice(1))
       .join('path')
       .attr('fill', d => colorScale(d.value))
       .attr('d', d3.geoPath());
@@ -940,7 +940,7 @@ export class Embedding {
     // Draw the contours
     contourGroup
       .selectAll('path')
-      .data(contours)
+      .data(contours.slice(1))
       .join('path')
       .attr('fill', d => colorScale(d.value))
       .attr('d', d3.geoPath());
@@ -1326,13 +1326,33 @@ export class Embedding {
     switch (checkbox) {
       case 'contour': {
         if (group !== undefined) {
-          // Only show one group's contour
           if (this.groupNames) {
             const groupIndex = this.groupNames?.indexOf(group);
             this.showContours[groupIndex] = checked;
             this.svg
               .select(`g.contour-group-${group}`)
               .classed('hidden', !this.showContours[groupIndex]);
+
+            // Update all contour groups' opacity
+            let shownGroupNum = 0;
+            for (const item of this.showContours) {
+              if (item) {
+                shownGroupNum += 1;
+              }
+            }
+            const opacity = 1 / shownGroupNum;
+
+            for (const [i, name] of this.groupNames.entries()) {
+              if (this.showContours[i]) {
+                this.svg
+                  .select(`g.contour-group-${name}`)
+                  .style('opacity', opacity);
+              } else {
+                this.svg
+                  .select(`g.contour-group-${name}`)
+                  .style('opacity', null);
+              }
+            }
           }
         } else {
           this.showContours = new Array<boolean>(this.showContours.length).fill(

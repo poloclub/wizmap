@@ -72,12 +72,12 @@ const startLoadData = (url: string) => {
       } else {
         processPointStream(point);
 
-        // TODO: Remove me in prod
-        if (loadedPointCount >= 305000) {
-          pointStreamFinished();
-          timeit('Stream data', DEBUG);
-          break;
-        }
+        // // TODO: Remove me in prod
+        // if (loadedPointCount >= 305000) {
+        //   pointStreamFinished();
+        //   timeit('Stream data', DEBUG);
+        //   break;
+        // }
       }
     }
   });
