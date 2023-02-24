@@ -17,7 +17,6 @@ export interface DataURLs {
   point: string;
   grid: string;
   topic: string;
-  point2?: string;
 }
 
 export interface WebGLMatrices {
@@ -189,11 +188,14 @@ export type TopicData = [number, number, string];
 
 /**
  * A UMAP data point (x, y, prompt)
+ * [x, y, text]
+ * [x, y, text, year]
+ * [x, y, text, year, group]
  */
 export type UMAPPointStreamData =
   | [number, number, string]
   | [number, number, string, string]
-  | [number, number, string, string, string];
+  | [number, number, string, string, number];
 
 export interface LevelTileMap {
   [level: string]: LevelTileDataItem[];
@@ -245,15 +247,15 @@ export interface GridData {
   timeFormat?: string;
   timeCounter?: { [key: string]: number };
   groupGrids?: { [key: string]: number[][] };
-  groupTotalPointSizes?: number[];
-  defaultGroup?: string;
+  groupTotalPointSizes?: { [key: string]: number };
+  groupNames?: string[];
 }
 
 export interface PromptPoint extends Point {
   prompt: string;
   id: number;
   time?: string;
-  group?: string;
+  groupID?: number;
 }
 
 export interface PromptUMAPData {

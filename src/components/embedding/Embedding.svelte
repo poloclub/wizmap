@@ -48,10 +48,10 @@
 
   switch (datasetName) {
     case 'diffusiondb': {
-      dataURLs.point = DATA_BASE + '/diffusiondb/umap-1m.ndjson';
+      // dataURLs.point = DATA_BASE + '/diffusiondb/umap-1m.ndjson';
+      dataURLs.point = DATA_BASE + '/diffusiondb/umap-mini.ndjson';
       dataURLs.grid = DATA_BASE + '/diffusiondb/grid.json';
       dataURLs.topic = DATA_BASE + '/diffusiondb/umap-1m-topic-data.json';
-      dataURLs.point2 = DATA_BASE + '/diffusiondb/image-umap.ndjson';
       break;
     }
 
@@ -131,7 +131,7 @@
         if (!myEmbedding || myEmbedding.groupNames === null) {
           myEmbedding?.displayCheckboxChanged(
             'contour',
-            !myEmbedding.showContour
+            !myEmbedding.showContours[0]
           );
         } else {
           if (controlDisplayItem === 'contour') {
@@ -148,7 +148,7 @@
       <div
         class="item"
         class:activated="{myEmbedding
-          ? anyTrue(myEmbedding.showContour)
+          ? anyTrue(myEmbedding.showContours)
           : false}"
       >
         <div class="svg-icon">{@html iconContour}</div>
@@ -214,7 +214,10 @@
       class="item-wrapper"
       on:click="{() => {
         if (!myEmbedding || myEmbedding.groupNames === null) {
-          myEmbedding?.displayCheckboxChanged('point', !myEmbedding.showPoint);
+          myEmbedding?.displayCheckboxChanged(
+            'point',
+            !myEmbedding.showPoints[0]
+          );
         } else {
           if (controlDisplayItem === 'point') {
             controlDisplayItem = '';
@@ -227,7 +230,12 @@
         }
       }}"
     >
-      <div class="item" class:activated="{defaultSetting.showPoint}">
+      <div
+        class="item"
+        class:activated="{myEmbedding
+          ? anyTrue(myEmbedding.showPoints)
+          : false}"
+      >
         <div class="svg-icon">{@html iconPoint}</div>
         <div class="name">Point</div>
         <div

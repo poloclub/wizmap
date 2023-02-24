@@ -73,7 +73,7 @@ export class Embedding {
   pointRegl: createRegl.Regl;
   frontPositionBuffer: createRegl.Buffer | null = null;
   frontTextureCoordinateBuffer: createRegl.Buffer | null = null;
-  bufferPointSize = 0;
+  frontBufferPointSize = 0;
 
   searchPointCanvas: d3.Selection<HTMLElement, unknown, null, undefined>;
   searchPointRegl: createRegl.Regl;
@@ -102,9 +102,9 @@ export class Embedding {
   hideHighlights = false;
 
   // User settings
-  showContour: boolean[];
+  showContours: boolean[];
   showGrid: boolean;
-  showPoint: boolean[];
+  showPoints: boolean[];
   showLabel: boolean;
 
   // Data
@@ -220,9 +220,9 @@ export class Embedding {
     this.searchBarStoreValue = getSearchBarStoreDefaultValue();
 
     // Init some properties based on the default setting
-    this.showContour = [defaultSetting.showContour];
+    this.showContours = [defaultSetting.showContour];
     this.showGrid = defaultSetting.showGrid;
-    this.showPoint = [defaultSetting.showPoint];
+    this.showPoints = [defaultSetting.showPoint];
     this.showLabel = defaultSetting.showLabel;
 
     // Initialize the web worker to load data and deal with the quadtree
@@ -597,23 +597,24 @@ export class Embedding {
     }
 
     // Create group related structures if the data has groups
-    if (this.gridData.groupGrids) {
-      this.groupNames = [...Object.keys(this.gridData.groupGrids)];
+    if (this.gridData.groupGrids && this.gridData.groupNames) {
+      this.groupNames = this.gridData.groupNames;
 
-      this.showContour = [true];
-      this.showPoint = [true];
+      this.showContours = [true];
+      this.showPoints = [true];
       const umapGroup = this.svg.select('g.umap-group');
 
       // Adjust the first contour's name
       umapGroup
         .select('g.contour-group')
-        .classed(`contour-group-${this.groupNames[0]}`, true);
+        .classed(`contour-group-${this.groupNames[0]}`, true)
+        .classed('contour-group-generic', true);
 
       for (let i = 1; i < this.groupNames.length; i++) {
         // Add groups to the control states
         // (Default is to show the first group only)
-        this.showContour.push(false);
-        this.showPoint.push(false);
+        this.showContours.push(false);
+        this.showPoints.push(false);
 
         const name = this.groupNames[i];
 
@@ -707,7 +708,7 @@ export class Embedding {
     umapGroup
       .append('g')
       .attr('class', 'contour-group')
-      .classed('hidden', !this.showContour);
+      .classed('hidden', !this.showContours[0]);
 
     umapGroup
       .append('g')
@@ -785,14 +786,6 @@ export class Embedding {
       d3.extent(thresholds) as number[],
       d => blueScale(d / 1)
     );
-
-    // const purpleScale = d3.interpolateLab(
-    //   '#ffffff',
-    //   config.colors['pink-900']
-    // );
-    // colorScale = d3.scaleSequential(d3.extent(thresholds) as number[], d =>
-    //   purpleScale(d / 1)
-    // );
 
     // Draw the contours
     contourGroup
@@ -965,7 +958,7 @@ export class Embedding {
       .attr('transform', `${transform.toString()}`);
 
     // Transform the visible canvas elements
-    if (this.showPoint) {
+    if (anyTrue(this.showPoints)) {
       if (this.frontPositionBuffer && this.frontTextureCoordinateBuffer) {
         this.drawScatterPlot();
       }
@@ -996,7 +989,7 @@ export class Embedding {
 
     // Adjust the highlighted point
     if (
-      this.showPoint &&
+      anyTrue(this.showPoints) &&
       this.lastMouseClientPosition &&
       !this.hideHighlights
     ) {
@@ -1041,8 +1034,9 @@ export class Embedding {
         if (e.data.payload.isFirstBatch) {
           // Add the first batch points
           this.promptPoints = e.data.payload.points;
+
           this.initWebGLBuffers();
-          if (this.showPoint) {
+          if (anyTrue(this.showPoints)) {
             this.drawScatterPlot();
           }
 
@@ -1054,12 +1048,6 @@ export class Embedding {
             }
           };
           this.searchWorker.postMessage(searchMessage);
-
-          // TODO: Remove me (testing search panel)
-          // const results = this.promptPoints.map(d => d.prompt);
-          // this.searchBarStoreValue.shown = true;
-          // this.searchBarStoreValue.results = results;
-          // this.searchBarStore.set(this.searchBarStoreValue);
         } else {
           // Batches after the first batch
           // Add the points to the the prompt point list
@@ -1079,7 +1067,7 @@ export class Embedding {
 
           // Add the new points to the WebGL buffers
           this.updateWebGLBuffers(newPoints);
-          if (this.showPoint) {
+          if (anyTrue(this.showPoints)) {
             this.drawScatterPlot();
           }
 
@@ -1112,7 +1100,7 @@ export class Embedding {
     switch (e.data.command) {
       case 'finishInitQuadtree': {
         // Tell the loader worker to start loading data
-        // (need to wait to set up the quadtree)
+        // (need to wait to set up the quadtree to avoid racing)
         const message: LoaderWorkerMessage = {
           command: 'startLoadData',
           payload: { url: this.dataURLs.point }
@@ -1236,7 +1224,7 @@ export class Embedding {
     this.lastMouseClientPosition = { x: x, y: y };
 
     // Show point highlight
-    if (this.showPoint && !this.hideHighlights) {
+    if (anyTrue(this.showPoints) && !this.hideHighlights) {
       this.mouseoverPoint(x, y);
     }
 
@@ -1318,25 +1306,25 @@ export class Embedding {
           // Only show one group's contour
           if (this.groupNames) {
             const groupIndex = this.groupNames?.indexOf(group);
-            this.showContour[groupIndex] = checked;
+            this.showContours[groupIndex] = checked;
             this.svg
               .select(`g.contour-group-${group}`)
-              .classed('hidden', !this.showContour[groupIndex]);
+              .classed('hidden', !this.showContours[groupIndex]);
           }
         } else {
-          this.showContour = new Array<boolean>(this.showContour.length).fill(
+          this.showContours = new Array<boolean>(this.showContours.length).fill(
             checked
           );
           this.svg
             .select('g.contour-group')
-            .classed('hidden', !this.showContour[0]);
+            .classed('hidden', !this.showContours[0]);
         }
 
         if (this.showGrid) {
           let startColor: string;
           let endColor: string;
 
-          if (this.showContour) {
+          if (anyTrue(this.showContours)) {
             // No contour -> contour | dark -> light
             startColor = config.gridColorDark;
             endColor = config.gridColorLight;
@@ -1357,20 +1345,23 @@ export class Embedding {
 
       case 'point': {
         if (group !== undefined) {
-          // Only show one group's contour
-          console.log('point', group);
+          if (this.groupNames === null) {
+            throw Error('groupNames is null');
+          }
+          // Only show one group's point
+          const groupIndex = this.groupNames.indexOf(group);
+          this.showPoints[groupIndex] = checked;
         } else {
-          this.showPoint = new Array<boolean>(this.showPoint.length).fill(
+          this.showPoints = new Array<boolean>(this.showPoints.length).fill(
             checked
           );
-          this.pointCanvas
-            .classed('hidden', !this.showPoint)
-            .classed('faded', this.showPoint && this.showLabel);
         }
 
-        if (this.showPoint) {
-          this.drawScatterPlot();
-        }
+        this.pointCanvas
+          .classed('hidden', !anyTrue(this.showPoints))
+          .classed('faded', anyTrue(this.showPoints) && this.showLabel);
+
+        this.drawScatterPlot();
 
         if (this.showGrid) this.redrawTopicGrid();
         break;
@@ -1393,7 +1384,10 @@ export class Embedding {
           .select('g.top-content g.topics')
           .classed('hidden', !this.showLabel);
 
-        this.pointCanvas.classed('faded', this.showPoint && this.showLabel);
+        this.pointCanvas.classed(
+          'faded',
+          anyTrue(this.showPoints) && this.showLabel
+        );
 
         if (this.showLabel) {
           this.layoutTopicLabels(this.userMaxLabelNum);
@@ -1405,10 +1399,11 @@ export class Embedding {
         this.timeInspectMode = checked;
 
         // Hide the old contour if it's shown
-        if (this.showContour) {
+        // TODO: need to handle multiple groups + time
+        if (anyTrue(this.showContours)) {
           this.svg
             .select('g.contour-group')
-            .style('opacity', this.timeInspectMode ? 0.3 : 1);
+            .style('opacity', this.timeInspectMode ? 0.4 : 1);
 
           this.svg
             .select('g.contour-group-time')
@@ -1436,4 +1431,3 @@ export class Embedding {
 }
 
 const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
-const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);

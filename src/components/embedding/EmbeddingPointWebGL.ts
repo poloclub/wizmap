@@ -71,7 +71,11 @@ export function initWebGLBuffers(this: Embedding) {
 
     // Get the texture coordinate for this point
     if (this.timeTextureMap === null) {
-      textureCoords.push([0, 0]);
+      if (this.groupNames && point.groupID !== undefined) {
+        textureCoords.push([point.groupID / this.groupNames.length, 0]);
+      } else {
+        textureCoords.push([0, 0]);
+      }
     } else {
       if (this.timeTextureMap.has(point.time!)) {
         const u =
@@ -100,7 +104,7 @@ export function initWebGLBuffers(this: Embedding) {
   });
   this.frontTextureCoordinateBuffer.subdata(textureCoords, 0);
 
-  this.bufferPointSize = this.promptPoints.length;
+  this.frontBufferPointSize = this.promptPoints.length;
 }
 
 /**
@@ -117,7 +121,11 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
     positions.push([point.x, point.y]);
 
     if (this.timeTextureMap === null) {
-      textureCoords.push([0, 0]);
+      if (this.groupNames && point.groupID !== undefined) {
+        textureCoords.push([point.groupID / this.groupNames.length, 0]);
+      } else {
+        textureCoords.push([0, 0]);
+      }
     } else {
       if (this.timeTextureMap.has(point.time!)) {
         const u =
@@ -133,12 +141,15 @@ export function updateWebGLBuffers(this: Embedding, newPoints: PromptPoint[]) {
   }
 
   // Update the buffer using byte offsets
-  this.frontPositionBuffer!.subdata(positions, this.bufferPointSize * 2 * 4);
+  this.frontPositionBuffer!.subdata(
+    positions,
+    this.frontBufferPointSize * 2 * 4
+  );
   this.frontTextureCoordinateBuffer!.subdata(
     textureCoords,
-    this.bufferPointSize * 2 * 4
+    this.frontBufferPointSize * 2 * 4
   );
-  this.bufferPointSize += newPoints.length;
+  this.frontBufferPointSize += newPoints.length;
 }
 
 /**
@@ -206,6 +217,36 @@ export function drawScatterPlot(this: Embedding) {
     255,
     0
   ];
+
+  // Adjust texture if there are groups
+  if (this.groupNames) {
+    textureArray = [];
+
+    for (const [i, showPointGroup] of this.showPoints.entries()) {
+      const color =
+        i === 0
+          ? config.layout.defaultPointColorInt
+          : config.layout.secondPointColorInt;
+
+      if (showPointGroup) {
+        textureArray.push(color[0]);
+        textureArray.push(color[1]);
+        textureArray.push(color[2]);
+        textureArray.push(255);
+      } else {
+        textureArray.push(color[0]);
+        textureArray.push(color[1]);
+        textureArray.push(color[2]);
+        textureArray.push(0);
+      }
+    }
+
+    // Add the empty pixel for the last point
+    textureArray.push(255);
+    textureArray.push(255);
+    textureArray.push(255);
+    textureArray.push(0);
+  }
 
   // If this dataset has time information (nx1), n is number of unique time
   // strings
@@ -281,7 +322,7 @@ export function drawScatterPlot(this: Embedding) {
       }
     },
 
-    count: this.bufferPointSize,
+    count: this.frontBufferPointSize,
     primitive: 'points'
   });
 
@@ -398,7 +439,7 @@ export function drawSearchScatterPlot(this: Embedding) {
  */
 export function updateHighlightPoint(this: Embedding) {
   if (this.hoverPoint === null) return;
-  if (!this.showPoint) return;
+  if (!anyTrue(this.showPoints)) return;
   if (this.hideHighlights) return;
 
   // Draw the point on the top svg
@@ -437,7 +478,7 @@ export function highlightPoint(
   }
 ) {
   const { point, animated } = args;
-  if (!this.showPoint) return;
+  if (!anyTrue(this.showPoints)) return;
   if (point === this.hoverPoint) return;
   if (this.hideHighlights) return;
 
@@ -560,3 +601,5 @@ const getZoomMatrix = (zoomTransform: d3.ZoomTransform) => {
   const zoomMatrix1D = zoomMatrix.flat();
   return zoomMatrix1D;
 };
+
+const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);

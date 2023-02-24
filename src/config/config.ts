@@ -7,7 +7,7 @@ const layout = {
   zoomScale: [0.5, 1000],
   defaultPointColor: [48 / 255, 65 / 255, 159 / 255],
   defaultPointColorInt: [48, 65, 159],
-  secondPointColorInt: [48, 65, 159],
+  secondPointColorInt: [194, 24, 92],
   timePointColorInt: [123, 31, 162],
   contourLevels: 12,
   searchLimit: 5000

@@ -96,11 +96,11 @@ const processPointStream = (point: UMAPPointStreamData) => {
   };
 
   if (point.length > 3) {
-    promptPoint.time = point[3];
+    promptPoint.time = point[3]!;
   }
 
   if (point.length > 4) {
-    promptPoint.group = point[4];
+    promptPoint.groupID = point[4]!;
   }
 
   pendingDataPoints.push(promptPoint);

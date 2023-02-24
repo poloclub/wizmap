@@ -18,11 +18,9 @@ void main() {
   //   return;
   // }
 
-  vec4 color = texture2D(texture, fragTextureCoord);
-  vec4 colorOpacity = color * fragAlpha;
-  gl_FragColor = colorOpacity;
-
   // Need to pre-compute alpha
   // https://medium.com/david-guan/alpha-blending-and-webgl-823d86de00d8
-  // gl_FragColor = vec4(fragColor * fragAlpha, fragAlpha);
+  vec4 color = texture2D(texture, fragTextureCoord);
+  vec4 colorOpacity = color * fragAlpha * color[3];
+  gl_FragColor = colorOpacity;
 }
