@@ -457,7 +457,8 @@ function roundRect(
  */
 export function layoutTopicLabels(
   this: Embedding,
-  maxLabels: number | null = null
+  maxLabels: number | null = null,
+  canSkipLayout = true
 ) {
   if (this.topicLevelTrees.size <= 1) return;
   if (this.contours === null) return;
@@ -533,11 +534,25 @@ export function layoutTopicLabels(
       }
     );
 
-  this.lastLabelTreeLevel = idealTreeLevel;
-
   // Find closest topic labels for each high density point
   const labelDataMap = new Map<string, LabelData>();
   const labelDataCounter = new Map<string, number>();
+  const fontSize = 14 / this.curZoomTransform.k;
+
+  // Skip layout if we have just done it
+  if (canSkipLayout && Date.now() - this.lastLabelLayoutTime < 300) {
+    // Draw the labels
+    this.drawLabels(
+      group,
+      this.lastDrawnLabels,
+      tileScreenWidth,
+      idealTreeLevel,
+      fontSize
+    );
+    return;
+  }
+
+  this.lastLabelTreeLevel = idealTreeLevel;
 
   for (const point of polygonCenters) {
     const viewX = this.xScale.invert(point[0]);
@@ -585,7 +600,6 @@ export function layoutTopicLabels(
   const drawnLabels: DrawnLabel[] = [];
   const drawnTiles: Rect[] = [];
 
-  const fontSize = 14 / this.curZoomTransform.k;
   const textHeight = fontSize * 1.1;
   const vPadding = 6.4 / this.curZoomTransform.k;
   const hPadding = 6.4 / this.curZoomTransform.k;
@@ -864,6 +878,9 @@ export function layoutTopicLabels(
       drawnTiles.push(drawnTile);
     }
   }
+
+  this.lastDrawnLabels = drawnLabels;
+  this.lastLabelLayoutTime = Date.now();
 
   // Draw the labels
   this.drawLabels(

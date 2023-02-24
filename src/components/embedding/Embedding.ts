@@ -154,6 +154,8 @@ export class Embedding {
   lastLabelNames: Map<string, Direction> = new Map();
   lastLabelTreeLevel: number | null = null;
   lastGridTreeLevels: number[] = [];
+  lastDrawnLabels: DrawnLabel[] = [];
+  lastLabelLayoutTime = 0;
 
   // Web workers
   loaderWorker: Worker;
@@ -670,7 +672,7 @@ export class Embedding {
     // Show topic labels once we have contours and topic data
     Promise.all([topicPromise]).then(() => {
       this.drawTopicGrid();
-      this.layoutTopicLabels(this.userMaxLabelNum);
+      this.layoutTopicLabels(this.userMaxLabelNum, false);
 
       // Initialize the slider value
       setTimeout(() => {
@@ -978,7 +980,7 @@ export class Embedding {
 
     // Adjust the label size based on the zoom level
     if (this.showLabel) {
-      this.layoutTopicLabels(this.userMaxLabelNum);
+      this.layoutTopicLabels(this.userMaxLabelNum, true);
     }
 
     // Adjust the canvas grid based on the zoom level
@@ -1020,6 +1022,11 @@ export class Embedding {
    */
   zoomEnded = () => {
     // Update the points (the last call during zoomed() might be skipped)
+
+    // Adjust the label size based on the zoom level
+    if (this.showLabel) {
+      this.layoutTopicLabels(this.userMaxLabelNum, false);
+    }
   };
 
   /**
@@ -1443,7 +1450,7 @@ export class Embedding {
         );
 
         if (this.showLabel) {
-          this.layoutTopicLabels(this.userMaxLabelNum);
+          this.layoutTopicLabels(this.userMaxLabelNum, false);
         }
         break;
       }
