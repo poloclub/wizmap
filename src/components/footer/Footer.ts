@@ -15,6 +15,8 @@ export class Footer {
 
   numPoints: string;
   scaleDataWidth: string;
+  embeddingName: string;
+
   footerUpdated: () => void;
 
   constructor(
@@ -31,6 +33,7 @@ export class Footer {
 
     this.numPoints = '0';
     this.scaleDataWidth = '0.0000';
+    this.embeddingName = 'Embedding';
 
     this.initStore();
   }
@@ -49,6 +52,8 @@ export class Footer {
         this.footerStoreValue.xScale.invert(stageWidth) -
         this.footerStoreValue.xScale.invert(0);
       this.scaleDataWidth = scaleFormatter(dataWidth);
+
+      this.embeddingName = this.footerStoreValue.embeddingName;
 
       this.footerUpdated();
     });

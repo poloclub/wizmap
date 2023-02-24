@@ -652,6 +652,7 @@ export class Embedding {
 
     // Send the xScale to the footer
     this.footerStoreValue.xScale = this.xScale;
+    this.footerStoreValue.embeddingName = this.gridData.embeddingName;
     this.footerStore.set(this.footerStoreValue);
 
     this.updateEmbedding();

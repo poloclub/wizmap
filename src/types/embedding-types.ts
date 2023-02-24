@@ -233,6 +233,7 @@ export interface GridData {
   padded: boolean;
   sampleSize: number;
   totalPointSize: number;
+  embeddingName: string;
   timeGrids?: { [key: string]: number[][] };
   timeFormat?: string;
   timeCounter?: { [key: string]: number };

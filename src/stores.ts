@@ -12,6 +12,7 @@ export interface FooterStoreValue {
   numPoints: number;
   curZoomTransform: d3.ZoomTransform;
   xScale: d3.ScaleLinear<number, number, never>;
+  embeddingName: string;
   messageID: number;
   messageCommand: 'zoomIn' | 'zoomOut' | 'zoomReset' | '';
 }
@@ -42,6 +43,7 @@ export const getFooterStoreDefaultValue = (): FooterStoreValue => {
     numPoints: 0,
     curZoomTransform: d3.zoomIdentity,
     xScale: d3.scaleLinear(),
+    embeddingName: 'Embedding',
     messageID: 0,
     messageCommand: ''
   };

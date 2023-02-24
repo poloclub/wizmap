@@ -157,6 +157,13 @@
     >
     <div class="splitter"></div>
 
+    <button
+      on:click="{() => {
+        datasetClicked();
+      }}"><span class="item"> {myFooter?.embeddingName} </span></button
+    >
+    <div class="splitter"></div>
+
     <span class="count">
       <span class="total-count" class:hidden="{false}"
         >{myFooter ? myFooter.numPoints : '0'} Data Points

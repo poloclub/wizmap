@@ -34,6 +34,13 @@
     }
   }
 
+  button {
+    &:hover {
+      color: $purple-600;
+      text-decoration: underline;
+    }
+  }
+
   .name {
     font-weight: 700;
     display: flex;
