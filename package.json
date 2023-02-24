@@ -7,6 +7,7 @@
     "dev": "vite --port 3000",
     "build": "vite build",
     "build:github": "vite build --mode github",
+    "build:vercel": "vite build --mode vercel",
     "deploy:vercel": "sh ./publish-vercel.sh",
     "deploy": "pnpm run deploy:vercel",
     "preview": "vite preview",

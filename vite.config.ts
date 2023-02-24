@@ -25,6 +25,16 @@ export default defineConfig(({ command, mode }) => {
         };
       }
 
+      case 'vercel': {
+        // Production: for vercel demo
+        return {
+          build: {
+            outDir: 'dist'
+          },
+          plugins: [svelte()]
+        };
+      }
+
       case 'github': {
         // Production: github page
         return {
