@@ -60,7 +60,7 @@ export type TreeWorkerMessage =
         xRange: [number, number];
         yRange: [number, number];
         times: string[];
-        groups: string[];
+        groupIDs: number[];
       };
     }
   | {
@@ -79,7 +79,7 @@ export type TreeWorkerMessage =
         x: number;
         y: number;
         time: string;
-        group: string;
+        groupID: number;
       };
     }
   | {

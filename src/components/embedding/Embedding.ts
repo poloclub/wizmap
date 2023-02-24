@@ -630,12 +630,19 @@ export class Embedding {
     }
 
     // Tell the tree worker to prepare to add points to the tree
+    const groupIDs = [];
+
+    if (this.groupNames) {
+      for (let i = 0; i < this.groupNames.length; i++) {
+        groupIDs.push(i);
+      }
+    }
     const treeMessage: TreeWorkerMessage = {
       command: 'initQuadtree',
       payload: {
         xRange,
         yRange,
-        groups: [],
+        groupIDs: groupIDs,
         times: this.timeCountMap ? [...this.timeCountMap.keys()] : []
       }
     };
@@ -1200,13 +1207,29 @@ export class Embedding {
     const dataY = this.yScale.invert(this.curZoomTransform.invertY(y));
 
     // Let the worker to search the closest point in a radius
+    let groupID = -1;
+
+    if (this.groupNames) {
+      if (allTrue(this.showPoints)) {
+        groupID = -1;
+      } else {
+        // TODO: Need a better way to search slices of groups for multi groups
+        for (let i = 0; i < this.showPoints.length; i++) {
+          if (this.showPoints[i]) {
+            groupID = i;
+            break;
+          }
+        }
+      }
+    }
+
     const message: TreeWorkerMessage = {
       command: 'startQuadtreeSearch',
       payload: {
         x: dataX,
         y: dataY,
         time: this.timeInspectMode && this.curTime ? this.curTime : '',
-        group: ''
+        groupID: groupID
       }
     };
     this.treeWorker.postMessage(message);
@@ -1431,3 +1454,4 @@ export class Embedding {
 }
 
 const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
+const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);
