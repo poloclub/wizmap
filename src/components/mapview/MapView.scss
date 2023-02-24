@@ -64,12 +64,6 @@
   border-radius: 4px;
   font-size: $font-d2;
 
-  max-width: 300px;
-  max-height: 200px;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  overflow: hidden;
-
   display: flex;
   justify-content: center;
   box-sizing: border-box;
@@ -90,6 +84,13 @@
     .popper-arrow {
       background: $purple-900;
     }
+  }
+
+  .popper-content {
+    max-width: 300px;
+    max-height: 200px;
+    line-height: 1.5;
+    overflow: hidden;
   }
 
   .popper-arrow {
