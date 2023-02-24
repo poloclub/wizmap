@@ -216,6 +216,16 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
       border-bottom: 1px solid $gray-200;
       cursor: default;
 
+      &.clamp-line {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        overflow: hidden;
+        flex-shrink: 0;
+        -webkit-box-pack: end;
+        padding-bottom: 3px;
+      }
+
       :global(em) {
         color: $purple-500;
         font-style: normal;

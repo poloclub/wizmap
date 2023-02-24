@@ -1,5 +1,6 @@
 import type { Writable } from 'svelte/store';
 import d3 from '../../utils/d3-import';
+import type { SearchResult } from '../../types/embedding-types';
 import type { SearchBarStoreValue } from '../../stores';
 import { getSearchBarStoreDefaultValue } from '../../stores';
 
@@ -11,7 +12,7 @@ export class SearchPanel {
   searchBarStore: Writable<SearchBarStoreValue>;
   searchBarStoreValue: SearchBarStoreValue;
 
-  formattedResults: string[] = [];
+  formattedResults: SearchResult[] = [];
   handledQueryID = 0;
 
   constructor(
@@ -50,7 +51,7 @@ export class SearchPanel {
    * @param results Current search results
    */
   formatResults = (results: string[]) => {
-    const formattedResults: string[] = [];
+    const formattedResults: SearchResult[] = [];
     const query = this.searchBarStoreValue.query;
 
     for (const result of results) {
@@ -59,12 +60,34 @@ export class SearchPanel {
       if (result.includes('<script')) continue;
 
       const searchWords = new Set(query.split(/\s+/));
-      let newResult = result;
+      const newResult: SearchResult = {
+        fullText: result,
+        shortText: result,
+        isSummary: true
+      };
+
+      newResult.fullText = result;
 
       for (const word of searchWords) {
         if (word === '') continue;
         const re = new RegExp('\\b' + word + '\\b', 'ig');
-        newResult = newResult.replaceAll(re, `<em>${word}</em>`);
+        newResult.fullText = newResult.fullText.replaceAll(
+          re,
+          `<em>${word}</em>`
+        );
+      }
+
+      // Truncate the text if it is too long
+      if (newResult.fullText.length > 300) {
+        newResult.shortText = newResult.fullText.slice(0, 300);
+        newResult.shortText = newResult.shortText.slice(
+          0,
+          newResult.shortText.lastIndexOf(' ')
+        );
+        newResult.shortText = newResult.shortText.concat('...');
+        newResult.isSummary = true;
+      } else {
+        newResult.shortText = newResult.fullText;
       }
 
       formattedResults.push(newResult);

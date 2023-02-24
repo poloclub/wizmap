@@ -3,6 +3,12 @@
  */
 import type { Point, Rect } from './common-types';
 
+export interface SearchResult {
+  shortText: string;
+  fullText: string;
+  isSummary: boolean;
+}
+
 /**
  * A collection of data files to set up WizMap
  */

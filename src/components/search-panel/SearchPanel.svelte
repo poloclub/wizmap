@@ -85,7 +85,18 @@
             Search Results
           </div>
           {#each mySearchPanel.formattedResults.slice(0, maxListLength) as result, i}
-            <div class="item">{@html result}</div>
+            <div
+              class="item"
+              on:keypress="{() => {
+                result.isSummary = !result.isSummary;
+              }}"
+              on:click="{() => {
+                result.isSummary = !result.isSummary;
+              }}"
+              class:clamp-line="{result.isSummary}"
+            >
+              {@html result.fullText}
+            </div>
           {/each}
 
           <button
