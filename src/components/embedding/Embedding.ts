@@ -356,7 +356,7 @@ export class Embedding {
       .attr('height', `${this.svgFullSize.height}px`)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
       .on('mouseleave', () => {
-        this.highlightPoint(undefined, true);
+        this.highlightPoint({ point: undefined, animated: false });
         this.mouseoverLabel(null, null);
       })
       .attr(
@@ -654,6 +654,13 @@ export class Embedding {
     this.footerStoreValue.xScale = this.xScale;
     this.footerStoreValue.embeddingName = this.gridData.embeddingName;
     this.footerStore.set(this.footerStoreValue);
+
+    // Send the highlight update function to the search panel
+    const highlightSearchPoint = (point: PromptPoint | undefined) => {
+      this.highlightPoint({ point, animated: true });
+    };
+    this.searchBarStoreValue.highlightSearchPoint = highlightSearchPoint;
+    this.searchBarStore.set(this.searchBarStoreValue);
 
     this.updateEmbedding();
   };
@@ -1089,9 +1096,9 @@ export class Embedding {
         );
 
         if (distance <= curHoverRadius) {
-          this.highlightPoint(closestPoint, true);
+          this.highlightPoint({ point: closestPoint, animated: false });
         } else {
-          this.highlightPoint(undefined, true);
+          this.highlightPoint({ point: undefined, animated: false });
         }
         break;
       }
@@ -1111,17 +1118,15 @@ export class Embedding {
     switch (e.data.command) {
       case 'finishQuery': {
         const { resultIndexes } = e.data.payload;
-        const results: string[] = [];
         const resultPoints: PromptPoint[] = [];
 
         for (const resultIndex of resultIndexes) {
           const curPoint = this.promptPoints[resultIndex];
-          results.push(curPoint.prompt);
           resultPoints.push(curPoint);
         }
 
         // Update the search panel
-        this.searchBarStoreValue.results = results;
+        this.searchBarStoreValue.results = resultPoints;
         this.searchBarStoreValue.shown = true;
         this.searchBarStore.set(this.searchBarStoreValue);
 

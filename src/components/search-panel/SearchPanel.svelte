@@ -93,6 +93,9 @@
               on:click="{() => {
                 result.isSummary = !result.isSummary;
               }}"
+              on:mouseenter="{() => {
+                mySearchPanel?.mouseenterHandler(result.point);
+              }}"
               class:clamp-line="{result.isSummary}"
             >
               {@html result.fullText}

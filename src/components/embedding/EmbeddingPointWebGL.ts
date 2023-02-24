@@ -431,9 +431,12 @@ export function updateHighlightPoint(this: Embedding) {
  */
 export function highlightPoint(
   this: Embedding,
-  point: PromptPoint | undefined,
-  showTooltip: boolean
+  args: {
+    point: PromptPoint | undefined;
+    animated: boolean;
+  }
 ) {
+  const { point, animated } = args;
   if (!this.showPoint) return;
   if (point === this.hoverPoint) return;
   if (this.hideHighlights) return;
@@ -498,30 +501,48 @@ export function highlightPoint(
       .style('stroke-width', highlightStroke);
   } else {
     // There has been a highlighted point already
-    curHighlightPoint = oldHighlightPoint
-      .attr('cx', this.xScale(point.x))
-      .attr('cy', this.yScale(point.y))
-      .attr('r', highlightRadius)
-      .style('stroke-width', highlightStroke);
-  }
+    curHighlightPoint = oldHighlightPoint;
 
-  updatePopperTooltip(
-    this.tooltipTop,
-    curHighlightPoint.node()! as unknown as HTMLElement,
-    point.prompt,
-    'top'
-  );
+    if (animated) {
+      curHighlightPoint
+        .transition()
+        .duration(150)
+        .attr('cx', this.xScale(point.x))
+        .attr('cy', this.yScale(point.y))
+        .attr('r', highlightRadius)
+        .style('stroke-width', highlightStroke)
+        .on('end', () => {
+          updatePopperTooltip(
+            this.tooltipTop,
+            curHighlightPoint.node()! as unknown as HTMLElement,
+            point.prompt,
+            'top'
+          );
+        });
+    } else {
+      curHighlightPoint
+        .attr('cx', this.xScale(point.x))
+        .attr('cy', this.yScale(point.y))
+        .attr('r', highlightRadius)
+        .style('stroke-width', highlightStroke);
+
+      updatePopperTooltip(
+        this.tooltipTop,
+        curHighlightPoint.node()! as unknown as HTMLElement,
+        point.prompt,
+        'top'
+      );
+    }
+  }
 
   if (pointMouseenterTimer !== null) {
     clearTimeout(pointMouseenterTimer);
   }
 
-  if (showTooltip) {
-    pointMouseenterTimer = setTimeout(() => {
-      this.tooltipTop.classList.remove('hidden');
-      pointMouseenterTimer = null;
-    }, 300);
-  }
+  pointMouseenterTimer = setTimeout(() => {
+    this.tooltipTop.classList.remove('hidden');
+    pointMouseenterTimer = null;
+  }, 300);
 }
 
 /**

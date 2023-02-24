@@ -215,6 +215,7 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
       padding: 5px ($search-h-margin + $search-bar-h-padding);
       border-bottom: 1px solid $gray-200;
       cursor: default;
+      padding-bottom: 3px;
 
       &.clamp-line {
         display: -webkit-box;
@@ -223,7 +224,10 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
         overflow: hidden;
         flex-shrink: 0;
         -webkit-box-pack: end;
-        padding-bottom: 3px;
+      }
+
+      &:hover {
+        background-color: change-color($color: $purple-100, $lightness: 96%);
       }
 
       :global(em) {

@@ -1,11 +1,13 @@
 import { writable } from 'svelte/store';
+import type { PromptPoint } from './types/embedding-types';
 import d3 from './utils/d3-import';
 
 export interface SearchBarStoreValue {
   shown: boolean;
-  results: string[];
+  results: PromptPoint[];
   query: string;
   queryID: number;
+  highlightSearchPoint: (point: PromptPoint | undefined) => void;
 }
 
 export interface FooterStoreValue {
@@ -34,7 +36,10 @@ export const getSearchBarStoreDefaultValue = (): SearchBarStoreValue => {
     shown: false,
     results: [],
     query: '',
-    queryID: 0
+    queryID: 0,
+    highlightSearchPoint: (point: PromptPoint | undefined) => {
+      // pass
+    }
   };
 };
 

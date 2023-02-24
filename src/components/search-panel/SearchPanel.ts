@@ -1,6 +1,6 @@
 import type { Writable } from 'svelte/store';
 import d3 from '../../utils/d3-import';
-import type { SearchResult } from '../../types/embedding-types';
+import type { SearchResult, PromptPoint } from '../../types/embedding-types';
 import type { SearchBarStoreValue } from '../../stores';
 import { getSearchBarStoreDefaultValue } from '../../stores';
 
@@ -50,12 +50,13 @@ export class SearchPanel {
    * Format the search results to highlight matches
    * @param results Current search results
    */
-  formatResults = (results: string[]) => {
+  formatResults = (results: PromptPoint[]) => {
     const formattedResults: SearchResult[] = [];
     const query = this.searchBarStoreValue.query;
 
-    for (const result of results) {
+    for (const resultPoint of results) {
       // Try to avoid XSS attack
+      const result = resultPoint.prompt;
       if (result.includes('iframe')) continue;
       if (result.includes('<script')) continue;
 
@@ -63,7 +64,8 @@ export class SearchPanel {
       const newResult: SearchResult = {
         fullText: result,
         shortText: result,
-        isSummary: true
+        isSummary: true,
+        point: resultPoint
       };
 
       newResult.fullText = result;
@@ -124,5 +126,9 @@ export class SearchPanel {
     this.searchBarStoreValue.query = '';
     this.searchBarStoreValue.shown = false;
     this.searchBarStore.set(this.searchBarStoreValue);
+  };
+
+  mouseenterHandler = (point: PromptPoint) => {
+    this.searchBarStoreValue.highlightSearchPoint(point);
   };
 }

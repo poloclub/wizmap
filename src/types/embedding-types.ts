@@ -7,6 +7,7 @@ export interface SearchResult {
   shortText: string;
   fullText: string;
   isSummary: boolean;
+  point: PromptPoint;
 }
 
 /**
