@@ -102,14 +102,14 @@ export function moveTimeSliderThumb(this: Embedding, progress: number) {
   this.curTime = this.timeFormatter(curTime);
 
   // Redraw the scatter plot
-  if (this.showPoint) {
+  if (anyTrue(this.showPoints)) {
     if (this.frontPositionBuffer && this.frontTextureCoordinateBuffer) {
       this.drawScatterPlot();
     }
   }
 
   // Redraw the contour plot
-  if (this.showContour) {
+  if (anyTrue(this.showContours)) {
     this.drawContourTimeSlice();
   }
 }
@@ -330,3 +330,6 @@ export function drawContourTimeSlice(this: Embedding) {
   //     }
   //   );
 }
+
+const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
+const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);

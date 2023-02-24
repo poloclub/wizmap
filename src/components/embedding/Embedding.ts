@@ -1358,9 +1358,19 @@ export class Embedding {
           this.showContours = new Array<boolean>(this.showContours.length).fill(
             checked
           );
-          this.svg
+
+          const contourGroup = this.svg
             .select('g.contour-group')
+            .style('opacity', null)
             .classed('hidden', !this.showContours[0]);
+
+          this.svg
+            .select('g.contour-group-time')
+            .classed('hidden', !this.showContours[0]);
+
+          if (this.timeInspectMode && this.showContours[0]) {
+            contourGroup.style('opacity', 0.4);
+          }
         }
 
         if (this.showGrid) {
@@ -1444,9 +1454,11 @@ export class Embedding {
         // Hide the old contour if it's shown
         // TODO: need to handle multiple groups + time
         if (anyTrue(this.showContours)) {
-          this.svg
-            .select('g.contour-group')
-            .style('opacity', this.timeInspectMode ? 0.4 : 1);
+          if (this.timeInspectMode) {
+            this.svg.select('g.contour-group').style('opacity', 0.4);
+          } else {
+            this.svg.select('g.contour-group').style('opacity', null);
+          }
 
           this.svg
             .select('g.contour-group-time')

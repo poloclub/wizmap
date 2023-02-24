@@ -337,7 +337,7 @@ export function drawTopicGrid(
     if (strokeColor) {
       ctx.strokeStyle = strokeColor;
     } else {
-      if (this.showContour) {
+      if (anyTrue(this.showContours)) {
         ctx.strokeStyle = config.gridColorLight;
       } else {
         // Dark stroke if there is no contour background
@@ -1076,7 +1076,9 @@ export function mouseoverLabel(
       .style('stroke-width', 2.6 / this.curZoomTransform.k)
       .style(
         'stroke',
-        this.showContour ? config.gridColorLight : config.gridColorDark
+        anyTrue(this.showContours)
+          ? config.gridColorLight
+          : config.gridColorDark
       );
 
     // Show the tooltip
@@ -1253,3 +1255,6 @@ const search2DQuadTree = (
   });
   return results;
 };
+
+const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
+const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);

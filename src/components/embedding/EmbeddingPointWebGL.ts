@@ -230,7 +230,7 @@ export function drawScatterPlot(this: Embedding) {
   ];
 
   // Adjust texture if there are groups
-  if (this.groupNames) {
+  if (this.groupNames !== null) {
     textureArray = [];
 
     for (const [i, showPointGroup] of this.showPoints.entries()) {
