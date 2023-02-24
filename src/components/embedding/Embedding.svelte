@@ -67,6 +67,9 @@
     }
   }
 
+  const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
+  const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);
+
   onMount(() => {
     mounted = true;
   });
@@ -75,9 +78,13 @@
     myEmbedding = myEmbedding;
   };
 
-  const displayCheckboxChanged = (e: InputEvent, checkbox: string) => {
+  const displayCheckboxChanged = (
+    e: InputEvent,
+    checkbox: string,
+    group: string | undefined = undefined
+  ) => {
     const newValue = (e.target as HTMLInputElement).checked;
-    myEmbedding?.displayCheckboxChanged(checkbox, newValue);
+    myEmbedding?.displayCheckboxChanged(checkbox, newValue, group);
   };
 
   /**
@@ -138,7 +145,12 @@
         }
       }}"
     >
-      <div class="item" class:activated="{myEmbedding?.showContour}">
+      <div
+        class="item"
+        class:activated="{myEmbedding
+          ? anyTrue(myEmbedding.showContour)
+          : false}"
+      >
         <div class="svg-icon">{@html iconContour}</div>
         <div class="name">Contour</div>
         <div
@@ -166,8 +178,13 @@
               class="checkbox"
               id="checkbox-contour-1"
               name="checkbox-contour-1"
-              bind:checked="{defaultSetting.showContour}"
-              on:input="{e => displayCheckboxChanged(e, 'contour')}"
+              checked="{defaultSetting.showContour}"
+              on:input="{e =>
+                displayCheckboxChanged(
+                  e,
+                  'contour',
+                  myEmbedding?.groupNames[0]
+                )}"
             />
             <label for="checkbox-contour-1">{myEmbedding?.groupNames[0]}</label>
           </div>
@@ -178,10 +195,15 @@
               class="checkbox"
               id="checkbox-contour-2"
               name="checkbox-contour-2"
-              bind:checked="{defaultSetting.showContour}"
-              on:input="{e => displayCheckboxChanged(e, 'contour')}"
+              checked="{false}"
+              on:input="{e =>
+                displayCheckboxChanged(
+                  e,
+                  'contour',
+                  myEmbedding?.groupNames[1]
+                )}"
             />
-            <label for="checkbox-contour-2">Images</label>
+            <label for="checkbox-contour-2">{myEmbedding?.groupNames[1]}</label>
           </div>
         </button>
       {/if}
@@ -233,8 +255,9 @@
               class="checkbox"
               id="checkbox-point-1"
               name="checkbox-point-1"
-              bind:checked="{defaultSetting.showPoint}"
-              on:input="{e => displayCheckboxChanged(e, 'point')}"
+              checked="{defaultSetting.showPoint}"
+              on:input="{e =>
+                displayCheckboxChanged(e, 'point', myEmbedding?.groupNames[0])}"
             />
             <label for="checkbox-point-1">{myEmbedding?.groupNames[0]}</label>
           </div>
@@ -245,8 +268,9 @@
               class="checkbox"
               id="checkbox-point-2"
               name="checkbox-point-2"
-              bind:checked="{defaultSetting.showPoint}"
-              on:input="{e => displayCheckboxChanged(e, 'point')}"
+              checked="{false}"
+              on:input="{e =>
+                displayCheckboxChanged(e, 'point', myEmbedding?.groupNames[1])}"
             />
             <label for="checkbox-point-2">{myEmbedding?.groupNames[1]}</label>
           </div>

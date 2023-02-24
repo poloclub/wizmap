@@ -102,9 +102,9 @@ export class Embedding {
   hideHighlights = false;
 
   // User settings
-  showContour: boolean;
+  showContour: boolean[];
   showGrid: boolean;
-  showPoint: boolean;
+  showPoint: boolean[];
   showLabel: boolean;
 
   // Data
@@ -220,9 +220,9 @@ export class Embedding {
     this.searchBarStoreValue = getSearchBarStoreDefaultValue();
 
     // Init some properties based on the default setting
-    this.showContour = defaultSetting.showContour;
+    this.showContour = [defaultSetting.showContour];
     this.showGrid = defaultSetting.showGrid;
-    this.showPoint = defaultSetting.showPoint;
+    this.showPoint = [defaultSetting.showPoint];
     this.showLabel = defaultSetting.showLabel;
 
     // Initialize the web worker to load data and deal with the quadtree
@@ -599,6 +599,33 @@ export class Embedding {
     // Create group related structures if the data has groups
     if (this.gridData.groupGrids) {
       this.groupNames = [...Object.keys(this.gridData.groupGrids)];
+
+      this.showContour = [true];
+      this.showPoint = [true];
+      const umapGroup = this.svg.select('g.umap-group');
+
+      // Adjust the first contour's name
+      umapGroup
+        .select('g.contour-group')
+        .classed(`contour-group-${this.groupNames[0]}`, true);
+
+      for (let i = 1; i < this.groupNames.length; i++) {
+        // Add groups to the control states
+        // (Default is to show the first group only)
+        this.showContour.push(false);
+        this.showPoint.push(false);
+
+        const name = this.groupNames[i];
+
+        // Add contour elements for other groups
+        umapGroup
+          .append('g')
+          .attr('class', `contour-group-generic contour-group-${name}`)
+          .classed('hidden', true);
+
+        // Drw the group contour
+        this.drawGroupContour(name);
+      }
     }
 
     // Tell the tree worker to prepare to add points to the tree
@@ -686,57 +713,6 @@ export class Embedding {
       .append('g')
       .attr('class', 'contour-group-time')
       .classed('hidden', !this.timeInspectMode);
-
-    umapGroup.append('g').attr('class', 'quad-group');
-    umapGroup.append('g').attr('class', 'tile-group');
-    umapGroup.append('g').attr('class', 'scatter-group');
-  };
-
-  /**
-   * Initialize a quadtree
-   */
-  drawQuadtree = () => {
-    const rectGroup = this.svg.select('g.quad-group');
-    const tree = d3
-      .quadtree<PromptPoint>()
-      .x(d => d.x)
-      .y(d => d.y)
-      .extent([
-        [this.xScale.domain()[0], this.yScale.domain()[0]],
-        [this.xScale.domain()[1], this.yScale.domain()[1]]
-      ])
-      .addAll(this.promptPoints);
-
-    // Collapse the quadtree into an array of rectangles.
-    const nodes: QuadtreeNode[] = [];
-    tree.visit((cur_node, x0, y0, x1, y1) => {
-      if (cur_node.length === undefined) {
-        const curNode = {
-          x0,
-          x1,
-          y0,
-          y1
-        };
-        nodes.push(curNode);
-      }
-    });
-
-    // Draw the rectangles
-    rectGroup
-      .selectAll('.quadtree-node')
-      .data(nodes)
-      .join('rect')
-      .attr('class', 'quadtree-node')
-      .attr('x', d => this.xScale(d.x0))
-      .attr('y', d => this.yScale(d.y1))
-      .attr('width', d => this.yScale(d.y0) - this.yScale(d.y1))
-      .attr('height', d => this.xScale(d.x1) - this.xScale(d.x0))
-      .style('fill', 'none')
-      .style('stroke', 'gray')
-      .style('stroke-width', 0.4)
-      .style('opacity', 0.9);
-
-    // downloadJSON(tree);
   };
 
   /**
@@ -887,6 +863,87 @@ export class Embedding {
     });
 
     return contours;
+  };
+
+  /**
+   * Draw the contour for other groups
+   */
+  drawGroupContour = (group: string) => {
+    if (this.gridData == null || this.gridData.groupGrids === undefined) {
+      console.error('Grid data not initialized');
+      return null;
+    }
+
+    const contourGroup = this.svg.select<SVGGElement>(
+      `.contour-group-${group}`
+    );
+
+    const gridData1D: number[] = [];
+    const grid = this.gridData.groupGrids[group];
+    for (const row of grid) {
+      for (const item of row) {
+        gridData1D.push(item);
+      }
+    }
+
+    // Linear interpolate the levels to determine the thresholds
+    const levels = config.layout.contourLevels;
+    const thresholds: number[] = [];
+    const minValue = Math.min(...gridData1D);
+    const maxValue = Math.max(...gridData1D);
+    const step = (maxValue - minValue) / levels;
+    for (let i = 0; i < levels; i++) {
+      thresholds.push(minValue + step * i);
+    }
+
+    let contours = d3
+      .contours()
+      .thresholds(thresholds)
+      .size([grid.length, grid[0].length])(gridData1D);
+
+    // Convert the scale of the generated paths
+    const contourXScale = d3
+      .scaleLinear()
+      .domain([0, grid.length])
+      .range(this.gridData.xRange);
+
+    const contourYScale = d3
+      .scaleLinear()
+      .domain([0, grid[0].length])
+      .range(this.gridData.yRange);
+
+    contours = contours.map(item => {
+      item.coordinates = item.coordinates.map(coordinates => {
+        return coordinates.map(positions => {
+          return positions.map(point => {
+            return [
+              this.xScale(contourXScale(point[0])),
+              this.yScale(contourYScale(point[1]))
+            ];
+          });
+        });
+      });
+      return item;
+    });
+
+    // Create a new color interpolator
+    // (starting from white here)
+    const colorScaleInterpolator = d3.interpolateLab(
+      '#ffffff',
+      config.colors['pink-900']
+    );
+    const colorScale = d3.scaleSequential(
+      d3.extent(thresholds) as number[],
+      d => colorScaleInterpolator(d / 1)
+    );
+
+    // Draw the contours
+    contourGroup
+      .selectAll('path')
+      .data(contours)
+      .join('path')
+      .attr('fill', d => colorScale(d.value))
+      .attr('d', d3.geoPath());
   };
 
   /**
@@ -1250,11 +1307,30 @@ export class Embedding {
    * @param checkbox Checkbox name
    * @param checked Whether this checkbox is checked
    */
-  displayCheckboxChanged = (checkbox: string, checked: boolean) => {
+  displayCheckboxChanged = (
+    checkbox: string,
+    checked: boolean,
+    group: string | undefined = undefined
+  ) => {
     switch (checkbox) {
       case 'contour': {
-        this.showContour = checked;
-        this.svg.select('g.contour-group').classed('hidden', !this.showContour);
+        if (group !== undefined) {
+          // Only show one group's contour
+          if (this.groupNames) {
+            const groupIndex = this.groupNames?.indexOf(group);
+            this.showContour[groupIndex] = checked;
+            this.svg
+              .select(`g.contour-group-${group}`)
+              .classed('hidden', !this.showContour[groupIndex]);
+          }
+        } else {
+          this.showContour = new Array<boolean>(this.showContour.length).fill(
+            checked
+          );
+          this.svg
+            .select('g.contour-group')
+            .classed('hidden', !this.showContour[0]);
+        }
 
         if (this.showGrid) {
           let startColor: string;
@@ -1280,10 +1356,17 @@ export class Embedding {
       }
 
       case 'point': {
-        this.showPoint = checked;
-        this.pointCanvas
-          .classed('hidden', !this.showPoint)
-          .classed('faded', this.showPoint && this.showLabel);
+        if (group !== undefined) {
+          // Only show one group's contour
+          console.log('point', group);
+        } else {
+          this.showPoint = new Array<boolean>(this.showPoint.length).fill(
+            checked
+          );
+          this.pointCanvas
+            .classed('hidden', !this.showPoint)
+            .classed('faded', this.showPoint && this.showLabel);
+        }
 
         if (this.showPoint) {
           this.drawScatterPlot();
@@ -1351,3 +1434,6 @@ export class Embedding {
     this.updateEmbedding();
   };
 }
+
+const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
+const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);
