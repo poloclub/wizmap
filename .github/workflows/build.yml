@@ -3,9 +3,9 @@ name: build
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   #: Run the test every week
   schedule:
     - cron: "0 12 * * 1"
