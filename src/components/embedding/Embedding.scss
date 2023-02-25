@@ -665,8 +665,10 @@ $search-panel-width: 356px;
             }
           }
 
-          &:active {
+          &:focus {
             cursor: grabbing;
+            outline: none;
+
             &::before {
               transform: scale(7);
             }

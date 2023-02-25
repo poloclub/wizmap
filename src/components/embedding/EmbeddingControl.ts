@@ -32,6 +32,9 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
   const trackBBox = track.getBoundingClientRect();
 
   const trackWidth = trackBBox.width;
+  // Need to use focus instead of active because FireFox doesn't treat dragging
+  // as active
+  thumb.focus();
 
   const mouseMoveHandler = (e: MouseEvent) => {
     e.preventDefault();
@@ -60,6 +63,7 @@ export function timeSliderMouseDownHandler(this: Embedding, e: MouseEvent) {
     document.removeEventListener('mousemove', mouseMoveHandler);
     document.removeEventListener('mouseup', mouseUpHandler);
     eventBlocker.classList.remove('activated');
+    thumb.blur();
   };
 
   // Listen to mouse move on the whole page (users can drag outside of the

@@ -48,8 +48,8 @@
 
   switch (datasetName) {
     case 'diffusiondb': {
-      dataURLs.point = DATA_BASE + '/diffusiondb/umap-mini.ndjson';
-      // dataURLs.point = DATA_BASE + '/diffusiondb/umap.ndjson';
+      // dataURLs.point = DATA_BASE + '/diffusiondb/umap-mini.ndjson';
+      dataURLs.point = DATA_BASE + '/diffusiondb/umap.ndjson';
       dataURLs.grid = DATA_BASE + '/diffusiondb/grid.json';
       dataURLs.topic = DATA_BASE + '/diffusiondb/umap-1m-topic-data.json';
       break;

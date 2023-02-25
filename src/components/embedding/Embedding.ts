@@ -1347,13 +1347,23 @@ export class Embedding {
                 shownGroupNum += 1;
               }
             }
-            const opacity = 1 / shownGroupNum;
+            const opacity = 1 / (shownGroupNum + 1);
+
+            // Base should have opacity 1, all other has opacity
+            let baseFound = false;
 
             for (const [i, name] of this.groupNames.entries()) {
               if (this.showContours[i]) {
-                this.svg
-                  .select(`g.contour-group-${name}`)
-                  .style('opacity', opacity);
+                if (baseFound) {
+                  this.svg
+                    .select(`g.contour-group-${name}`)
+                    .style('opacity', null);
+                  baseFound = true;
+                } else {
+                  this.svg
+                    .select(`g.contour-group-${name}`)
+                    .style('opacity', opacity);
+                }
               } else {
                 this.svg
                   .select(`g.contour-group-${name}`)
