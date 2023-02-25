@@ -43,6 +43,7 @@
 
 :global(.embedding-svg .contour-group-generic) {
   transition: opacity, 300ms ease-in-out;
+  mix-blend-mode: multiply;
   opacity: 1;
 }
 

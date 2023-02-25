@@ -293,6 +293,12 @@ export class Embedding {
       .attr('height', `${this.svgFullSize.height}px`);
     this.pointRegl = createRegl(this.pointCanvas!.node() as HTMLCanvasElement);
 
+    // Fade the canvas if the default is to show labels
+    this.pointCanvas.classed(
+      'faded',
+      anyTrue(this.showPoints) && this.showLabel
+    );
+
     this.searchPointCanvas = d3
       .select(this.component)
       .select<HTMLElement>('.search-point-canvas')
@@ -1339,37 +1345,6 @@ export class Embedding {
             this.svg
               .select(`g.contour-group-${group}`)
               .classed('hidden', !this.showContours[groupIndex]);
-
-            // Update all contour groups' opacity
-            let shownGroupNum = 0;
-            for (const item of this.showContours) {
-              if (item) {
-                shownGroupNum += 1;
-              }
-            }
-            const opacity = 1 / (shownGroupNum + 1);
-
-            // Base should have opacity 1, all other has opacity
-            let baseFound = false;
-
-            for (const [i, name] of this.groupNames.entries()) {
-              if (this.showContours[i]) {
-                if (baseFound) {
-                  this.svg
-                    .select(`g.contour-group-${name}`)
-                    .style('opacity', null);
-                  baseFound = true;
-                } else {
-                  this.svg
-                    .select(`g.contour-group-${name}`)
-                    .style('opacity', opacity);
-                }
-              } else {
-                this.svg
-                  .select(`g.contour-group-${name}`)
-                  .style('opacity', null);
-              }
-            }
           }
         } else {
           this.showContours = new Array<boolean>(this.showContours.length).fill(
