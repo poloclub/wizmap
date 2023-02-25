@@ -36,7 +36,7 @@
 
   // Resolve the embedding data files based on the embedding
   let DATA_BASE = `${import.meta.env.BASE_URL}data`;
-  if (import.meta.env.MODE === 'vercel') {
+  if (import.meta.env.MODE === 'vercel' || import.meta.env.MODE === 'github') {
     DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
   }
 
