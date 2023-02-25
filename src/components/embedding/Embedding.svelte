@@ -27,7 +27,7 @@
     showContour: true,
     showPoint: true,
     showGrid: false,
-    showLabel: false
+    showLabel: true
   };
 
   export let datasetName = 'diffusiondb';

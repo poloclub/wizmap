@@ -8,6 +8,7 @@
     "build:github": "vite build --mode github",
     "build:vercel": "vite build --mode vercel",
     "deploy:vercel": "sh ./publish-vercel.sh",
+    "deploy:github": "sh ./publish-github.sh",
     "deploy": "pnpm run deploy:vercel",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"

@@ -38,6 +38,7 @@ export default defineConfig(({ command, mode }) => {
       case 'github': {
         // Production: github page
         return {
+          base: '/wizmap/',
           build: {
             outDir: 'gh-page'
           },

@@ -67,12 +67,12 @@
       <div class="dataset-list">
         <ul>
           <li>
-            <a href="/?dataset=diffusiondb"
+            <a href="./?dataset=diffusiondb"
               >DiffusionDB (1.8M text + 1.8M images)</a
             >
           </li>
           <li>
-            <a href="/?dataset=acl-abstracts"> ACL Abstracts (63k text) </a>
+            <a href="./?dataset=acl-abstracts"> ACL Abstracts (63k text) </a>
           </li>
         </ul>
       </div>
