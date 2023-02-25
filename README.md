@@ -1,47 +1,69 @@
-# Svelte + TS + Vite
+# WizMap <a href="https://poloclub.github.io/wizmap/"><img align="right" src="./src/imgs/icon-wizmap.svg" height="38"></img></a>
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+[![build](https://github.com/poloclub/wizmap/actions/workflows/build.yml/badge.svg)](https://github.com/poloclub/wizmap/actions/workflows/build.yml)
+[![npm](https://img.shields.io/npm/v/wizmap?color=red)](https://www.npmjs.com/package/wizmap)
+[![license](https://img.shields.io/badge/License-MIT-blue)](https://github.com/poloclub/wizmap/blob/main/LICENSE)
 
-## Recommended IDE Setup
+<!-- [![arxiv badge](https://img.shields.io/badge/arXiv-2209.09227-red)](https://arxiv.org/abs/2209.09227) -->
+<!-- [![DOI:10.1145/3491101.3519653](https://img.shields.io/badge/DOI-10.1145/3491101.3519653-blue)](https://doi.org/10.1145/3491101.3519653) -->
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+Exploring and interpreting large embeddings in your browser!
 
-## Need an official Svelte framework?
+<table>
+  <tr>
+    <td colspan="2"><a href="https://poloclub.github.io/timbertrek"><img src='https://i.imgur.com/U5LqUi4.png'></a></td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td><a href="https://poloclub.github.io/wizmap">🚀 Live Demo</a></td>
+    <td><a href="https://youtu.be/8fJG87QVceQ">📺 Demo Video</a></td>
+  </tr>
+</table>
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
 
-## Technical considerations
+## What is WizMap?
 
-**Why use this over SvelteKit?**
+WizMap is a scalable interactive visualization tool to help you easily explore large machine learning embeddings. With a novel multi-resolution embedding summarization method and a familiar map-like interaction design, WizMap allows you to navigate and interpret embedding spaces with ease.
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+## Web Demo
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+For a live web demo, visit: <https://poloclub.github.io/wizmap>.
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+## Get Started
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
+Clone or download this repository:
 
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+```bash
+git clone git@github.com:poloclub/wizmap.git
 ```
+
+Install the dependencies:
+
+```bash
+npm install
+```
+
+Then run WizMap:
+
+```
+npm run dev
+```
+
+Navigate to localhost:3000. You should see WizMap running in your browser :)
+
+### Use My Dataset
+
+To use WizMap with your dataset, you can check out this [notebook](./example/acl-abstracts.ipynb) to see how to create three JSON files to set up WizMap. These three JSON files contain pre-computed embedding summaries, embedding distributions, and original embedding data in a streamable format.
+
+## Credits
+
+WizMap is created by <a href='https://zijie.wang/' target='_blank'>Jay Wang</a>, <a href='http://fredhohman.com/' target='_blank'>Fred Hohman</a>, and <a href='https://poloclub.github.io/polochau/' target='_blank'>Polo Chau</a>.
+
+
+## License
+
+The software is available under the [MIT License](https://github.com/poloclub/wizmap/blob/master/LICENSE).
+
+## Contact
+
+If you have any questions, feel free to [open an issue](https://github.com/poloclub/wizmap/issues/new) or contact [Jay Wang](https://zijie.wang).

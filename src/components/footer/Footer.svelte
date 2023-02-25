@@ -149,7 +149,7 @@
     >
     <div class="splitter"></div>
 
-    <a href="https://github.com/poloclub/wizmap"
+    <a href="https://youtu.be/8fJG87QVceQ"
       ><span class="item">
         <span class="svg-icon">{@html iconPlay}</span>
         Video
