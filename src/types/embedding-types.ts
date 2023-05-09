@@ -249,6 +249,12 @@ export interface GridData {
   groupGrids?: { [key: string]: number[][] };
   groupTotalPointSizes?: { [key: string]: number };
   groupNames?: string[];
+  image?: GridImageEntry;
+}
+
+interface GridImageEntry {
+  imageGroup: number;
+  imageURLPrefix: string;
 }
 
 export interface PromptPoint extends Point {

@@ -1,0 +1,12 @@
+pip>=22.1
+bump2version==0.5.11
+wheel==0.38.1
+watchdog==0.9.0
+flake8==3.7.8
+coverage==4.5.4
+Sphinx==1.8.5
+twine==1.14.0
+pandas>=0.24.0
+ipython>=7.4.0
+numpy>=1.15.1
+quadtree-d3>=0.1.0

@@ -1134,7 +1134,7 @@ export class Embedding {
           throw Error('lastMouseClientPosition is null');
         }
         // Check if the closest point is relatively close to the mouse
-        const closestPoint = e.data.payload.point;
+        const closestPoint = structuredClone(e.data.payload.point) as Point;
         const screenPointX = this.curZoomTransform.applyX(
           this.xScale(closestPoint.x)
         );

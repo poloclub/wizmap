@@ -1195,7 +1195,7 @@ export const updatePopperTooltip = (
   const contentElement = tooltip.querySelector(
     '.popper-content'
   )! as HTMLElement;
-  contentElement.innerText = text;
+  contentElement.innerHTML = text;
 
   computePosition(anchor, tooltip, {
     placement: placement,

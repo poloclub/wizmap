@@ -91,6 +91,13 @@
     max-height: 200px;
     line-height: 1.5;
     overflow: hidden;
+    display: flex;
+
+    :global(.tooltip-image) {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+    }
   }
 
   .popper-arrow {

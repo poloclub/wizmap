@@ -524,6 +524,16 @@ export function highlightPoint(
 
   // Hovering over a point
   this.hoverPoint = point;
+
+  // Change the point's text to an image tag if this is an image point
+  if (this.gridData?.image !== undefined) {
+    if (this.gridData?.image.imageGroup == this.hoverPoint.groupID) {
+      this.hoverPoint.prompt = `<img class="tooltip-image"
+        src="${this.gridData?.image.imageURLPrefix + this.hoverPoint.prompt}"
+      >`;
+    }
+  }
+
   if (pointMouseleaveTimer !== null) {
     clearTimeout(pointMouseleaveTimer);
     pointMouseleaveTimer = null;
