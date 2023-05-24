@@ -8,7 +8,6 @@ import type {
   UMAPPointStreamData,
   LevelTileMap,
   TopicData,
-  TopicDataJSON,
   DrawnLabel,
   LabelData,
   DataURLs,
@@ -656,39 +655,29 @@ export class Embedding {
     };
     this.treeWorker.postMessage(treeMessage);
 
-    // Read the topic label data
-    const topicPromise = d3
-      .json<TopicDataJSON>(this.dataURLs.topic)
-      .then(topicData => {
-        if (topicData) {
-          // Create a quad tree at each level
-          for (const level of Object.keys(topicData!.data)) {
-            const tree = d3
-              .quadtree<TopicData>()
-              .x(d => d[0])
-              .y(d => d[1])
-              .addAll(topicData!.data[level]);
-            this.topicLevelTrees.set(parseInt(level), tree);
-          }
-        } else {
-          console.error('Fail to read topic data.');
-        }
-      });
+    // Handling the topic label data
+    // Create a quad tree at each level
+    for (const level of Object.keys(this.gridData.topic.data)) {
+      const tree = d3
+        .quadtree<TopicData>()
+        .x(d => d[0])
+        .y(d => d[1])
+        .addAll(this.gridData.topic.data[level]);
+      this.topicLevelTrees.set(parseInt(level), tree);
+    }
 
     // Show topic labels once we have contours and topic data
-    Promise.all([topicPromise]).then(() => {
-      this.drawTopicGrid();
-      this.layoutTopicLabels(this.userMaxLabelNum, false);
+    this.drawTopicGrid();
+    this.layoutTopicLabels(this.userMaxLabelNum, false);
 
-      // Initialize the slider value
-      setTimeout(() => {
-        (
-          this.component.querySelector(
-            'input#slider-label-num'
-          ) as HTMLInputElement
-        ).value = `${this.curLabelNum}`;
-      }, 500);
-    });
+    // Initialize the slider value
+    setTimeout(() => {
+      (
+        this.component.querySelector(
+          'input#slider-label-num'
+        ) as HTMLInputElement
+      ).value = `${this.curLabelNum}`;
+    }, 500);
 
     // Initialize WebGL matrices once we have the scales
     this.initWebGLMatrices();
@@ -1134,7 +1123,9 @@ export class Embedding {
           throw Error('lastMouseClientPosition is null');
         }
         // Check if the closest point is relatively close to the mouse
-        const closestPoint = structuredClone(e.data.payload.point) as Point;
+        const closestPoint = structuredClone(
+          e.data.payload.point
+        ) as PromptPoint;
         const screenPointX = this.curZoomTransform.applyX(
           this.xScale(closestPoint.x)
         );

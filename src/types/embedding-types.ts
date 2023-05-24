@@ -16,7 +16,6 @@ export interface SearchResult {
 export interface DataURLs {
   point: string;
   grid: string;
-  topic: string;
 }
 
 export interface WebGLMatrices {
@@ -172,20 +171,6 @@ export enum Direction {
   right = 'right'
 }
 
-export interface TopicDataJSON {
-  extent: [[number, number], [number, number]];
-  data: TopicDataMap;
-}
-
-interface TopicDataMap {
-  [level: string]: TopicData[];
-}
-
-/**
- * A topic center point (x, y, topic label)
- */
-export type TopicData = [number, number, string];
-
 /**
  * A UMAP data point (x, y, prompt)
  * [x, y, text]
@@ -235,6 +220,20 @@ export interface QuadtreeNode {
   y1: number;
 }
 
+interface TopicDataJSON {
+  extent: [[number, number], [number, number]];
+  data: TopicDataMap;
+}
+
+interface TopicDataMap {
+  [level: string]: TopicData[];
+}
+
+/**
+ * A topic center point (x, y, topic label)
+ */
+export type TopicData = [number, number, string];
+
 export interface GridData {
   grid: number[][];
   xRange: [number, number];
@@ -243,6 +242,7 @@ export interface GridData {
   sampleSize: number;
   totalPointSize: number;
   embeddingName: string;
+  topic: TopicDataJSON;
   timeGrids?: { [key: string]: number[][] };
   timeFormat?: string;
   timeCounter?: { [key: string]: number };

@@ -42,8 +42,7 @@
 
   const dataURLs: DataURLs = {
     point: '',
-    grid: '',
-    topic: ''
+    grid: ''
   };
 
   switch (datasetName) {
@@ -51,14 +50,12 @@
       dataURLs.point = DATA_BASE + '/diffusiondb/umap-mini.ndjson';
       // dataURLs.point = DATA_BASE + '/diffusiondb/umap.ndjson';
       dataURLs.grid = DATA_BASE + '/diffusiondb/grid.json';
-      dataURLs.topic = DATA_BASE + '/diffusiondb/umap-1m-topic-data.json';
       break;
     }
 
     case 'acl-abstracts': {
       dataURLs.point = DATA_BASE + '/acl-abstracts/umap.ndjson';
       dataURLs.grid = DATA_BASE + '/acl-abstracts/grid.json';
-      dataURLs.topic = DATA_BASE + '/acl-abstracts/topic.json';
       break;
     }
 
