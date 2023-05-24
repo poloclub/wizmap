@@ -8,7 +8,7 @@
     "build:github": "vite build --mode github",
     "build:vercel": "vite build --mode vercel",
     "deploy:vercel": "sh ./publish-vercel.sh",
-    "deploy:github": "sh ./publish-github.sh",
+    "deploy:github": "pnpm run build:github && pnpm gh-pages -m \"Deploy $(git log '--format=format:%H' main -1)\" -d ./gh-page",
     "deploy": "pnpm run deploy:github",
     "publish": "pnpm run deploy:github",
     "preview": "vite preview",
