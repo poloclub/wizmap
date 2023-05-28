@@ -6,7 +6,7 @@ from json import loads
 from setuptools import setup, find_packages
 from pathlib import Path
 
-with open("../README.md") as readme_file:
+with open("README.md", "r") as readme_file:
     readme = readme_file.read()
 
 requirements = ["numpy", "ipython", "tqdm", "quadtreed3", "ndjson", "scikit-learn"]
