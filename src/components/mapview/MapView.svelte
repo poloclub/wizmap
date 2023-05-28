@@ -9,7 +9,10 @@
 
   let component: HTMLElement | null = null;
   let view = 'prompt-embedding';
-  let datasetName = 'diffusiondb';
+  let datasetName = 'imdb';
+  let dataURL: string | null = null;
+  let gridURL: string | null = null;
+  let notebookMode = false;
 
   // Check url query to change dataset names
   if (window.location.search !== '') {
@@ -17,6 +20,16 @@
     if (searchParams.has('dataset')) {
       datasetName = searchParams.get('dataset')!;
     }
+
+    if (searchParams.has('dataURL') && searchParams.has('gridURL')) {
+      dataURL = searchParams.get('dataURL') as string;
+      gridURL = searchParams.get('gridURL') as string;
+      console.log(dataURL, gridURL);
+    }
+  }
+
+  if (import.meta.env.MODE === 'notebook') {
+    notebookMode = true;
   }
 
   // Create stores for child components to consume
@@ -47,8 +60,11 @@
       >
         <Embedding
           datasetName="{datasetName}"
+          dataURL="{dataURL}"
+          gridURL="{gridURL}"
           footerStore="{footerStore}"
           searchBarStore="{searchBarStore}"
+          notebookMode="{notebookMode}"
         />
       </div>
     </div>

@@ -22,6 +22,9 @@
   let myFooter: Footer | null = null;
   const scaleWidth = 50;
 
+  let dataURLInput = '';
+  let gridURLInput = '';
+
   const footerUpdated = () => {
     myFooter = myFooter;
   };
@@ -33,6 +36,17 @@
       dialogElement.showModal();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const useMyEmbeddingClicked = () => {
+    // Encode the urls as query string
+    if (dataURLInput !== '' && gridURLInput !== '') {
+      const dataURL = encodeURIComponent(dataURLInput);
+      const gridURL = encodeURIComponent(gridURLInput);
+      const targetURL = `./?dataURL=${dataURL}&gridURL=${gridURL}`;
+      dialogElement?.close();
+      window.location.href = targetURL;
     }
   };
 
@@ -74,16 +88,35 @@
           <li>
             <a href="./?dataset=acl-abstracts"> ACL Abstracts (63k text) </a>
           </li>
+          <li>
+            <a href="./?dataset=imdb"> IMDB Reviews (25k text) </a>
+          </li>
         </ul>
       </div>
     </div>
 
-    <div class="button-block">
-      <a href="https://github.com/poloclub/wizmap">
-        <button class="close-button" on:click="{() => {}}"
-          >Use My Embedding</button
+    <div class="separator"></div>
+
+    <div class="input-form">
+      <div class="row">
+        <a href="https://github.com/poloclub/wizmap" target="_blank"
+          >Data JSON URL</a
         >
-      </a>
+        <input placeholder="http://xxx.ndjson" bind:value="{dataURLInput}" />
+      </div>
+
+      <div class="row">
+        <a href="https://github.com/poloclub/wizmap" target="_blank"
+          >Grid JSON URL</a
+        >
+        <input placeholder="http://xxx.json" bind:value="{gridURLInput}" />
+      </div>
+    </div>
+
+    <div class="button-block">
+      <button class="close-button" on:click="{() => useMyEmbeddingClicked()}"
+        >Use My Embedding</button
+      >
 
       <button
         class="close-button"

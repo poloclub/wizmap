@@ -5,6 +5,7 @@
     EmbeddingInitSetting,
     DataURLs
   } from '../../types/embedding-types';
+  import type { NotebookEvent } from '../../types/common-types';
   import type { Writable } from 'svelte/store';
   import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
   import iconContour2 from '../../imgs/icon-contour.svg?raw';
@@ -30,9 +31,12 @@
     showLabel: true
   };
 
-  export let datasetName = 'diffusiondb';
+  export let datasetName: string;
+  export let dataURL: string | null = null;
+  export let gridURL: string | null = null;
   export let footerStore: Writable<FooterStoreValue>;
   export let searchBarStore: Writable<SearchBarStoreValue>;
+  export let notebookMode: boolean;
 
   // Resolve the embedding data files based on the embedding
   let DATA_BASE = `${import.meta.env.BASE_URL}data`;
@@ -59,9 +63,21 @@
       break;
     }
 
+    case 'imdb': {
+      dataURLs.point = DATA_BASE + '/imdb/data.ndjson';
+      dataURLs.grid = DATA_BASE + '/imdb/grid.json';
+      break;
+    }
+
     default: {
       console.error(`Unknown dataset name: ${datasetName}`);
     }
+  }
+
+  // If dataURL and gridURL are given, use them to override the default dataset
+  if (dataURL && gridURL) {
+    dataURLs.point = dataURL;
+    dataURLs.grid = gridURL;
   }
 
   const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
@@ -102,7 +118,17 @@
     }
   };
 
-  $: mounted && !initialized && component && initView();
+  // If it is notebook mode, we don't init the view until we get users' URLs
+  if (notebookMode) {
+    document.addEventListener('wizmapData', (e: Event) => {
+      const notebookEvent = e as NotebookEvent;
+      dataURLs.point = notebookEvent.dataURL;
+      dataURLs.grid = notebookEvent.gridURL;
+      initView();
+    });
+  }
+
+  $: mounted && !initialized && component && !notebookMode && initView();
 </script>
 
 <style lang="scss">

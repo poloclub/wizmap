@@ -7,6 +7,7 @@
     "build": "vite build",
     "build:github": "vite build --mode github",
     "build:vercel": "vite build --mode vercel",
+    "build:notebook": "vite build --mode notebook",
     "deploy:vercel": "sh ./publish-vercel.sh",
     "deploy:github": "pnpm run build:github && pnpm gh-pages -m \"Deploy $(git log '--format=format:%H' main -1)\" -d ./gh-page",
     "deploy": "pnpm run deploy:github",
@@ -15,7 +16,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@floating-ui/dom": "^1.2.1",
+    "@floating-ui/dom": "^1.2.8",
     "@rollup/plugin-commonjs": "^17.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.5.0",
