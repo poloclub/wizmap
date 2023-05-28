@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import re
 import random
 import html
 import base64
@@ -763,3 +762,93 @@ def save_json_files(
 
     with open(join(output_dir, grid_json_name), "w", encoding="utf8") as fp:
         dump(grid_dict, fp)
+
+
+def _make_html(data_url, grid_url):
+    """
+    Function to create an HTML string to bundle WizMap's html, css, and js.
+    We use base64 to encode the js so that we can use inline defer for <script>
+
+    We add another script to pass Python data as inline json, and dispatch an
+    event to transfer the data
+
+    Args:
+        data_url(str): URL to the data json file
+        grid_url(str): URL to the grid json file
+
+    Return:
+        HTML code with deferred JS code in base64 format
+    """
+    # HTML template for WizMap widget
+    html_top = """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>WizMap</title><style>html {font-size: 16px;-moz-osx-font-smoothing: grayscale;-webkit-font-smoothing: antialiased;text-rendering: optimizeLegibility;-webkit-text-size-adjust: 100%;-moz-text-size-adjust: 100%;scroll-behavior: smooth;}html, body {position: relative;width: 100%;height: 100%;overscroll-behavior: none;}body {margin: 0px;padding: 0px;box-sizing: border-box;font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;color: hsl(0, 0%, 29%);font-size: 1em;font-weight: 400;line-height: 1.5;}*, ::after, ::before {box-sizing: inherit;}a {color: rgb(0, 100, 200);text-decoration: none;}a:hover {text-decoration: underline;}a:visited {color: rgb(0, 80, 160);}label {display: block;}input, select, textarea {font-family: inherit;font-size: inherit;-webkit-padding: 0 0;padding: 0;margin: 0 0 0 0;box-sizing: border-box;border: 1px solid #ccc;border-radius: 2px;}input:disabled {color: #ccc;}button {all: unset;outline: none;cursor: pointer;}</style>"""
+    html_bottom = """</head><body><div id="app"></div></body></html>"""
+
+    # Read the bundled JS file
+    js_b = pkgutil.get_data(__name__, "wizmap.js")
+
+    # Read local JS file (for development only)
+    # with open("./wizmap.js", "r") as fp:
+    #     js_string = fp.read()
+    # js_b = bytes(js_string, encoding="utf-8")
+
+    # Encode the JS & CSS with base 64
+    js_base64 = base64.b64encode(js_b).decode("utf-8")
+
+    # Pass data into JS by using another script to dispatch an event
+    messenger_js = f"""
+        (function() {{
+            const event = new Event('wizmapData');
+            event.dataURL = '{data_url}';
+            event.gridURL = '{grid_url}';
+            document.dispatchEvent(event);
+        }}())
+    """
+    messenger_js = messenger_js.encode()
+    messenger_js_base64 = base64.b64encode(messenger_js).decode("utf-8")
+
+    # Inject the JS to the html template
+    html_str = (
+        html_top
+        + """<script defer src='data:text/javascript;base64,{}'></script>""".format(
+            js_base64
+        )
+        + """<script defer src='data:text/javascript;base64,{}'></script>""".format(
+            messenger_js_base64
+        )
+        + html_bottom
+    )
+
+    return html.escape(html_str)
+
+
+def visualize(data_url, grid_url, height=700):
+    """
+    Render WizMap in the output cell.
+
+    Args:
+        data_url(str): URL to the data json file
+        grid_url(str): URL to the grid json file
+        width(int): Width of the main visualization window
+        height(int): Height of the whole window
+
+    Return:
+        HTML code with deferred JS code in base64 format
+    """
+    html_str = _make_html(data_url, grid_url)
+
+    # Randomly generate an ID for the iframe to avoid collision
+    iframe_id = "wizmap-iframe-" + str(int(random.random() * 1e8))
+
+    iframe = f"""
+        <iframe
+            srcdoc="{html_str}"
+            frameBorder="0"
+            width="100%"
+            height="{height}px"
+            id="{iframe_id}"
+            style="border: 1px solid hsl(0, 0%, 90%); border-radius: 5px;">
+        </iframe>
+    """
+
+    # Display the iframe
+    display_html(iframe, raw=True)

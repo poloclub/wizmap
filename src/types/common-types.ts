@@ -2,6 +2,14 @@
  * Common types.
  */
 
+/**
+ * Custom event for notebook message events
+ */
+export interface NotebookEvent extends Event {
+  dataURL: string;
+  gridURL: string;
+}
+
 export interface Padding {
   top: number;
   bottom: number;

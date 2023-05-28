@@ -40,9 +40,9 @@ import * as PointDrawer from './EmbeddingPointWebGL';
 import * as Controller from './EmbeddingControl';
 import createRegl from 'regl';
 import { config } from '../../config/config';
-import LoaderWorker from './workers/loader?worker';
-import TreeWorker from './workers/tree?worker';
-import SearchWorker from './workers/search?worker';
+import LoaderWorker from './workers/loader?worker&inline';
+import TreeWorker from './workers/tree?worker&inline';
+import SearchWorker from './workers/search?worker&inline';
 
 const DEBUG = config.debug;
 const HOVER_RADIUS = 3;

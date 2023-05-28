@@ -9,7 +9,7 @@ from pathlib import Path
 with open("../README.md") as readme_file:
     readme = readme_file.read()
 
-requirements = ["numpy", "ipython", "tqdm", "quadtreed3", "ndjson"]
+requirements = ["numpy", "ipython", "tqdm", "quadtreed3", "ndjson", "scikit-learn"]
 
 test_requirements = []
 
