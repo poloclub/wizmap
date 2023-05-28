@@ -25,3 +25,4 @@ notebook-widget/wizmap/data.json
 notebook-widget/wizmap/*.ipynb
 notebook-widget/wizmap/*.html
 notebook-widget/wizmap/wizmap.js
+*.egg-info

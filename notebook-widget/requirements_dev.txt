@@ -9,4 +9,5 @@ twine==1.14.0
 pandas>=0.24.0
 ipython>=7.4.0
 numpy>=1.15.1
-quadtree-d3>=0.1.0
+quadtreed3>=0.1.0
+ndjson>=0.3.1
