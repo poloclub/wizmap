@@ -1,8 +1,9 @@
 # WizMap <a href="https://poloclub.github.io/wizmap/"><img align="right" src="./src/imgs/icon-wizmap.svg" height="38"></img></a>
 
 [![build](https://github.com/poloclub/wizmap/actions/workflows/build.yml/badge.svg)](https://github.com/poloclub/wizmap/actions/workflows/build.yml)
+[![license](https://img.shields.io/badge/License-MIT-success)](https://github.com/poloclub/wizmap/blob/main/LICENSE)
 [![npm](https://img.shields.io/npm/v/wizmap?color=red)](https://www.npmjs.com/package/wizmap)
-[![license](https://img.shields.io/badge/License-MIT-blue)](https://github.com/poloclub/wizmap/blob/main/LICENSE)
+[![pypi](https://img.shields.io/pypi/v/wizmap?color=blue)](https://pypi.python.org/pypi/wizmap)
 
 <!-- [![arxiv badge](https://img.shields.io/badge/arXiv-2209.09227-red)](https://arxiv.org/abs/2209.09227) -->
 <!-- [![DOI:10.1145/3491101.3519653](https://img.shields.io/badge/DOI-10.1145/3491101.3519653-blue)](https://doi.org/10.1145/3491101.3519653) -->
@@ -49,11 +50,17 @@ Then run WizMap:
 npm run dev
 ```
 
-Navigate to localhost:3000. You should see WizMap running in your browser :)
+Navigate to [localhost:3000](https://localhost:3000). You should see WizMap running in your browser :)
 
-### Use My Dataset
+## Use My Dataset
 
-To use WizMap with your dataset, you can check out this [notebook](./example/acl-abstracts.ipynb) to see how to create three JSON files to set up WizMap. These three JSON files contain pre-computed embedding summaries, embedding distributions, and original embedding data in a streamable format.
+To use WizMap with your dataset, you can check out this [notebook](./example/acl-abstracts.ipynb) to see how to easily call two functions provided by the `wizmap` library to create two JSON files and set up WizMap.
+These two JSON files contain pre-computed embedding summaries & distributions and the original embedding data.
+
+After generating the JSON files, you have two options to use WizMap.
+
+1. **Browser**: You can click the folder icon on the bottom right of the [WizMap demo](https://poloclub.github.io/wizmap/) and enter the URLs to the JSON files in the pop-up window.
+2. **Notebook**: If you are familiar with computational notebooks (e.g., Jupyter Notebook, VSCode Notebook, Colab), you can directly use WizMap in your favorite notebook platform with `wizmap.visualize()`.
 
 ## Credits
 

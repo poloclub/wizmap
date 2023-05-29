@@ -623,6 +623,7 @@ def generate_grid_dict(
     time_format: str = None,
     image_label=None,
     image_url_prefix=None,
+    opacity=None,
 ):
     """Generate a grid dictionary object that encodes the contour plot and the
     associated topics of different regions on the projected embedding space.
@@ -649,6 +650,8 @@ def generate_grid_dict(
         time_format (str): strptime format string to parse the time string in times
         image_label (int): The label corresponds to an image point
         image_url_prefix (str): The url prefix for all image texts
+        opacity (float): The opacity of data points. If it is None, WizMap will
+            dynamically adjust the opacity values. Defaults to None.
 
     Returns:
         dict: A dictionary object encodes the grid data.
@@ -681,6 +684,9 @@ def generate_grid_dict(
     grid_dict = contour_dict
     grid_dict["topic"] = topic_dict
     grid_dict["embeddingName"] = embedding_name
+
+    if opacity is not None:
+        grid_dict["opacity"] = opacity
 
     # Create a config for image points
     if image_label is not None:
