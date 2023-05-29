@@ -250,6 +250,7 @@ export interface GridData {
   groupTotalPointSizes?: { [key: string]: number };
   groupNames?: string[];
   image?: GridImageEntry;
+  opacity?: number;
 }
 
 interface GridImageEntry {

@@ -294,6 +294,12 @@ export function drawScatterPlot(this: Embedding) {
     format: 'rgba'
   });
 
+  // If user specifies an alpha level, we use it to override auto-alpha
+  let userAlpha = -1.0;
+  if (this.gridData!.opacity !== undefined) {
+    userAlpha = Math.max(0, Math.min(this.gridData!.opacity, 1));
+  }
+
   const drawPoints = this.pointRegl({
     depth: { enable: false },
     stencil: { enable: false },
@@ -320,6 +326,7 @@ export function drawScatterPlot(this: Embedding) {
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
       alpha: alpha,
+      userAlpha: userAlpha,
       texture: texture
     },
 

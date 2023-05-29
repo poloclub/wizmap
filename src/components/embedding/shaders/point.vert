@@ -18,6 +18,7 @@ uniform mat3 zoomMatrix;
 uniform mat3 normalizeMatrix;
 
 uniform float alpha;
+uniform float userAlpha;
 
 // Values sent to the fragment shader
 varying vec2 fragTextureCoord;
@@ -33,6 +34,7 @@ void main() {
   // https://observablehq.com/@bmschmidt/zoom-strategies-for-huge-scatterplots-with-three-js
   float dynamicSize = pointWidth * (exp(log(zoomMatrix[0][0]) * 0.55));
   float dynamicAlpha = min(0.4, max(0.1, alpha * log(zoomMatrix[0][0]) / 2.0));
+  dynamicAlpha = max(userAlpha, dynamicAlpha);
 
   fragTextureCoord = textureCoord;
   fragAlpha = dynamicAlpha;
