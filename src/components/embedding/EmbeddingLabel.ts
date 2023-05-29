@@ -320,7 +320,7 @@ export function drawTopicGrid(
       .map(d => {
         const tileRect: NamedRect = {
           x: this.xScale(d[0] - tileWidth / 2),
-          y: this.yScale(d[1] - tileWidth / 2),
+          y: this.yScale(d[1] + tileWidth / 2),
           width: tileScreenWidth,
           height: tileScreenWidth,
           name: `${(d[0], d[1])}`,
