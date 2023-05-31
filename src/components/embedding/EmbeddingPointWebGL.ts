@@ -432,6 +432,7 @@ export function drawSearchScatterPlot(this: Embedding) {
       zoomMatrix: zoomMatrix,
       normalizeMatrix: this.webGLMatrices.normalizeMatrix,
       alpha: alpha,
+      userAlpha: -1,
       texture: texture
     },
 
