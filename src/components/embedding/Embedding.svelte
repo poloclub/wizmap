@@ -43,6 +43,8 @@
   if (import.meta.env.MODE === 'vercel' || import.meta.env.MODE === 'github') {
     DATA_BASE = 'https://pub-596951ee767949aba9096a18685c74bd.r2.dev';
   }
+  const HF_BASE =
+    'https://huggingface.co/datasets/xiaohk/embeddings/resolve/main';
 
   const dataURLs: DataURLs = {
     point: '',
@@ -64,8 +66,8 @@
     }
 
     case 'imdb': {
-      dataURLs.point = DATA_BASE + '/imdb/data.ndjson';
-      dataURLs.grid = DATA_BASE + '/imdb/grid.json';
+      dataURLs.point = HF_BASE + '/imdb/data.ndjson';
+      dataURLs.grid = HF_BASE + '/imdb/grid.json';
       break;
     }
 

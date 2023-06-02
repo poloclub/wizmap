@@ -9,7 +9,7 @@
 
   let component: HTMLElement | null = null;
   let view = 'prompt-embedding';
-  let datasetName = 'imdb';
+  let datasetName = 'diffusiondb';
   let dataURL: string | null = null;
   let gridURL: string | null = null;
   let notebookMode = false;
