@@ -8,8 +8,7 @@
   import iconGithub from '../../imgs/icon-github.svg?raw';
 
   let component: HTMLElement | null = null;
-  let view = 'prompt-embedding';
-  let datasetName = 'diffusiondb';
+  let datasetName = 'acl-abstracts';
   let dataURL: string | null = null;
   let gridURL: string | null = null;
   let notebookMode = false;
@@ -54,10 +53,7 @@
 
   <div class="app-wrapper">
     <div class="main-app" bind:this="{component}">
-      <div
-        class="main-app-container"
-        class:hidden="{view !== 'prompt-embedding'}"
-      >
+      <div class="main-app-container">
         <Embedding
           datasetName="{datasetName}"
           dataURL="{dataURL}"
