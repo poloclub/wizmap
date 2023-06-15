@@ -29,6 +29,14 @@ Exploring and interpreting large embeddings in your browser!
 
 WizMap is a scalable interactive visualization tool to help you easily explore large machine learning embeddings. With a novel multi-resolution embedding summarization method and a familiar map-like interaction design, WizMap allows you to navigate and interpret embedding spaces with ease.
 
+- ✅ Scalable to millions of embedding point
+- ✅ Multi-resolution embedding summaries
+- ✅ Fast embedding search
+- ✅ Multimodal data (text and image)
+- ✅ Animated embedding evolution
+- ✅ Support all computational notebook platforms (e.g., Jupyter, Colab, VS Code)
+- ✅ Sharable URLs
+
 ## Web Demo
 
 For a live web demo, visit: <https://poloclub.github.io/wizmap>.
@@ -63,12 +71,20 @@ To use WizMap with your embeddings, you first need to install the `wizmap` Pytho
 pip install wizmap
 ```
 
-Then take a look at this [notebook](./example/acl-abstracts.ipynb) for a detailed guide. Spoiler alert: You'll be up and running with just two function calls from the `wizmap` library. These two JSON files contain pre-computed embedding summaries, distributions, and the original embedding data.
+Then take a look at this [notebook](./example/imdb.ipynb) for a detailed guide. Spoiler alert: You'll be up and running with just two function calls from the `wizmap` library. These two JSON files contain pre-computed embedding summaries, distributions, and the original embedding data.
 
 After generating the JSON files, you have two options to use WizMap.
 
 1. **Browser**: You can click the folder icon on the bottom right of the [WizMap demo](https://poloclub.github.io/wizmap/) and enter the URLs to the JSON files in the pop-up window.
 2. **Notebook**: If you are familiar with computational notebooks (e.g., Jupyter Notebook, VSCode Notebook, Colab), you can directly use WizMap in your favorite notebook platform with `wizmap.visualize()`.
+
+## Share My WizMap
+
+You can easily share your embedding maps with collaborators by copying the unique URL of WizMap from your browser. For example, the [URL below](https://poloclub.github.io/wizmap/?dataURL=https%3A%2F%2Fhuggingface.co%2Fdatasets%2Fxiaohk%2Fembeddings%2Fresolve%2Fmain%2Fimdb%2Fdata.ndjson&gridURL=https%3A%2F%2Fhuggingface.co%2Fdatasets%2Fxiaohk%2Fembeddings%2Fresolve%2Fmain%2Fimdb%2Fgrid.json) points to an IMDB embedding in WizMap.
+
+```
+https://poloclub.github.io/wizmap/?dataURL=https%3A%2F%2Fhuggingface.co%2Fdatasets%2Fxiaohk%2Fembeddings%2Fresolve%2Fmain%2Fimdb%2Fdata.ndjson&gridURL=https%3A%2F%2Fhuggingface.co%2Fdatasets%2Fxiaohk%2Fembeddings%2Fresolve%2Fmain%2Fimdb%2Fgrid.json
+```
 
 ## Credits
 
