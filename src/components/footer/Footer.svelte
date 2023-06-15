@@ -75,7 +75,7 @@
 
 <div class="footer-wrapper" bind:this="{component}">
   <dialog id="dataset-dialog" bind:this="{dialogElement}">
-    <div class="header">Choose Embeddings</div>
+    <div class="header">Choose an Embedding</div>
 
     <div class="row-block">
       <div class="dataset-list">
@@ -97,25 +97,33 @@
 
     <div class="separator"></div>
 
+    <div class="header">My Own Embedding</div>
+
     <div class="input-form">
       <div class="row">
-        <a href="https://github.com/poloclub/wizmap" target="_blank"
-          >Data JSON URL</a
-        >
-        <input placeholder="http://xxx.ndjson" bind:value="{dataURLInput}" />
+        <span class="row-header">
+          Data JSON URL <a
+            href="https://github.com/poloclub/wizmap#use-my-own-embeddings"
+            target="_blank">(what is this?)</a
+          >
+        </span>
+        <input placeholder="https://xxx.ndjson" bind:value="{dataURLInput}" />
       </div>
 
       <div class="row">
-        <a href="https://github.com/poloclub/wizmap" target="_blank"
-          >Grid JSON URL</a
-        >
-        <input placeholder="http://xxx.json" bind:value="{gridURLInput}" />
+        <span class="row-header">
+          Grid JSON URL <a
+            href="https://github.com/poloclub/wizmap#use-my-own-embeddings"
+            target="_blank">(what is this?)</a
+          >
+        </span>
+        <input placeholder="https://xxx.json" bind:value="{gridURLInput}" />
       </div>
     </div>
 
     <div class="button-block">
       <button class="close-button" on:click="{() => useMyEmbeddingClicked()}"
-        >Use My Embedding</button
+        >Create</button
       >
 
       <button

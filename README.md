@@ -4,6 +4,9 @@
 [![license](https://img.shields.io/badge/License-MIT-success)](https://github.com/poloclub/wizmap/blob/main/LICENSE)
 [![npm](https://img.shields.io/npm/v/wizmap?color=red)](https://www.npmjs.com/package/wizmap)
 [![pypi](https://img.shields.io/pypi/v/wizmap?color=blue)](https://pypi.python.org/pypi/wizmap)
+[![colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1GNdmBnc5UA7OYBZPtHu244eiAN-0IMZA?usp=sharing)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/poloclub/wizmap/master?urlpath=lab/tree/example/imdb.ipynb)
+
 
 <!-- [![arxiv badge](https://img.shields.io/badge/arXiv-2209.09227-red)](https://arxiv.org/abs/2209.09227) -->
 <!-- [![DOI:10.1145/3491101.3519653](https://img.shields.io/badge/DOI-10.1145/3491101.3519653-blue)](https://doi.org/10.1145/3491101.3519653) -->
@@ -46,16 +49,21 @@ npm install
 
 Then run WizMap:
 
-```
+```bash
 npm run dev
 ```
 
 Navigate to [localhost:3000](https://localhost:3000). You should see WizMap running in your browser :)
 
-## Use My Dataset
+## Use My Own Embeddings
 
-To use WizMap with your dataset, you can check out this [notebook](./example/acl-abstracts.ipynb) to see how to easily call two functions provided by the `wizmap` library to create two JSON files and set up WizMap.
-These two JSON files contain pre-computed embedding summaries & distributions and the original embedding data.
+To use WizMap with your embeddings, you first need to install the `wizmap` Python library.
+
+```bash
+pip install wizmap
+```
+
+Then take a look at this [notebook](./example/acl-abstracts.ipynb) for a detailed guide. Spoiler alert: You'll be up and running with just two function calls from the `wizmap` library. These two JSON files contain pre-computed embedding summaries, distributions, and the original embedding data.
 
 After generating the JSON files, you have two options to use WizMap.
 

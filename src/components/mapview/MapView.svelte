@@ -3,9 +3,6 @@
   import Footer from '../footer/Footer.svelte';
   import SearchPanel from '../search-panel/SearchPanel.svelte';
   import { getFooterStore, getSearchBarStore } from '../../stores';
-  import Packing from '../packing/Packing.svelte';
-  import logoDiffusionDB from '../../imgs/logo-diffusiondb.svg?raw';
-  import iconGithub from '../../imgs/icon-github.svg?raw';
 
   let component: HTMLElement | null = null;
   let datasetName = 'acl-abstracts';

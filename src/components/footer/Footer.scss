@@ -188,13 +188,17 @@ dialog[open] {
   }
 
   .header {
-    padding: 16px 20px 0 20px;
+    padding: 0px 20px 0 20px;
     margin: 0;
     line-height: 1;
     font-size: $font-u3;
     font-weight: 600;
     // background-color: change-color($color: $purple-100, $lightness: 96%);
     width: 100%;
+
+    &:first-of-type {
+      padding: 16px 20px 0 20px;
+    }
   }
 
   button {
@@ -256,9 +260,15 @@ dialog[open] {
       flex-direction: column;
       align-items: flex-start;
 
-      a {
+      .row-header {
+        font-weight: 500;
         font-size: $font-d2;
-        color: $purple-500;
+
+        a {
+          font-weight: 400;
+          font-size: $font-d2;
+          color: $purple-500;
+        }
       }
 
       input {
