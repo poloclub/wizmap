@@ -7,7 +7,6 @@
 [![colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1GNdmBnc5UA7OYBZPtHu244eiAN-0IMZA?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/poloclub/wizmap/master?urlpath=lab/tree/example/imdb.ipynb)
 
-
 <!-- [![arxiv badge](https://img.shields.io/badge/arXiv-2209.09227-red)](https://arxiv.org/abs/2209.09227) -->
 <!-- [![DOI:10.1145/3491101.3519653](https://img.shields.io/badge/DOI-10.1145/3491101.3519653-blue)](https://doi.org/10.1145/3491101.3519653) -->
 
@@ -15,7 +14,7 @@ Exploring and interpreting large embeddings in your browser!
 
 <table>
   <tr>
-    <td colspan="2"><a href="https://poloclub.github.io/timbertrek"><img src='https://i.imgur.com/U5LqUi4.png'></a></td>
+    <td colspan="2"><video width="100%" src='https://github.com/poloclub/wizmap/assets/15007159/b978b2ad-b185-4d53-a488-61fc8f0d7ff2'></td>
   </tr>
   <tr></tr>
   <tr>
@@ -24,18 +23,47 @@ Exploring and interpreting large embeddings in your browser!
   </tr>
 </table>
 
-
 ## What is WizMap?
 
 WizMap is a scalable interactive visualization tool to help you easily explore large machine learning embeddings. With a novel multi-resolution embedding summarization method and a familiar map-like interaction design, WizMap allows you to navigate and interpret embedding spaces with ease.
 
-- ✅ Scalable to millions of embedding point
-- ✅ Multi-resolution embedding summaries
-- ✅ Fast embedding search
-- ✅ Multimodal data (text and image)
-- ✅ Animated embedding evolution
-- ✅ Support all computational notebook platforms (e.g., Jupyter, Colab, VS Code)
-- ✅ Sharable URLs
+<table>
+  <tr>
+    <td>✅</td>
+    <td>Scalable to millions of embedding point</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>✅</td>
+    <td>Multi-resolution embedding summaries</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>✅</td>
+    <td>Fast embedding search</td>
+  </tr>
+  <tr></tr>
+    <tr>
+    <td>✅</td>
+    <td>Multimodal data (text and image)</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>✅</td>
+    <td>Animated embedding evolution</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>✅</td>
+    <td>Support computational notebooks (e.g., Jupyter, Colab, VS Code)</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>✅</td>
+    <td>Sharable URLs</td>
+  </tr>
+  <tr></tr>
+</table>
 
 ## Web Demo
 
@@ -89,7 +117,6 @@ https://poloclub.github.io/wizmap/?dataURL=https%3A%2F%2Fhuggingface.co%2Fdatase
 ## Credits
 
 WizMap is created by <a href='https://zijie.wang/' target='_blank'>Jay Wang</a>, <a href='http://fredhohman.com/' target='_blank'>Fred Hohman</a>, and <a href='https://poloclub.github.io/polochau/' target='_blank'>Polo Chau</a>.
-
 
 ## License
 
