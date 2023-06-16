@@ -174,7 +174,7 @@
     </span>
     <div class="splitter"></div>
 
-    <a href="https://github.com/poloclub/wizmap"
+    <a href="https://arxiv.org/abs/2306.09328"
       ><span class="item">
         <span class="svg-icon">{@html iconFile}</span>
         Paper

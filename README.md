@@ -6,20 +6,21 @@
 [![pypi](https://img.shields.io/pypi/v/wizmap?color=blue)](https://pypi.python.org/pypi/wizmap)
 [![colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1GNdmBnc5UA7OYBZPtHu244eiAN-0IMZA?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/poloclub/wizmap/master?urlpath=lab/tree/example/imdb.ipynb)
+[![arxiv badge](https://img.shields.io/badge/arXiv-2306.09328-red)](https://arxiv.org/abs/2306.09328)
 
-<!-- [![arxiv badge](https://img.shields.io/badge/arXiv-2209.09227-red)](https://arxiv.org/abs/2209.09227) -->
 <!-- [![DOI:10.1145/3491101.3519653](https://img.shields.io/badge/DOI-10.1145/3491101.3519653-blue)](https://doi.org/10.1145/3491101.3519653) -->
 
 Exploring and interpreting large embeddings in your browser!
 
 <table>
   <tr>
-    <td colspan="2"><video width="100%" src='https://github.com/poloclub/wizmap/assets/15007159/b978b2ad-b185-4d53-a488-61fc8f0d7ff2'></td>
+    <td colspan="3"><video width="100%" src='https://github.com/poloclub/wizmap/assets/15007159/b978b2ad-b185-4d53-a488-61fc8f0d7ff2'></td>
   </tr>
   <tr></tr>
   <tr>
     <td><a href="https://poloclub.github.io/wizmap">🚀 Live Demo</a></td>
     <td><a href="https://youtu.be/8fJG87QVceQ">📺 Demo Video</a></td>
+    <td><a href="https://arxiv.org/abs/2306.09328">📖 Research Paper</a></td>
   </tr>
 </table>
 
@@ -117,6 +118,23 @@ https://poloclub.github.io/wizmap/?dataURL=https%3A%2F%2Fhuggingface.co%2Fdatase
 ## Credits
 
 WizMap is created by <a href='https://zijie.wang/' target='_blank'>Jay Wang</a>, <a href='http://fredhohman.com/' target='_blank'>Fred Hohman</a>, and <a href='https://poloclub.github.io/polochau/' target='_blank'>Polo Chau</a>.
+
+## Citation
+
+To learn more about WizMap, please read our [research paper](https://arxiv.org/abs/2306.09328) (published at [ACL'23 System Demonstration](https://2023.aclweb.org/program/accepted_system_demonstration/)).
+
+```bibtex
+@article{wangWizMapScalableInteractive2023,
+  title = {{{WizMap}}: {{Scalable Interactive Visualization}} for {{Exploring Large Machine Learning Embeddings}}},
+  shorttitle = {{{WizMap}}},
+  author = {Wang, Zijie J. and Hohman, Fred and Chau, Duen Horng},
+  year = {2023},
+  url = {http://arxiv.org/abs/2306.09328},
+  urldate = {2023-06-16},
+  archiveprefix = {arxiv},
+  journal = {arXiv 2306.09328}
+}
+```
 
 ## License
 
