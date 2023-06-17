@@ -14,7 +14,7 @@ Exploring and interpreting large embeddings in your browser!
 
 <table>
   <tr>
-    <td colspan="3"><video width="100%" src='https://github.com/poloclub/wizmap/assets/15007159/b978b2ad-b185-4d53-a488-61fc8f0d7ff2'></td>
+    <td colspan="3"><video width="100%" src='https://github.com/poloclub/wizmap/assets/15007159/c4829d38-8c46-4c47-8597-0ac55d9e95ad'></td>
   </tr>
   <tr></tr>
   <tr>
