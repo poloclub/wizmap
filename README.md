@@ -66,6 +66,37 @@ WizMap is a scalable interactive visualization tool to help you easily explore l
   <tr></tr>
 </table>
 
+## WizMap Gallery
+
+<table>
+  <tr>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=diffusiondb"><img src="https://i.imgur.com/hTcu3rJ.jpg" width="100%"></a></td>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=diffusiondb"><img src="https://i.imgur.com/AYUEHWz.png" width="100%"></a></td>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=diffusiondb"><img src="https://i.imgur.com/iyBzqHQ.png" width="100%"></a></td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=diffusiondb">DiffusionDB Prompts + Images</a></td>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=acl-abstracts">ACL Paper Abstracts</a></td>
+    <td><a href="https://poloclub.github.io/wizmap/?dataset=imdb">IMDB Review Comments</a></td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td>1.8M text + 1.8M images</a></td>
+    <td>63k text</td>
+    <td>25k text</td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td><code>CLIP</code> Embedding</td>
+    <td><code>all-MiniLM-L6-v2</code> Embedding</td>
+    <td><code>all-MiniLM-L6-v2</code> Embedding</td>
+  </tr>
+  <tr></tr>
+</table>
+
+[Submit a PR](https://github.com/poloclub/wizmap/pulls) to add your WizMap here! You can share your WizMap using a [unique URL](#share-my-wizmap).
+
 ## Web Demo
 
 For a live web demo, visit: <https://poloclub.github.io/wizmap>.
