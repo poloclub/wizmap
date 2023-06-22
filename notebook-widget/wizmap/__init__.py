@@ -2,6 +2,6 @@
 
 __author__ = """Jay Wang"""
 __email__ = "jayw@zijie.wang"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from wizmap.wizmap import *
