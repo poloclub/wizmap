@@ -31,37 +31,37 @@ WizMap is a scalable interactive visualization tool to help you easily explore l
 <table>
   <tr>
     <td>✅</td>
-    <td>Scalable to millions of embedding point</td>
+    <td>Scalable to <strong>millions</strong> of embedding point</td>
   </tr>
   <tr></tr>
   <tr>
     <td>✅</td>
-    <td>Multi-resolution embedding summaries</td>
+    <td><strong>Multi-resolution</strong> embedding summaries</td>
   </tr>
   <tr></tr>
   <tr>
     <td>✅</td>
-    <td>Fast embedding search</td>
+    <td><strong>Fast</strong> embedding search</td>
   </tr>
   <tr></tr>
     <tr>
     <td>✅</td>
-    <td>Multimodal data (text and image)</td>
+    <td><strong>Multimodal</strong> data (text and image)</td>
   </tr>
   <tr></tr>
   <tr>
     <td>✅</td>
-    <td>Animated embedding evolution</td>
+    <td>Animated <strong>embedding evolution</strong></td>
   </tr>
   <tr></tr>
   <tr>
     <td>✅</td>
-    <td>Support computational notebooks (e.g., Jupyter, Colab, VS Code)</td>
+    <td>Support <strong>computational notebooks</strong> (e.g., Jupyter, Colab, VS Code)</td>
   </tr>
   <tr></tr>
   <tr>
     <td>✅</td>
-    <td>Sharable URLs</td>
+    <td><strong>Sharable URLs</strong></td>
   </tr>
   <tr></tr>
 </table>
