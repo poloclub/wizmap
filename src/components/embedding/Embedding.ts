@@ -563,7 +563,7 @@ export class Embedding {
       .domain(yRange)
       .range([this.svgSize.height, 0]);
 
-    this.contours = this.drawContour();
+
 
     // Create time scale if the data has time info
     if (this.gridData.timeGrids) {
@@ -616,7 +616,7 @@ export class Embedding {
         .select('g.contour-group')
         .classed(`contour-group-${this.groupNames[0]}`, true)
         .classed('contour-group-generic', true);
-
+      this.contours = this.drawContourFirst(this.groupNames[0]);
       for (let i = 1; i < this.groupNames.length; i++) {
         // Add groups to the control states
         // (Default is to show the first group only)
@@ -634,6 +634,8 @@ export class Embedding {
         // Drw the group contour
         this.drawGroupContour(name);
       }
+    } else {
+      this.contours = this.drawContour();
     }
 
     // Tell the tree worker to prepare to add points to the tree
@@ -861,7 +863,146 @@ export class Embedding {
 
     return contours;
   };
+  drawContourFirst = (group: string) => {
+    if (this.gridData == null || this.gridData.groupGrids === undefined) {
+      console.error('Grid data not initialized');
+      return null;
+    }
 
+    const contourGroup = this.svg.select<SVGGElement>(
+      `.contour-group-${group}`
+    );
+
+    const gridData1D: number[] = [];
+    const grid = this.gridData.groupGrids[group];
+    for (const row of grid) {
+      for (const item of row) {
+        gridData1D.push(item);
+      }
+    }
+
+    // Linear interpolate the levels to determine the thresholds
+    const levels = config.layout.contourLevels;
+    const thresholds: number[] = [];
+    const minValue = Math.min(...gridData1D);
+    const maxValue = Math.max(...gridData1D);
+    const step = (maxValue - minValue) / levels;
+    for (let i = 0; i < levels; i++) {
+      thresholds.push(minValue + step * i);
+    }
+
+    let contours = d3
+      .contours()
+      .thresholds(thresholds)
+      .size([grid.length, grid[0].length])(gridData1D);
+
+    // Convert the scale of the generated paths
+    const contourXScale = d3
+      .scaleLinear()
+      .domain([0, grid.length])
+      .range(this.gridData.xRange);
+
+    const contourYScale = d3
+      .scaleLinear()
+      .domain([0, grid[0].length])
+      .range(this.gridData.yRange);
+
+    contours = contours.map(item => {
+      item.coordinates = item.coordinates.map(coordinates => {
+        return coordinates.map(positions => {
+          return positions.map(point => {
+            return [
+              this.xScale(contourXScale(point[0])),
+              this.yScale(contourYScale(point[1]))
+            ];
+          });
+        });
+      });
+      return item;
+    });
+
+
+    // Create a new blue interpolator based on d3.interpolateBlues
+    // (starting from white here)
+    const blueScale = d3.interpolateLab(
+      '#ffffff',
+      config.colors['light-blue-800']
+    );
+    const colorScale = d3.scaleSequential(
+      d3.extent(thresholds) as number[],
+      d => blueScale(d / 1)
+    );
+
+    // Draw the contours
+    contourGroup
+      .selectAll('path')
+      .data(contours.slice(1))
+      .join('path')
+      .attr('fill', d => colorScale(d.value))
+      .attr('d', d3.geoPath());
+
+    // Zoom in to focus on the second level of the contour
+    // The first level is at 0
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+
+    if (contours.length > 1) {
+      for (const coord of contours[1].coordinates) {
+        for (const coordPoints of coord) {
+          for (const point of coordPoints) {
+            if (point[0] < x0) x0 = point[0];
+            if (point[1] < y0) y0 = point[1];
+            if (point[0] > x1) x1 = point[0];
+            if (point[1] > y1) y1 = point[1];
+          }
+        }
+      }
+    }
+
+    const screenPadding = 20;
+    const viewAreaWidth =
+      this.svgFullSize.width - config.layout.searchPanelWidth;
+    const viewAreaHeight =
+      this.svgFullSize.height -
+      config.layout.topBarHeight -
+      config.layout.footerHeight;
+
+    const initZoomK = Math.min(
+      viewAreaWidth / (x1 - x0 + screenPadding),
+      viewAreaHeight / (y1 - y0 + screenPadding)
+    );
+
+    this.initZoomTransform = d3.zoomIdentity
+      .translate(
+        (this.svgFullSize.width + config.layout.searchPanelWidth) / 2,
+        (this.svgFullSize.height + config.layout.topBarHeight) / 2
+      )
+      .scale(initZoomK)
+      .translate(-(x0 + (x1 - x0) / 2), -(y0 + (y1 - y0) / 2));
+
+    // Trigger the first zoom
+    this.topSvg
+      .call(selection =>
+        this.zoom?.transform(selection, this.initZoomTransform)
+      )
+      .on('end', () => {
+        this.contoursInitialized = true;
+      });
+
+    // Double click to reset zoom to the initial viewpoint
+    this.topSvg.on('dblclick', () => {
+      this.topSvg
+        .transition()
+        .duration(700)
+        .call(selection => {
+          this.zoom?.transform(selection, this.initZoomTransform);
+        });
+    });
+
+    return contours;
+  };
   /**
    * Draw the contour for other groups
    */
