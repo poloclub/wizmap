@@ -7,9 +7,6 @@
   import iconPlus from '../../imgs/icon-plus.svg?raw';
   import iconMinus from '../../imgs/icon-minus.svg?raw';
   import iconHome from '../../imgs/icon-home.svg?raw';
-  import iconGithub from '../../imgs/icon-github.svg?raw';
-  import iconFile from '../../imgs/icon-file.svg?raw';
-  import iconPlay from '../../imgs/icon-play.svg?raw';
   import iconWizmap from '../../imgs/icon-wizmap.svg?raw';
   import iconFolder from '../../imgs/icon-folder.svg?raw';
 
@@ -174,30 +171,8 @@
     </span>
     <div class="splitter"></div>
 
-    <a href="https://arxiv.org/abs/2306.09328"
-      ><span class="item">
-        <span class="svg-icon">{@html iconFile}</span>
-        Paper
-      </span></a
-    >
-    <div class="splitter"></div>
-
-    <a href="https://github.com/poloclub/wizmap"
-      ><span class="item">
-        <span class="svg-icon">{@html iconGithub}</span>
-        Code
-      </span></a
-    >
-    <div class="splitter"></div>
-
-    <a href="https://youtu.be/8fJG87QVceQ"
-      ><span class="item">
-        <span class="svg-icon">{@html iconPlay}</span>
-        Video
-      </span></a
-    >
-    <div class="splitter"></div>
-
+    <!-- The "Paper," "Code," and "Video" elements are removed -->
+    
     <button
       on:click="{() => {
         datasetClicked();
