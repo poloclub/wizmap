@@ -88,6 +88,9 @@
           <li>
             <a href="./?dataset=imdb"> IMDB Reviews (25k text) </a>
           </li>
+          <li>
+            <a href="./?dataset=TweetsData"> TweetsData </a>
+          </li>
         </ul>
       </div>
     </div>
