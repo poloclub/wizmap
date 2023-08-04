@@ -169,9 +169,7 @@
   </div>
 
   <div class="footer">
-    <span class="name"
-      ><span class="svg-icon">{@html iconWizmap}</span>WizMap
-    </span>
+    <!-- The WizMap icon and text are removed -->
     <div class="splitter"></div>
 
     <!-- The "Paper," "Code," and "Video" elements are removed -->
