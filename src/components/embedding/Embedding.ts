@@ -112,6 +112,7 @@ export class Embedding {
   gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
   contours: d3.ContourMultiPolygon[] | null = null;
+  groupContours: d3.ContourMultiPolygon[][] | null = null;
   contoursInitialized = false;
   loadedPointCount = 1;
 
@@ -611,6 +612,7 @@ export class Embedding {
       // Adjust the first contour's name
       this.showContours = [];
       this.showPoints = [];
+      this.groupContours = [];
 
       for (let i = 0; i < this.groupNames.length; i++) {
         // Add groups to the control states
@@ -626,7 +628,10 @@ export class Embedding {
           .classed('hidden', i !== 0);
 
         // Drw the group contour
-        this.drawGroupContour(name);
+        const curContour = this.drawGroupContour(name);
+        if (curContour !== null) {
+          this.groupContours.push(curContour);
+        }
       }
     }
 
@@ -944,6 +949,8 @@ export class Embedding {
       .join('path')
       .attr('fill', d => colorScale(d.value))
       .attr('d', d3.geoPath());
+
+    return contours;
   };
 
   /**
@@ -1333,12 +1340,17 @@ export class Embedding {
     switch (checkbox) {
       case 'contour': {
         if (group !== undefined) {
+          // Users have specified groups
           if (this.groupNames) {
             const groupIndex = this.groupNames?.indexOf(group);
             this.showContours[groupIndex] = checked;
             this.svg
               .select(`g.contour-group-${group}`)
               .classed('hidden', !this.showContours[groupIndex]);
+
+            if (this.showLabel) {
+              this.layoutTopicLabels(this.userMaxLabelNum, true);
+            }
           }
         } else {
           this.showContours = new Array<boolean>(this.showContours.length).fill(
