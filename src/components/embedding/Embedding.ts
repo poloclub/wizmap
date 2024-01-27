@@ -606,30 +606,24 @@ export class Embedding {
     // Create group related structures if the data has groups
     if (this.gridData.groupGrids && this.gridData.groupNames) {
       this.groupNames = this.gridData.groupNames;
-
-      this.showContours = [true];
-      this.showPoints = [true];
       const umapGroup = this.svg.select('g.umap-group');
 
       // Adjust the first contour's name
-      umapGroup
-        .select('g.contour-group')
-        .classed(`contour-group-${this.groupNames[0]}`, true)
-        .classed('contour-group-generic', true);
+      this.showContours = [];
+      this.showPoints = [];
 
-      for (let i = 1; i < this.groupNames.length; i++) {
+      for (let i = 0; i < this.groupNames.length; i++) {
         // Add groups to the control states
         // (Default is to show the first group only)
-        this.showContours.push(false);
-        this.showPoints.push(false);
-
-        const name = this.groupNames[i];
+        this.showContours.push(i === 0);
+        this.showPoints.push(i === 0);
 
         // Add contour elements for other groups
+        const name = this.groupNames[i];
         umapGroup
           .append('g')
           .attr('class', `contour-group-generic contour-group-${name}`)
-          .classed('hidden', true);
+          .classed('hidden', i !== 0);
 
         // Drw the group contour
         this.drawGroupContour(name);
@@ -729,7 +723,16 @@ export class Embedding {
       return null;
     }
 
-    const contourGroup = this.svg.select<SVGGElement>('.contour-group');
+    const contourGroup = this.svg
+      .select<SVGGElement>('.contour-group')
+      // Hide the total contour if the user specifies groups
+      .style(
+        'display',
+        this.gridData.groupGrids !== undefined &&
+          this.gridData.groupNames !== undefined
+          ? 'none'
+          : 'unset'
+      );
 
     const gridData1D: number[] = [];
     for (const row of this.gridData.grid) {
@@ -784,7 +787,7 @@ export class Embedding {
     // (starting from white here)
     const blueScale = d3.interpolateLab(
       '#ffffff',
-      config.colors['light-blue-800']
+      config.layout['groupColors'][0]
     );
     const colorScale = d3.scaleSequential(
       d3.extent(thresholds) as number[],
@@ -927,7 +930,7 @@ export class Embedding {
     // (starting from white here)
     const colorScaleInterpolator = d3.interpolateLab(
       '#ffffff',
-      config.colors['pink-900']
+      config.layout['groupColors'][this.groupNames?.indexOf(group) || 0]
     );
     const colorScale = d3.scaleSequential(
       d3.extent(thresholds) as number[],

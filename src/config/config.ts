@@ -1,18 +1,3 @@
-const layout = {
-  scatterDotRadius: 1,
-  searchPanelWidth: 356,
-  topBarHeight: 30,
-  footerHeight: 30,
-  timeSliderWidth: 400,
-  zoomScale: [0.5, 1000],
-  defaultPointColor: [48 / 255, 65 / 255, 159 / 255],
-  defaultPointColorInt: [48, 65, 159],
-  secondPointColorInt: [194, 24, 92],
-  timePointColorInt: [123, 31, 162],
-  contourLevels: 12,
-  searchLimit: 5000
-};
-
 const time = {
   mouseenterDelay: 300
 };
@@ -291,6 +276,22 @@ const colors = {
   'blue-gray-800': 'hsl(199, 17.91%, 26.27%)',
   'blue-gray-900': 'hsl(199, 19.15%, 18.43%)',
   'blue-gray-1000': 'hsl(199, 20.93%, 8.43%)'
+};
+
+const layout = {
+  scatterDotRadius: 1,
+  searchPanelWidth: 356,
+  topBarHeight: 30,
+  footerHeight: 30,
+  timeSliderWidth: 400,
+  zoomScale: [0.5, 1000],
+  defaultPointColor: [48 / 255, 65 / 255, 159 / 255],
+  defaultPointColorInt: [48, 65, 159],
+  secondPointColorInt: [194, 24, 92],
+  timePointColorInt: [123, 31, 162],
+  contourLevels: 12,
+  searchLimit: 5000,
+  groupColors: [colors['light-blue-800'], colors['pink-900']]
 };
 
 export const config = {
