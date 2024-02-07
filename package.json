@@ -79,7 +79,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-svelte": "^2.19.0",
     "eslint-plugin-svelte3": "^3.4.1",
-    "flexsearch": "^0.7.31",
+    "flexsearch": "0.7.31",
     "prettier": "^2.7.1",
     "regl": "^2.1.0",
     "rollup": "^2.79.1",
