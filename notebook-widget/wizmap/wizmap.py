@@ -20,14 +20,17 @@ class JsonPointContentConfig(TypedDict):
     """Config for json point.
 
     Args:
-        group_labels (list[str]): A list of group labels. Each data point has a group label. If
-            a point's group label is in this list, wizmap will use json parser to parse the data point's text content.
+        group_labels (list[int] | None): A list of group labels. Each data point has a
+        group label. If a point's group label is in this list, wizmap will use
+        json parser to parse the data point's text content. If it is None, wizmap
+        will apply json parsing to all data points.
         text_key (str): The key for the text, e.g., 'text' or 't'.
         image_key (str | None): The key for the image content, e.g., 'image' or 'i'.
-        image_url_prefix (str | None): The prefix for the image URL, e.g., 'https://example.com/images/'.
+        image_url_prefix (str | None): The prefix for the image URL, e.g.,
+        'https://example.com/images/'.
     """
 
-    group_labels: list[str]
+    group_labels: list[int] | None
     text_key: str
     image_key: str | None
     image_url_prefix: str | None
@@ -634,7 +637,7 @@ def generate_grid_dict(
     group_names: list[str] | None = None,
     times: list[str] | None = None,
     time_format: str | None = None,
-    image_label: str | None = None,
+    image_label: int | None = None,
     image_url_prefix: str | None = None,
     opacity: float | None = None,
     json_point_content_config: JsonPointContentConfig | None = None,

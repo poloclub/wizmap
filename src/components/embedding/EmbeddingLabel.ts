@@ -1,16 +1,16 @@
-import type { Embedding } from './Embedding';
-import d3 from '../../utils/d3-import';
-import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
+import { arrow, computePosition, flip, offset, shift } from '@floating-ui/dom';
+import { config } from '../../config/config';
+import type { Padding, Point, Rect, Size } from '../../types/common-types';
 import type {
-  TopicData,
   DrawnLabel,
-  LabelData
+  LabelData,
+  TopicData
 } from '../../types/embedding-types';
 import { Direction } from '../../types/embedding-types';
-import type { Size, Padding, Rect, Point } from '../../types/common-types';
-import { timeit, rectsIntersect } from '../../utils/utils';
+import d3 from '../../utils/d3-import';
 import { getLatoTextWidth } from '../../utils/text-width';
-import { config } from '../../config/config';
+import { rectsIntersect, timeit } from '../../utils/utils';
+import type { Embedding } from './Embedding';
 
 const IDEAL_TILE_WIDTH = 35;
 const LABEL_SPLIT = '-';
@@ -1203,11 +1203,12 @@ export const updatePopperTooltip = (
   tooltip: HTMLElement,
   anchor: HTMLElement,
   text: string,
-  placement: 'bottom' | 'left' | 'top' | 'right'
+  placement: 'bottom' | 'left' | 'top' | 'right',
+  maxTextLength: number | null = 300
 ) => {
   // Truncate the text if it is too long
-  if (text.length > 300) {
-    text = text.slice(0, 300);
+  if (maxTextLength !== null && text.length > maxTextLength) {
+    text = text.slice(0, maxTextLength);
     text = text.slice(0, text.lastIndexOf(' '));
     text = text.concat('...');
   }

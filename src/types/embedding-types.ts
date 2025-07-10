@@ -250,6 +250,7 @@ export interface GridData {
   groupTotalPointSizes?: { [key: string]: number };
   groupNames?: string[];
   image?: GridImageEntry;
+  jsonPoint?: GridJSONPointEntry;
   opacity?: number;
 }
 
@@ -269,4 +270,11 @@ export interface PromptUMAPData {
   xs: number[];
   ys: number[];
   prompts: string[];
+}
+
+export interface GridJSONPointEntry {
+  group_labels: number[];
+  text_key: string;
+  image_key?: string | null;
+  image_url_prefix?: string | null;
 }
