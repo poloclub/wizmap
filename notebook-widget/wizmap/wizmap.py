@@ -5,30 +5,44 @@ import base64
 import pkgutil
 import ndjson
 
-from glob import glob
-from os.path import exists, join, basename
+from os.path import join
 from tqdm import tqdm
-from collections import Counter
 from IPython.display import display_html
-from json import dump, load, dumps
+from json import dump
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from quadtreed3 import Quadtree, Node
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import KernelDensity
-from scipy.stats import norm
-from typing import Tuple
+from typing import Tuple, TypedDict
+
+
+class JsonPointContentConfig(TypedDict):
+    """Config for json point.
+
+    Args:
+        group_labels (list[str]): A list of group labels. Each data point has a group label. If
+            a point's group label is in this list, wizmap will use json parser to parse the data point's text content.
+        text_key (str): The key for the text, e.g., 'text' or 't'.
+        image_key (str | None): The key for the image content, e.g., 'image' or 'i'.
+        image_url_prefix (str | None): The prefix for the image URL, e.g., 'https://example.com/images/'.
+    """
+
+    group_labels: list[str]
+    text_key: str
+    image_key: str | None
+    image_url_prefix: str | None
 
 
 def generate_contour_dict(
     xs: list[float],
     ys: list[float],
-    grid_size=200,
-    max_sample=100000,
-    random_seed=202355,
-    labels: list[int] = None,
-    group_names: list[str] = None,
-    times: list[str] = None,
-    time_format: str = None,
+    grid_size: int = 200,
+    max_sample: int = 100000,
+    random_seed: int = 202355,
+    labels: list[int] | None = None,
+    group_names: list[str] | None = None,
+    times: list[str] | None = None,
+    time_format: str | None = None,
 ) -> dict:
     """Generate a grid dictionary object that encodes the contour plot of the
     projected embedding space.
@@ -92,7 +106,7 @@ def generate_contour_dict(
     bw = (n * (d + 2) / 4.0) ** (-1.0 / (d + 4))
 
     # We use a random sample to fit the KDE for faster run time
-    rng = np.random.RandomState(random_seed)
+    rng = np.random.default_rng(random_seed)
     random_indexes = rng.choice(
         range(projected_emb.shape[0]),
         min(projected_emb.shape[0], sample_size),
@@ -158,7 +172,7 @@ def generate_contour_dict(
             bw = (n * (d + 2) / 4.0) ** (-1.0 / (d + 4))
 
             # We use a random sample to fit the KDE for faster run time
-            rng = np.random.RandomState(random_seed)
+            rng = np.random.default_rng(random_seed)
             random_indexes = rng.choice(
                 range(cur_projected_emb.shape[0]),
                 min(cur_projected_emb.shape[0], sample_size),
@@ -215,7 +229,7 @@ def generate_contour_dict(
             bw = (n * (d + 2) / 4.0) ** (-1.0 / (d + 4))
 
             # We use a random sample to fit the KDE for faster run time
-            rng = np.random.RandomState(random_seed)
+            rng = np.random.default_rng(random_seed)
             random_indexes = rng.choice(
                 range(cur_projected_emb.shape[0]),
                 min(cur_projected_emb.shape[0], sample_size),
@@ -616,13 +630,14 @@ def generate_grid_dict(
     svg_width=1000,
     svg_height=1000,
     ideal_tile_width=35,
-    labels: list[int] = None,
-    group_names: list[str] = None,
-    times: list[str] = None,
-    time_format: str = None,
-    image_label=None,
-    image_url_prefix=None,
-    opacity=None,
+    labels: list[int] | None = None,
+    group_names: list[str] | None = None,
+    times: list[str] | None = None,
+    time_format: str | None = None,
+    image_label: str | None = None,
+    image_url_prefix: str | None = None,
+    opacity: float | None = None,
+    json_point_content_config: JsonPointContentConfig | None = None,
 ):
     """Generate a grid dictionary object that encodes the contour plot and the
     associated topics of different regions on the projected embedding space.
@@ -651,6 +666,8 @@ def generate_grid_dict(
         image_url_prefix (str): The url prefix for all image texts
         opacity (float): The opacity of data points. If it is None, WizMap will
             dynamically adjust the opacity values. Defaults to None.
+        json_point_content_config (JsonPointContentConfig | None): Config for json point.
+            A json point can include both image and text, etc.
 
     Returns:
         dict: A dictionary object encodes the grid data.
@@ -696,6 +713,9 @@ def generate_grid_dict(
 
         grid_dict["image"] = image_config
 
+    if json_point_content_config is not None:
+        grid_dict["jsonPoint"] = json_point_content_config
+
     return grid_dict
 
 
@@ -703,8 +723,8 @@ def generate_data_list(
     xs: list[float],
     ys: list[float],
     texts: list[str],
-    times: list[str] = None,
-    labels: list[int] = None,
+    times: list[str] | None = None,
+    labels: list[int] | None = None,
 ) -> list[list]:
     """Generate a list of data points.
 
