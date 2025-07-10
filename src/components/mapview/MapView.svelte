@@ -5,8 +5,7 @@
   import SearchPanel from '../search-panel/SearchPanel.svelte';
 
   let component: HTMLElement | null = null;
-  // let datasetName = 'acl-abstracts';
-  let datasetName = 'temp';
+  let datasetName = 'acl-abstracts';
   let dataURL: string | null = null;
   let gridURL: string | null = null;
   let notebookMode = false;
