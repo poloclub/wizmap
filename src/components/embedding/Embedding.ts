@@ -1,48 +1,48 @@
-import d3 from '../../utils/d3-import';
-import type {
-  PromptUMAPData,
-  PromptPoint,
-  GridData,
-  QuadtreeNode,
-  LevelTileDataItem,
-  UMAPPointStreamData,
-  LevelTileMap,
-  TopicData,
-  DrawnLabel,
-  LabelData,
-  DataURLs,
-  Direction,
-  LoaderWorkerMessage,
-  TreeWorkerMessage,
-  SearchWorkerMessage,
-  EmbeddingInitSetting,
-  WebGLMatrices
-} from '../../types/embedding-types';
-import type { Size, Padding, Rect, Point } from '../../types/common-types';
+import createRegl from 'regl';
+import type { Writable } from 'svelte/store';
+import { config } from '../../config/config';
 import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
 import {
   getFooterStoreDefaultValue,
   getSearchBarStoreDefaultValue
 } from '../../stores';
-import type { Writable } from 'svelte/store';
+import type { Padding, Point, Rect, Size } from '../../types/common-types';
+import type {
+  DataURLs,
+  Direction,
+  DrawnLabel,
+  EmbeddingInitSetting,
+  GridData,
+  LabelData,
+  LevelTileDataItem,
+  LevelTileMap,
+  LoaderWorkerMessage,
+  PromptPoint,
+  PromptUMAPData,
+  QuadtreeNode,
+  SearchWorkerMessage,
+  TopicData,
+  TreeWorkerMessage,
+  UMAPPointStreamData,
+  WebGLMatrices
+} from '../../types/embedding-types';
+import d3 from '../../utils/d3-import';
 import {
   downloadJSON,
-  splitStreamTransform,
   parseJSONTransform,
-  timeit,
+  rectsIntersect,
   rgbToHex,
   round,
-  rectsIntersect,
+  splitStreamTransform,
+  timeit,
   yieldToMain
 } from '../../utils/utils';
+import * as Controller from './EmbeddingControl';
 import * as Labeler from './EmbeddingLabel';
 import * as PointDrawer from './EmbeddingPointWebGL';
-import * as Controller from './EmbeddingControl';
-import createRegl from 'regl';
-import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker&inline';
-import TreeWorker from './workers/tree?worker&inline';
 import SearchWorker from './workers/search?worker&inline';
+import TreeWorker from './workers/tree?worker&inline';
 
 const DEBUG = config.debug;
 const HOVER_RADIUS = 3;
@@ -691,6 +691,9 @@ export class Embedding {
       this.highlightPoint({ point, animated: true });
     };
     this.searchBarStoreValue.highlightSearchPoint = highlightSearchPoint;
+    if (this.gridData.jsonPoint) {
+      this.searchBarStoreValue.textKey = this.gridData.jsonPoint.text_key;
+    }
     this.searchBarStore.set(this.searchBarStoreValue);
 
     this.updateEmbedding();
@@ -1050,6 +1053,16 @@ export class Embedding {
         };
         this.treeWorker.postMessage(treeMessage);
 
+        if (!this.gridData) {
+          throw new Error(
+            'Grid data not initialized before loading / transferring data'
+          );
+        }
+        let textKey = null;
+        if (this.gridData.jsonPoint) {
+          textKey = this.gridData.jsonPoint.text_key;
+        }
+
         if (e.data.payload.isFirstBatch) {
           // Add the first batch points
           this.promptPoints = e.data.payload.points;
@@ -1063,7 +1076,8 @@ export class Embedding {
           const searchMessage: SearchWorkerMessage = {
             command: 'addPoints',
             payload: {
-              points: e.data.payload.points
+              points: e.data.payload.points,
+              textKey
             }
           };
           this.searchWorker.postMessage(searchMessage);
@@ -1079,7 +1093,8 @@ export class Embedding {
           const searchMessage: SearchWorkerMessage = {
             command: 'addPoints',
             payload: {
-              points: newPoints
+              points: newPoints,
+              textKey
             }
           };
           this.searchWorker.postMessage(searchMessage);

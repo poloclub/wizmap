@@ -8,6 +8,11 @@ export interface SearchBarStoreValue {
   query: string;
   queryID: number;
   highlightSearchPoint: (point: PromptPoint | undefined) => void;
+  /**
+   * The key of the text field in the json point data. If it is not set, we
+   * treat the entire prompt as the text
+   */
+  textKey: string | null;
 }
 
 export interface FooterStoreValue {
@@ -39,7 +44,8 @@ export const getSearchBarStoreDefaultValue = (): SearchBarStoreValue => {
     queryID: 0,
     highlightSearchPoint: (point: PromptPoint | undefined) => {
       // pass
-    }
+    },
+    textKey: null
   };
 };
 
