@@ -2,25 +2,16 @@
 
 """The setup script."""
 
-from json import loads, load
 from setuptools import setup, find_packages
-from pathlib import Path
-import os
+from wizmap import __version__
 
-with open("README.md", "r") as readme_file:
+with open("README.md", "r", encoding="utf8") as readme_file:
     readme = readme_file.read()
 
 requirements = ["numpy", "ipython", "tqdm", "quadtreed3", "ndjson", "scikit-learn"]
 
-test_requirements = []
+test_requirements: list[str] = []
 
-# Read the version from package.json
-package_json_path = "./package.json"
-
-# Read the package.json file
-with open(package_json_path, "r", encoding="utf8") as f:
-    package_json = load(f)
-    version = package_json["version"]
 
 setup(
     author="Jay Wang",
@@ -59,6 +50,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/poloclub/wizmap",
-    version=version,
+    version=__version__,
     zip_safe=False,
 )

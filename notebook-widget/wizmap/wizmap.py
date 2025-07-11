@@ -4,11 +4,11 @@ import html
 import base64
 import pkgutil
 import ndjson
+import json
 
 from os.path import join
 from tqdm import tqdm
 from IPython.display import display_html
-from json import dump
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from quadtreed3 import Quadtree, Node
 from scipy.sparse import csr_matrix
@@ -689,10 +689,17 @@ def generate_grid_dict(
     )
 
     print("Start generating multi-level summaries...")
+    # If the user uses json point, we need to extract the text content first
+    if json_point_content_config is not None:
+        real_texts = [
+            json.loads(d)[json_point_content_config["text_key"]] for d in texts
+        ]
+    else:
+        real_texts = texts
     topic_dict = generate_topic_dict(
         xs,
         ys,
-        texts,
+        real_texts,
         max_zoom_scale=max_zoom_scale,
         svg_width=svg_width,
         svg_height=svg_height,
@@ -709,7 +716,7 @@ def generate_grid_dict(
 
     # Create a config for image points
     if image_label is not None:
-        image_config = {"imageGroup": image_label}
+        image_config: dict[str, int | str | None] = {"imageGroup": image_label}
 
         if image_url_prefix is not None:
             image_config["imageURLPrefix"] = image_url_prefix
@@ -789,7 +796,7 @@ def save_json_files(
         ndjson.dump(data_list, fp)
 
     with open(join(output_dir, grid_json_name), "w", encoding="utf8") as fp:
-        dump(grid_dict, fp)
+        json.dump(grid_dict, fp)
 
 
 def _make_html(data_url, grid_url):
