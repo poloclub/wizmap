@@ -1,6 +1,6 @@
 {
   "name": "wizmap",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
@@ -47,7 +47,7 @@
     "@types/d3-timer": "^3.0.0",
     "@types/d3-transition": "^3.0.2",
     "@types/d3-zoom": "^3.0.1",
-    "@types/flexsearch": "^0.7.3",
+    "@types/flexsearch": "0.7.3",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
     "apache-arrow": "^10.0.1",
@@ -79,7 +79,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-svelte": "^2.19.0",
     "eslint-plugin-svelte3": "^3.4.1",
-    "flexsearch": "^0.7.31",
+    "flexsearch": "0.7.31",
     "prettier": "^2.7.1",
     "regl": "^2.1.0",
     "rollup": "^2.79.1",

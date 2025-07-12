@@ -3,7 +3,7 @@
 </script>
 
 <style lang="scss">
-  @import './PhrasePack.scss';
+  @use './PhrasePack.scss' as *;
 </style>
 
 <div class="phrasepack-page">

@@ -1,8 +1,8 @@
 <script lang="ts">
+  import { getFooterStore, getSearchBarStore } from '../../stores';
   import Embedding from '../embedding/Embedding.svelte';
   import Footer from '../footer/Footer.svelte';
   import SearchPanel from '../search-panel/SearchPanel.svelte';
-  import { getFooterStore, getSearchBarStore } from '../../stores';
 
   let component: HTMLElement | null = null;
   let datasetName = 'acl-abstracts';
@@ -34,7 +34,7 @@
 </script>
 
 <style lang="scss">
-  @import './MapView.scss';
+  @use './MapView.scss' as *;
 </style>
 
 <div class="mapview-page">
@@ -52,19 +52,19 @@
     <div class="main-app" bind:this="{component}">
       <div class="main-app-container">
         <Embedding
-          datasetName="{datasetName}"
-          dataURL="{dataURL}"
-          gridURL="{gridURL}"
-          footerStore="{footerStore}"
-          searchBarStore="{searchBarStore}"
-          notebookMode="{notebookMode}"
+          {datasetName}
+          {dataURL}
+          {gridURL}
+          {footerStore}
+          {searchBarStore}
+          {notebookMode}
         />
       </div>
     </div>
   </div>
 
   <div class="footer-container">
-    <Footer footerStore="{footerStore}" />
+    <Footer {footerStore} />
   </div>
 
   <div class="search-panel-container">

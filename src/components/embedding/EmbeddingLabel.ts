@@ -1,16 +1,16 @@
-import type { Embedding } from './Embedding';
-import d3 from '../../utils/d3-import';
-import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
+import { arrow, computePosition, flip, offset, shift } from '@floating-ui/dom';
+import { config } from '../../config/config';
+import type { Padding, Point, Rect, Size } from '../../types/common-types';
 import type {
-  TopicData,
   DrawnLabel,
-  LabelData
+  LabelData,
+  TopicData
 } from '../../types/embedding-types';
 import { Direction } from '../../types/embedding-types';
-import type { Size, Padding, Rect, Point } from '../../types/common-types';
-import { timeit, rectsIntersect } from '../../utils/utils';
+import d3 from '../../utils/d3-import';
 import { getLatoTextWidth } from '../../utils/text-width';
-import { config } from '../../config/config';
+import { rectsIntersect, timeit } from '../../utils/utils';
+import type { Embedding } from './Embedding';
 
 const IDEAL_TILE_WIDTH = 35;
 const LABEL_SPLIT = '-';
@@ -463,25 +463,46 @@ export function layoutTopicLabels(
   if (this.topicLevelTrees.size <= 1) return;
   if (this.contours === null) return;
   if (!this.showLabel) return;
+  if (this.groupNames !== null && this.groupContours === null) return;
 
-  // Fin near labels for high density regions
+  // Find near labels for high density regions
   const topicGroup = this.topSvg.select('g.top-content g.topics');
 
-  const polygonCenters = [];
-  for (let i = this.contours.length - 1; i >= 0; i--) {
-    const contour = this.contours[i];
+  // Collect polygon centers from the total contour
+  let polygonCenters: [number, number, number][] = [];
 
-    // Compute the geometric center of each polygon
-    for (const polygon of contour.coordinates) {
-      const xs = [];
-      const ys = [];
-      for (const point of polygon[0]) {
-        xs.push(point[0]);
-        ys.push(point[1]);
+  const collectPolygonCenters = (curContour: d3.ContourMultiPolygon[]) => {
+    for (let i = curContour.length - 1; i >= 0; i--) {
+      const contour = curContour[i];
+
+      // Compute the geometric center of each polygon
+      for (const polygon of contour.coordinates) {
+        const xs = [];
+        const ys = [];
+        for (const point of polygon[0]) {
+          xs.push(point[0]);
+          ys.push(point[1]);
+        }
+        const centerX = xs.reduce((a, b) => a + b) / xs.length;
+        const centerY = ys.reduce((a, b) => a + b) / ys.length;
+        polygonCenters.push([centerX, centerY, contour.value]);
       }
-      const centerX = xs.reduce((a, b) => a + b) / xs.length;
-      const centerY = ys.reduce((a, b) => a + b) / ys.length;
-      polygonCenters.push([centerX, centerY, contour.value]);
+    }
+  };
+  collectPolygonCenters(this.contours);
+
+  // If the user specifies groups, we only consider polygon centers from the
+  // shown contour groups
+  if (this.groupNames !== null) {
+    if (this.groupContours === null) {
+      throw Error('groupContours is null');
+    }
+
+    polygonCenters = [];
+    for (const [i, _] of this.groupNames.entries()) {
+      if (this.showContours[i]) {
+        collectPolygonCenters(this.groupContours[i]);
+      }
     }
   }
 
@@ -1182,11 +1203,12 @@ export const updatePopperTooltip = (
   tooltip: HTMLElement,
   anchor: HTMLElement,
   text: string,
-  placement: 'bottom' | 'left' | 'top' | 'right'
+  placement: 'bottom' | 'left' | 'top' | 'right',
+  maxTextLength: number | null = 300
 ) => {
   // Truncate the text if it is too long
-  if (text.length > 300) {
-    text = text.slice(0, 300);
+  if (maxTextLength !== null && text.length > maxTextLength) {
+    text = text.slice(0, maxTextLength);
     text = text.slice(0, text.lastIndexOf(' '));
     text = text.concat('...');
   }

@@ -35,6 +35,11 @@ export type SearchWorkerMessage =
       command: 'addPoints';
       payload: {
         points: PromptPoint[];
+        /**
+         * The key of the text field in the json point data. If it is not set,
+         * we treat the entire prompt as the text.
+         */
+        textKey: string | null;
       };
     }
   | {
@@ -250,6 +255,7 @@ export interface GridData {
   groupTotalPointSizes?: { [key: string]: number };
   groupNames?: string[];
   image?: GridImageEntry;
+  jsonPoint?: GridJSONPointEntry;
   opacity?: number;
 }
 
@@ -269,4 +275,11 @@ export interface PromptUMAPData {
   xs: number[];
   ys: number[];
   prompts: string[];
+}
+
+export interface GridJSONPointEntry {
+  group_labels: number[];
+  text_key: string;
+  image_key?: string | null;
+  image_url_prefix?: string | null;
 }

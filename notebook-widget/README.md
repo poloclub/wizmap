@@ -131,7 +131,9 @@ To use WizMap with your embeddings, you first need to install the `wizmap` Pytho
 pip install wizmap
 ```
 
-Then take a look at this [notebook](./example/imdb.ipynb) for a detailed guide. Spoiler alert: You'll be up and running with just two function calls from the `wizmap` library. These two JSON files contain pre-computed embedding summaries, distributions, and the original embedding data.
+Then take a look at this [notebook](./example/imdb.ipynb) for a detailed guide. If your dataset includes images, take a look at this [notebook](./example/diffusiondb-images.ipynb).
+
+Spoiler alert: You'll be up and running with just two function calls from the `wizmap` library. These two JSON files contain pre-computed embedding summaries, distributions, and the original embedding data.
 
 After generating the JSON files, you have two options to use WizMap.
 

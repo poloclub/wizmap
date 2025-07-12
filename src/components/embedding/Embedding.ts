@@ -1,48 +1,48 @@
-import d3 from '../../utils/d3-import';
-import type {
-  PromptUMAPData,
-  PromptPoint,
-  GridData,
-  QuadtreeNode,
-  LevelTileDataItem,
-  UMAPPointStreamData,
-  LevelTileMap,
-  TopicData,
-  DrawnLabel,
-  LabelData,
-  DataURLs,
-  Direction,
-  LoaderWorkerMessage,
-  TreeWorkerMessage,
-  SearchWorkerMessage,
-  EmbeddingInitSetting,
-  WebGLMatrices
-} from '../../types/embedding-types';
-import type { Size, Padding, Rect, Point } from '../../types/common-types';
+import createRegl from 'regl';
+import type { Writable } from 'svelte/store';
+import { config } from '../../config/config';
 import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
 import {
   getFooterStoreDefaultValue,
   getSearchBarStoreDefaultValue
 } from '../../stores';
-import type { Writable } from 'svelte/store';
+import type { Padding, Point, Rect, Size } from '../../types/common-types';
+import type {
+  DataURLs,
+  Direction,
+  DrawnLabel,
+  EmbeddingInitSetting,
+  GridData,
+  LabelData,
+  LevelTileDataItem,
+  LevelTileMap,
+  LoaderWorkerMessage,
+  PromptPoint,
+  PromptUMAPData,
+  QuadtreeNode,
+  SearchWorkerMessage,
+  TopicData,
+  TreeWorkerMessage,
+  UMAPPointStreamData,
+  WebGLMatrices
+} from '../../types/embedding-types';
+import d3 from '../../utils/d3-import';
 import {
   downloadJSON,
-  splitStreamTransform,
   parseJSONTransform,
-  timeit,
+  rectsIntersect,
   rgbToHex,
   round,
-  rectsIntersect,
+  splitStreamTransform,
+  timeit,
   yieldToMain
 } from '../../utils/utils';
+import * as Controller from './EmbeddingControl';
 import * as Labeler from './EmbeddingLabel';
 import * as PointDrawer from './EmbeddingPointWebGL';
-import * as Controller from './EmbeddingControl';
-import createRegl from 'regl';
-import { config } from '../../config/config';
 import LoaderWorker from './workers/loader?worker&inline';
-import TreeWorker from './workers/tree?worker&inline';
 import SearchWorker from './workers/search?worker&inline';
+import TreeWorker from './workers/tree?worker&inline';
 
 const DEBUG = config.debug;
 const HOVER_RADIUS = 3;
@@ -112,6 +112,7 @@ export class Embedding {
   gridData: GridData | null = null;
   tileData: LevelTileMap | null = null;
   contours: d3.ContourMultiPolygon[] | null = null;
+  groupContours: d3.ContourMultiPolygon[][] | null = null;
   contoursInitialized = false;
   loadedPointCount = 1;
 
@@ -606,33 +607,31 @@ export class Embedding {
     // Create group related structures if the data has groups
     if (this.gridData.groupGrids && this.gridData.groupNames) {
       this.groupNames = this.gridData.groupNames;
-
-      this.showContours = [true];
-      this.showPoints = [true];
       const umapGroup = this.svg.select('g.umap-group');
 
       // Adjust the first contour's name
-      umapGroup
-        .select('g.contour-group')
-        .classed(`contour-group-${this.groupNames[0]}`, true)
-        .classed('contour-group-generic', true);
+      this.showContours = [];
+      this.showPoints = [];
+      this.groupContours = [];
 
-      for (let i = 1; i < this.groupNames.length; i++) {
+      for (let i = 0; i < this.groupNames.length; i++) {
         // Add groups to the control states
         // (Default is to show the first group only)
-        this.showContours.push(false);
-        this.showPoints.push(false);
-
-        const name = this.groupNames[i];
+        this.showContours.push(i === 0);
+        this.showPoints.push(i === 0);
 
         // Add contour elements for other groups
+        const name = this.groupNames[i];
         umapGroup
           .append('g')
           .attr('class', `contour-group-generic contour-group-${name}`)
-          .classed('hidden', true);
+          .classed('hidden', i !== 0);
 
         // Drw the group contour
-        this.drawGroupContour(name);
+        const curContour = this.drawGroupContour(name);
+        if (curContour !== null) {
+          this.groupContours.push(curContour);
+        }
       }
     }
 
@@ -692,6 +691,9 @@ export class Embedding {
       this.highlightPoint({ point, animated: true });
     };
     this.searchBarStoreValue.highlightSearchPoint = highlightSearchPoint;
+    if (this.gridData.jsonPoint) {
+      this.searchBarStoreValue.textKey = this.gridData.jsonPoint.text_key;
+    }
     this.searchBarStore.set(this.searchBarStoreValue);
 
     this.updateEmbedding();
@@ -729,7 +731,16 @@ export class Embedding {
       return null;
     }
 
-    const contourGroup = this.svg.select<SVGGElement>('.contour-group');
+    const contourGroup = this.svg
+      .select<SVGGElement>('.contour-group')
+      // Hide the total contour if the user specifies groups
+      .style(
+        'display',
+        this.gridData.groupGrids !== undefined &&
+          this.gridData.groupNames !== undefined
+          ? 'none'
+          : 'unset'
+      );
 
     const gridData1D: number[] = [];
     for (const row of this.gridData.grid) {
@@ -784,7 +795,7 @@ export class Embedding {
     // (starting from white here)
     const blueScale = d3.interpolateLab(
       '#ffffff',
-      config.colors['light-blue-800']
+      config.layout['groupColors'][0]
     );
     const colorScale = d3.scaleSequential(
       d3.extent(thresholds) as number[],
@@ -927,7 +938,7 @@ export class Embedding {
     // (starting from white here)
     const colorScaleInterpolator = d3.interpolateLab(
       '#ffffff',
-      config.colors['pink-900']
+      config.layout['groupColors'][this.groupNames?.indexOf(group) || 0]
     );
     const colorScale = d3.scaleSequential(
       d3.extent(thresholds) as number[],
@@ -941,6 +952,8 @@ export class Embedding {
       .join('path')
       .attr('fill', d => colorScale(d.value))
       .attr('d', d3.geoPath());
+
+    return contours;
   };
 
   /**
@@ -1040,6 +1053,16 @@ export class Embedding {
         };
         this.treeWorker.postMessage(treeMessage);
 
+        if (!this.gridData) {
+          throw new Error(
+            'Grid data not initialized before loading / transferring data'
+          );
+        }
+        let textKey = null;
+        if (this.gridData.jsonPoint) {
+          textKey = this.gridData.jsonPoint.text_key;
+        }
+
         if (e.data.payload.isFirstBatch) {
           // Add the first batch points
           this.promptPoints = e.data.payload.points;
@@ -1053,7 +1076,8 @@ export class Embedding {
           const searchMessage: SearchWorkerMessage = {
             command: 'addPoints',
             payload: {
-              points: e.data.payload.points
+              points: e.data.payload.points,
+              textKey
             }
           };
           this.searchWorker.postMessage(searchMessage);
@@ -1069,7 +1093,8 @@ export class Embedding {
           const searchMessage: SearchWorkerMessage = {
             command: 'addPoints',
             payload: {
-              points: newPoints
+              points: newPoints,
+              textKey
             }
           };
           this.searchWorker.postMessage(searchMessage);
@@ -1330,12 +1355,17 @@ export class Embedding {
     switch (checkbox) {
       case 'contour': {
         if (group !== undefined) {
+          // Users have specified groups
           if (this.groupNames) {
             const groupIndex = this.groupNames?.indexOf(group);
             this.showContours[groupIndex] = checked;
             this.svg
               .select(`g.contour-group-${group}`)
               .classed('hidden', !this.showContours[groupIndex]);
+
+            if (this.showLabel) {
+              this.layoutTopicLabels(this.userMaxLabelNum, true);
+            }
           }
         } else {
           this.showContours = new Array<boolean>(this.showContours.length).fill(

@@ -1,9 +1,9 @@
 import { config } from '../../config/config';
-import { timeit, rgbToHex } from '../../utils/utils';
-import d3 from '../../utils/d3-import';
-import { updatePopperTooltip } from './EmbeddingLabel';
-import type { Embedding } from './Embedding';
 import type { PromptPoint } from '../../types/embedding-types';
+import d3 from '../../utils/d3-import';
+import { rgbToHex, timeit } from '../../utils/utils';
+import type { Embedding } from './Embedding';
+import { updatePopperTooltip } from './EmbeddingLabel';
 import fragmentShader from './shaders/point.frag?raw';
 import vertexShader from './shaders/point.vert?raw';
 
@@ -542,6 +542,45 @@ export function highlightPoint(
     }
   }
 
+  if (this.gridData?.jsonPoint !== undefined) {
+    if (
+      this.gridData?.jsonPoint.group_labels == undefined ||
+      (this.hoverPoint.groupID !== undefined &&
+        this.gridData?.jsonPoint.group_labels.includes(this.hoverPoint.groupID))
+    ) {
+      try {
+        const jsonData = JSON.parse(this.hoverPoint.prompt) as Record<
+          string,
+          string
+        >;
+        const textKey = this.gridData?.jsonPoint.text_key;
+        const imageKey = this.gridData?.jsonPoint.image_key;
+        const text = jsonData[textKey];
+        let imageSrc: string | null = null;
+        let imageHTML = '';
+        if (imageKey) {
+          imageSrc = jsonData[imageKey];
+          if (imageSrc) {
+            imageHTML = `<div class="tooltip-image-container">
+          <img class="tooltip-image" src="${
+            (this.gridData?.jsonPoint.image_url_prefix || '') + imageSrc
+          }"></div>`;
+          }
+        }
+
+        this.hoverPoint.prompt = `<div class="tooltip-json-container">
+        ${imageHTML}
+        <div class="tooltip-json-text">
+          ${text}
+        </div>
+      </div>`;
+      } catch (e) {
+        // we override the prompt, so it's possible it has parsing error
+        // when user hovers over the point again
+      }
+    }
+  }
+
   if (pointMouseleaveTimer !== null) {
     clearTimeout(pointMouseleaveTimer);
     pointMouseleaveTimer = null;
@@ -586,7 +625,8 @@ export function highlightPoint(
             this.tooltipTop,
             curHighlightPoint.node()! as unknown as HTMLElement,
             point.prompt,
-            'top'
+            'top',
+            null
           );
         });
     } else {
@@ -600,7 +640,8 @@ export function highlightPoint(
         this.tooltipTop,
         curHighlightPoint.node()! as unknown as HTMLElement,
         point.prompt,
-        'top'
+        'top',
+        null
       );
     }
   }

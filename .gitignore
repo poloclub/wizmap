@@ -29,3 +29,5 @@ notebook-widget/wizmap/wizmap.js
 
 example/*.json
 example/*.ndjson
+notebooks
+public/data/temp

@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { SearchPanel } from './SearchPanel';
   import type { Writable } from 'svelte/store';
-  import type { SearchBarStoreValue } from '../../stores';
   import { config } from '../../config/config';
-  import d3 from '../../utils/d3-import';
-  import iconTop from '../../imgs/icon-top.svg?raw';
   import iconCancel from '../../imgs/icon-cancel.svg?raw';
   import iconSearch from '../../imgs/icon-search.svg?raw';
+  import iconTop from '../../imgs/icon-top.svg?raw';
   import iconWizmap from '../../imgs/icon-wizmap.svg?raw';
+  import type { SearchBarStoreValue } from '../../stores';
+  import d3 from '../../utils/d3-import';
+  import { SearchPanel } from './SearchPanel';
 
   export let searchPanelStore: Writable<SearchBarStoreValue>;
 
@@ -55,7 +55,7 @@
 </script>
 
 <style lang="scss">
-  @import './SearchPanel.scss';
+  @use './SearchPanel.scss' as *;
 </style>
 
 <div class="search-panel-wrapper" bind:this="{component}">

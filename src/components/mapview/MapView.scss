@@ -1,4 +1,4 @@
-@import '../../define.scss';
+@use '../../define.scss' as *;
 
 .mapview-page {
   display: flex;
@@ -45,10 +45,6 @@
   transition: opacity 300ms ease-in-out;
   border-radius: $border-radius;
 
-  &.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
 }
 
 .popper-tooltip {
@@ -89,7 +85,7 @@
   .popper-content {
     max-width: 300px;
     max-height: 200px;
-    line-height: 1.5;
+    line-height: 1.3;
     overflow: hidden;
     display: flex;
 
@@ -97,6 +93,24 @@
       width: 100px;
       height: 100px;
       object-fit: contain;
+    }
+
+    :global(.tooltip-json-container) {
+      display: flex;
+      flex-flow: row;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    :global(.tooltip-json-container .tooltip-image-container) {
+      margin: 3px 0px;
+      width: 100px;
+      height: 100px;
+    }
+
+    :global(.tooltip-json-container .tooltip-json-text) {
+      text-align: left;
+      overflow: auto;
     }
   }
 

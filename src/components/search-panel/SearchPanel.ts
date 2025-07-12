@@ -1,8 +1,8 @@
 import type { Writable } from 'svelte/store';
-import d3 from '../../utils/d3-import';
-import type { SearchResult, PromptPoint } from '../../types/embedding-types';
 import type { SearchBarStoreValue } from '../../stores';
 import { getSearchBarStoreDefaultValue } from '../../stores';
+import type { PromptPoint, SearchResult } from '../../types/embedding-types';
+import d3 from '../../utils/d3-import';
 
 export class SearchPanel {
   component: HTMLElement;
@@ -56,9 +56,20 @@ export class SearchPanel {
 
     for (const resultPoint of results) {
       // Try to avoid XSS attack
-      const result = resultPoint.prompt;
+      let result = resultPoint.prompt;
       if (result.includes('iframe')) continue;
       if (result.includes('<script')) continue;
+
+      // Parse json if needed
+      if (this.searchBarStoreValue.textKey) {
+        try {
+          const jsonData = JSON.parse(result) as Record<string, string>;
+          result = jsonData[this.searchBarStoreValue.textKey];
+        } catch (e) {
+          console.error('Failed to parse prompt', result);
+          result = resultPoint.prompt;
+        }
+      }
 
       const searchWords = new Set(query.split(/\s+/));
       const newResult: SearchResult = {

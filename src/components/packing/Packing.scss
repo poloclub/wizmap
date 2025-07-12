@@ -1,4 +1,4 @@
-@import '../../define.scss';
+@use '../../define.scss' as *;
 
 .packing-wrapper {
   display: flex;

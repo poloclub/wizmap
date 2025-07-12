@@ -71,6 +71,12 @@
       break;
     }
 
+    case 'temp': {
+      dataURLs.point = DATA_BASE + '/temp/data.ndjson';
+      dataURLs.grid = DATA_BASE + '/temp/grid.json';
+      break;
+    }
+
     default: {
       console.error(`Unknown dataset name: ${datasetName}`);
     }
@@ -134,7 +140,7 @@
 </script>
 
 <style lang="scss">
-  @import './Embedding.scss';
+  @use './Embedding.scss' as *;
 </style>
 
 <div class="embedding-wrapper" bind:this="{component}">
