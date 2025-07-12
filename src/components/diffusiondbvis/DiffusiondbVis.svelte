@@ -40,7 +40,7 @@
 </script>
 
 <style lang="scss">
-  @import './DiffusiondbVis.scss';
+  @use './DiffusiondbVis.scss' as *;
 </style>
 
 <div class="diffusiondbvis-page">
