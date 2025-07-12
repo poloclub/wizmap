@@ -511,7 +511,9 @@ def select_topic_levels(
 
     while scale <= max_zoom_scale:
         best_level = 1
-        best_tile_width_diff = np.Infinity
+
+        # Check if 'np.inf' exists (NumPy 2.0+) and use it instead of deprecated 'np.Infinity'
+        best_tile_width_diff = np.inf if hasattr(np, "inf") else np.Infinity
 
         for l in range(1, 21):
             tile_num = 2**l
