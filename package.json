@@ -87,7 +87,6 @@
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-svelte": "^7.1.0",
     "rollup-plugin-terser": "^7.0.2",
-    "sass": "^1.57.1",
     "svelte": "^3.52.0",
     "svelte-check": "^2.9.2",
     "svelte-preprocess": "^4.10.7",

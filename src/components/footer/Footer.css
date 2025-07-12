@@ -1,0 +1,283 @@
+@import "../../define.css";
+.footer-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  pointer-events: all;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px 2px 4px;
+  line-height: 1;
+  border-top-left-radius: 2px;
+  /* background-color: change-color(var(--purple-50), 94% / 0.9); */
+  background-color: color-mix(in srgb, var(--gray-50) 90%, transparent);
+  user-select: none;
+  -webkit-user-select: none;
+
+  a {
+    color: currentColor;
+
+    &:hover {
+      color: var(--purple-600);
+    }
+  }
+
+  button:hover {
+    color: var(--purple-600);
+    text-decoration: underline;
+  }
+
+  .name {
+    font-weight: 700;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .splitter {
+    height: 12px;
+    width: 1px;
+    border-right: 1px solid var(--gray-400);
+  }
+
+  .scale-legend {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+
+    .scale-line {
+      height: 8px;
+      border: 1px solid currentColor;
+      border-top: none;
+    }
+  }
+
+  .item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+
+    .svg-icon {
+      width: 1em;
+      height: 1em;
+    }
+  }
+
+  .count {
+    position: relative;
+
+    span.hidden {
+      visibility: hidden;
+    }
+
+    .subset-count {
+      position: absolute;
+      right: 0;
+    }
+  }
+}
+
+
+.svg-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1em;
+  height: 1em;
+  color: currentColor;
+  pointer-events: fill;
+}
+
+.svg-icon :global(svg) {
+  fill: currentColor;
+  width: 100%;
+  height: 100%;
+}
+
+.zoom-control {
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white);
+  box-shadow: 0 1px 4px hsla(0, 0%, 0%, 0.3);
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.zoom-button {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  color: var(--gray-700);
+  transition: background-color 100ms ease-in-out;
+}
+
+.zoom-button.zoom-button-plus {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.zoom-button.zoom-button-minus {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.zoom-button.zoom-button-reset {
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.zoom-button:hover {
+  background-color: var(--gray-200);
+}
+
+.zoom-button:active {
+  background-color: color-mix(in srgb, var(--gray-100) 90%, var(--black) 10%);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+dialog[open] {
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
+  pointer-events: all;
+}
+
+dialog[open]::backdrop {
+  background-color: color-mix(in srgb, var(--black) 55%, transparent);
+  animation: fade-in 300ms;
+}
+
+dialog[open] .header {
+  padding: 0px 20px 0 20px;
+  margin: 0;
+  line-height: 1;
+  font-size: 1.1875rem;
+  font-weight: 600;
+  /* background-color: change-color(var(--purple-100), 96%); */
+  width: 100%;
+}
+
+dialog[open] .header:first-of-type {
+  padding: 16px 20px 0 20px;
+}
+
+dialog[open] button {
+  background-color: var(--gray-200);
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-grow: 0;
+  transition: background-color 150ms ease-in-out;
+}
+
+dialog[open] button:hover {
+  background-color: var(--gray-300);
+}
+
+dialog[open] button:active {
+  background-color: var(--gray-400);
+}
+
+dialog[open] ul {
+  margin: 0;
+  padding: 0;
+  padding-left: 20px;
+}
+
+dialog[open] .row-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0px 20px;
+}
+
+dialog[open] .row-block .row-name {
+  color: var(--gray-500);
+  font-weight: 600;
+}
+
+dialog[open] .row-block a {
+  color: var(--purple-500);
+}
+
+dialog[open] .separator {
+  display: flex;
+  width: calc(100% - 40px);
+  height: 3px;
+  border-radius: 5px;
+  background-color: var(--gray-200);
+}
+
+dialog[open] .input-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0px 20px;
+  gap: 10px;
+}
+
+dialog[open] .input-form .row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+dialog[open] .input-form .row .row-header {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+dialog[open] .input-form .row .row-header a {
+  font-weight: 400;
+  font-size: 0.875rem;
+  color: var(--purple-500);
+}
+
+dialog[open] .input-form .row input {
+  width: 100%;
+}
+
+dialog[open] .button-block {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  padding: 0px 20px 16px 20px;
+}
+
+dialog[open] .button-block a {
+  color: currentColor;
+  font-style: normal;
+  text-decoration: none;
+}
+

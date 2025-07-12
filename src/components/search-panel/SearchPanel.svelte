@@ -54,8 +54,8 @@
   $: mounted && !initialized && component && searchPanelStore && initView();
 </script>
 
-<style lang="scss">
-  @import './SearchPanel.scss';
+<style >
+  @import './SearchPanel.css';
 </style>
 
 <div class="search-panel-wrapper" bind:this="{component}">

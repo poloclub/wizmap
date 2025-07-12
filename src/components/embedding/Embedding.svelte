@@ -139,8 +139,8 @@
   $: mounted && !initialized && component && !notebookMode && initView();
 </script>
 
-<style lang="scss">
-  @import './Embedding.scss';
+<style >
+  @import './Embedding.css';
 </style>
 
 <div class="embedding-wrapper" bind:this="{component}">

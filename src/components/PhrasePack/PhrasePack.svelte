@@ -2,8 +2,8 @@
   let component = null;
 </script>
 
-<style lang="scss">
-  @import './PhrasePack.scss';
+<style >
+  @import './PhrasePack.css';
 </style>
 
 <div class="phrasepack-page">

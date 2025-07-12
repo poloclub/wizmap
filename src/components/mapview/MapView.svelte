@@ -33,8 +33,8 @@
   const searchBarStore = getSearchBarStore();
 </script>
 
-<style lang="scss">
-  @import './MapView.scss';
+<style >
+  @import './MapView.css';
 </style>
 
 <div class="mapview-page">

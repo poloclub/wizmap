@@ -39,8 +39,8 @@
   const tooltipStore = getTooltipStore();
 </script>
 
-<style lang="scss">
-  @import './DiffusiondbVis.scss';
+<style >
+  @import './DiffusiondbVis.css';
 </style>
 
 <div class="diffusiondbvis-page">

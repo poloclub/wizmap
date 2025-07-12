@@ -34,8 +34,8 @@
   $: mounted && !initialized && component && tooltipStore && initView();
 </script>
 
-<style lang="scss">
-  @import './Packing.scss';
+<style >
+  @import './Packing.css';
 </style>
 
 <div class="packing-wrapper" bind:this={component}>

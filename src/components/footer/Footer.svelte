@@ -69,8 +69,8 @@
   $: mounted && !initialized && component && footerStore && initView();
 </script>
 
-<style lang="scss">
-  @import './Footer.scss';
+<style >
+  @import './Footer.css';
 </style>
 
 <div class="footer-wrapper" bind:this="{component}">
