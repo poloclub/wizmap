@@ -1,5 +1,6 @@
 @use 'sass:math';
-@import '../../define.scss';
+@use 'sass:color';
+@use '../../define.scss' as *;
 
 .embedding-wrapper {
   display: flex;
@@ -361,15 +362,15 @@ $search-panel-width: 356px;
       }
 
       &.activated {
-        background-color: change-color($color: $purple-50, $lightness: 95%);
+        background-color: color.change($purple-50, $lightness: 95%);
         color: $purple-600;
 
         &:hover {
-          background-color: change-color($color: $purple-50, $lightness: 92%);
+          background-color: color.change($purple-50, $lightness: 92%);
         }
 
         &:active {
-          background-color: change-color($color: $purple-50, $lightness: 88%);
+          background-color: color.change($purple-50, $lightness: 88%);
         }
       }
 

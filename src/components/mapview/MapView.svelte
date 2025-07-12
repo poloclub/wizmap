@@ -34,7 +34,7 @@
 </script>
 
 <style lang="scss">
-  @import './MapView.scss';
+  @use './MapView.scss' as *;
 </style>
 
 <div class="mapview-page">

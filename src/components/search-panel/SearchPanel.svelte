@@ -55,7 +55,7 @@
 </script>
 
 <style lang="scss">
-  @import './SearchPanel.scss';
+  @use './SearchPanel.scss' as *;
 </style>
 
 <div class="search-panel-wrapper" bind:this="{component}">

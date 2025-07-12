@@ -140,7 +140,7 @@
 </script>
 
 <style lang="scss">
-  @import './Embedding.scss';
+  @use './Embedding.scss' as *;
 </style>
 
 <div class="embedding-wrapper" bind:this="{component}">

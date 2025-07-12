@@ -35,7 +35,7 @@
 </script>
 
 <style lang="scss">
-  @import './Packing.scss';
+  @use './Packing.scss' as *;
 </style>
 
 <div class="packing-wrapper" bind:this={component}>

@@ -1,4 +1,5 @@
-@import '../../define.scss';
+@use 'sass:color';
+@use '../../define.scss' as *;
 
 $button-border-radius: 8px;
 
@@ -55,7 +56,7 @@ $search-bar-gap: 8px;
 
   padding: 0 $search-bar-h-padding;
   border-radius: $button-border-radius;
-  background-color: change-color($color: white, $alpha: 1);
+  background-color: color.change(white, $alpha: 1);
   transition: box-shadow 150ms ease-in-out;
   box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.2), 0 -1px 0 hsla(0, 0%, 0%, 0.02);
 
@@ -126,11 +127,11 @@ $search-bar-gap: 8px;
       cursor: default;
 
       &:hover {
-        color: adjust-color($color: $gray-500, $lightness: -10%);
+        color: color.adjust($gray-500, $lightness: -10%);
       }
 
       &:active {
-        color: adjust-color($color: $gray-500, $lightness: 10%);
+        color: color.adjust($gray-500, $lightness: 10%);
       }
 
       &.hidden {
@@ -227,7 +228,7 @@ $search-panel-width: $search-input-width + $search-bar-gap * 2 +
       }
 
       &:hover {
-        background-color: change-color($color: $purple-100, $lightness: 96%);
+        background-color: color.change($purple-100, $lightness: 96%);
       }
 
       :global(em) {

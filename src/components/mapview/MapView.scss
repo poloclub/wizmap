@@ -1,4 +1,4 @@
-@import '../../define.scss';
+@use '../../define.scss' as *;
 
 .mapview-page {
   display: flex;
@@ -45,10 +45,6 @@
   transition: opacity 300ms ease-in-out;
   border-radius: $border-radius;
 
-  &.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
 }
 
 .popper-tooltip {

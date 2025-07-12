@@ -70,7 +70,7 @@
 </script>
 
 <style lang="scss">
-  @import './Footer.scss';
+  @use './Footer.scss' as *;
 </style>
 
 <div class="footer-wrapper" bind:this="{component}">
