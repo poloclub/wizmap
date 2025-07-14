@@ -20,20 +20,31 @@ class JsonPointContentConfig(TypedDict):
     """Config for json point.
 
     Args:
-        group_labels (list[int] | None): A list of group labels. Each data point has a
+        textKey (str): The key for the text, e.g., 'text' or 't'.
+        groupLabels (list[int] | None): A list of group labels. Each data point has a
         group label. If a point's group label is in this list, wizmap will use
         json parser to parse the data point's text content. If it is None, wizmap
         will apply json parsing to all data points.
-        text_key (str): The key for the text, e.g., 'text' or 't'.
-        image_key (str | None): The key for the image content, e.g., 'image' or 'i'.
-        image_url_prefix (str | None): The prefix for the image URL, e.g.,
+        imageKey (str | None): The key for the image content, e.g., 'image' or 'i'.
+        imageURLPrefix (str | None): The prefix for the image URL, e.g.,
         'https://example.com/images/'.
+        largeImageKey (str | None): The key for the large image content, e.g.,
+        'large_image' or 'li'. The image will be shown in the floating window after
+        clicking on the point.
+        largeImageURLPrefix (str | None): The prefix for the large image URL, e.g.,
+        'https://example.com/large_images/'.
+        linkFieldKeys (list[str] | None): A list of field keys for the link content,
+        e.g., ['link1', 'link2']. The parameter tells WizMap to render the value of
+        these keys as clickable links in the floating window.
     """
 
-    group_labels: list[int] | None
-    text_key: str
-    image_key: str | None
-    image_url_prefix: str | None
+    textKey: str
+    groupLabels: list[int] | None
+    imageKey: str | None
+    imageURLPrefix: str | None
+    largeImageKey: str | None
+    largeImageURLPrefix: str | None
+    linkFieldKeys: list[str] | None
 
 
 def generate_contour_dict(
@@ -538,7 +549,7 @@ def generate_topic_dict(
     svg_width=1000,
     svg_height=1000,
     ideal_tile_width=35,
-    stop_words: list[str] = "english",
+    stop_words: list[str] = ["english"],
 ):
     """Generate a topic dictionary object that encodes the topics of different
     regions in the embedding map across scales.
@@ -644,7 +655,7 @@ def generate_grid_dict(
     image_label: int | None = None,
     image_url_prefix: str | None = None,
     opacity: float | None = None,
-    stop_words: list[str] = "english",
+    stop_words: list[str] = ["english"],
     json_point_content_config: JsonPointContentConfig | None = None,
 ):
     """Generate a grid dictionary object that encodes the contour plot and the
@@ -698,7 +709,7 @@ def generate_grid_dict(
     # If the user uses json point, we need to extract the text content first
     if json_point_content_config is not None:
         real_texts = [
-            json.loads(d)[json_point_content_config["text_key"]] for d in texts
+            json.loads(d)[json_point_content_config["textKey"]] for d in texts
         ]
     else:
         real_texts = texts
