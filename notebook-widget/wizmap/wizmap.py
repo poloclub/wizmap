@@ -13,7 +13,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from quadtreed3 import Quadtree, Node
 from scipy.sparse import csr_matrix
 from sklearn.neighbors import KernelDensity
-from typing import Tuple, TypedDict
+from typing import Tuple, TypedDict, Literal
 
 
 class JsonPointContentConfig(TypedDict):
@@ -549,7 +549,7 @@ def generate_topic_dict(
     svg_width=1000,
     svg_height=1000,
     ideal_tile_width=35,
-    stop_words: list[str] = ["english"],
+    stop_words: list[str] | Literal["english"] = "english",
 ):
     """Generate a topic dictionary object that encodes the topics of different
     regions in the embedding map across scales.
@@ -561,7 +561,7 @@ def generate_topic_dict(
         max_zoom_scale (float): The maximal zoom scale (default to zoom x 30)
         svg_width (float): The approximate size of the wizmap window
         svg_height (float): The approximate size of the wizmap window
-        stop_words (list[str]): Stop words for the count vectorizer
+        stop_words (list[str] | Literal["english"]): Stop words for the count vectorizer.
 
     Returns:
         dict: A dictionary object encodes the contour plot.
@@ -655,7 +655,7 @@ def generate_grid_dict(
     image_label: int | None = None,
     image_url_prefix: str | None = None,
     opacity: float | None = None,
-    stop_words: list[str] = ["english"],
+    stop_words: list[str] | Literal["english"] = "english",
     json_point_content_config: JsonPointContentConfig | None = None,
 ):
     """Generate a grid dictionary object that encodes the contour plot and the
@@ -685,7 +685,7 @@ def generate_grid_dict(
         image_url_prefix (str): The url prefix for all image texts
         opacity (float): The opacity of data points. If it is None, WizMap will
             dynamically adjust the opacity values. Defaults to None.
-        stop_words (list[str]): A set of stop words to filter out when generating topics
+        stop_words (list[str] | Literal["english"]): A set of stop words to filter out when generating topics.
         json_point_content_config (JsonPointContentConfig | None): Config for json point.
             A json point can include both image and text, etc.
 
