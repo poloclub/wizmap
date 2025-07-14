@@ -1,21 +1,26 @@
 <script lang="ts">
-  import { Embedding } from './Embedding';
   import { onMount } from 'svelte';
-  import type {
-    EmbeddingInitSetting,
-    DataURLs
-  } from '../../types/embedding-types';
-  import type { NotebookEvent } from '../../types/common-types';
   import type { Writable } from 'svelte/store';
-  import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
-  import iconContour2 from '../../imgs/icon-contour.svg?raw';
-  import iconPoint from '../../imgs/icon-point.svg?raw';
-  import iconLabel from '../../imgs/icon-label.svg?raw';
-  import iconGrid from '../../imgs/icon-grid.svg?raw';
-  import iconTime from '../../imgs/icon-time.svg?raw';
   import iconCaret from '../../imgs/icon-caret-down.svg?raw';
-  import iconPlay from '../../imgs/icon-play-solid.svg?raw';
+  import iconContour2 from '../../imgs/icon-contour.svg?raw';
+  import iconGrid from '../../imgs/icon-grid.svg?raw';
+  import iconLabel from '../../imgs/icon-label.svg?raw';
   import iconPause from '../../imgs/icon-pause-solid.svg?raw';
+  import iconPlay from '../../imgs/icon-play-solid.svg?raw';
+  import iconPoint from '../../imgs/icon-point.svg?raw';
+  import iconTime from '../../imgs/icon-time.svg?raw';
+  import type {
+    FloatingWindowStoreValue,
+    FooterStoreValue,
+    SearchBarStoreValue
+  } from '../../stores';
+  import type { NotebookEvent } from '../../types/common-types';
+  import type {
+    DataURLs,
+    EmbeddingInitSetting
+  } from '../../types/embedding-types';
+  import FloatingWindow from '../floating-window/FloatingWindow.svelte';
+  import { Embedding } from './Embedding';
   const iconContour = iconContour2.replaceAll('black', 'currentColor');
 
   let component: HTMLElement | null = null;
@@ -36,6 +41,7 @@
   export let gridURL: string | null = null;
   export let footerStore: Writable<FooterStoreValue>;
   export let searchBarStore: Writable<SearchBarStoreValue>;
+  export let floatingWindowStore: Writable<FloatingWindowStoreValue>;
   export let notebookMode: boolean;
 
   // Resolve the embedding data files based on the embedding
@@ -121,7 +127,8 @@
         defaultSetting,
         dataURLs,
         footerStore,
-        searchBarStore
+        searchBarStore,
+        floatingWindowStore
       });
     }
   };
@@ -153,6 +160,10 @@
     <canvas class="topic-grid-canvas top"></canvas>
     <canvas class="topic-grid-canvas bottom"></canvas>
     <svg class="embedding-svg"></svg>
+  </div>
+
+  <div class="floating-window-wrapper">
+    <FloatingWindow {floatingWindowStore} />
   </div>
 
   <div class="control-bar">

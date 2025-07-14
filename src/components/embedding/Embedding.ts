@@ -1,8 +1,13 @@
 import createRegl from 'regl';
 import type { Writable } from 'svelte/store';
 import { config } from '../../config/config';
-import type { FooterStoreValue, SearchBarStoreValue } from '../../stores';
+import type {
+  FloatingWindowStoreValue,
+  FooterStoreValue,
+  SearchBarStoreValue
+} from '../../stores';
 import {
+  getFloatingWindowStoreDefaultValue,
   getFooterStoreDefaultValue,
   getSearchBarStoreDefaultValue
 } from '../../stores';
@@ -13,6 +18,7 @@ import type {
   DrawnLabel,
   EmbeddingInitSetting,
   GridData,
+  HighlightedPromptPoint,
   LabelData,
   LevelTileDataItem,
   LevelTileMap,
@@ -83,7 +89,7 @@ export class Embedding {
   // Tooltips
   tooltipTop: HTMLElement;
   tooltipBottom: HTMLElement;
-  hoverPoint: PromptPoint | null = null;
+  hoverPoint: HighlightedPromptPoint | null = null;
 
   xScale: d3.ScaleLinear<number, number, never>;
   yScale: d3.ScaleLinear<number, number, never>;
@@ -142,6 +148,8 @@ export class Embedding {
   footerStoreValue: FooterStoreValue;
   searchBarStore: Writable<SearchBarStoreValue>;
   searchBarStoreValue: SearchBarStoreValue;
+  floatingWindowStore: Writable<FloatingWindowStoreValue>;
+  floatingWindowStoreValue: FloatingWindowStoreValue;
 
   // Display labels
   topicLevelTrees: Map<number, d3.Quadtree<TopicData>> = new Map<
@@ -202,7 +210,8 @@ export class Embedding {
     defaultSetting,
     dataURLs,
     footerStore,
-    searchBarStore
+    searchBarStore,
+    floatingWindowStore
   }: {
     component: HTMLElement;
     updateEmbedding: () => void;
@@ -210,6 +219,7 @@ export class Embedding {
     dataURLs: DataURLs;
     footerStore: Writable<FooterStoreValue>;
     searchBarStore: Writable<SearchBarStoreValue>;
+    floatingWindowStore: Writable<FloatingWindowStoreValue>;
   }) {
     this.component = component;
     this.updateEmbedding = updateEmbedding;
@@ -220,6 +230,9 @@ export class Embedding {
 
     this.searchBarStore = searchBarStore;
     this.searchBarStoreValue = getSearchBarStoreDefaultValue();
+
+    this.floatingWindowStore = floatingWindowStore;
+    this.floatingWindowStoreValue = getFloatingWindowStoreDefaultValue();
 
     // Init some properties based on the default setting
     this.showContours = [defaultSetting.showContour];
@@ -363,6 +376,7 @@ export class Embedding {
       .attr('width', `${this.svgFullSize.width}px`)
       .attr('height', `${this.svgFullSize.height}px`)
       .on('pointermove', e => this.mousemoveHandler(e as MouseEvent))
+      .on('click', e => this.clickHandler(e as MouseEvent))
       .on('mouseleave', () => {
         this.highlightPoint({ point: undefined, animated: false });
         this.mouseoverLabel(null, null);
@@ -510,6 +524,10 @@ export class Embedding {
         this.searchPointCanvas.classed('hidden', true);
         this.searchPointResults = [];
       }
+    });
+
+    this.floatingWindowStore.subscribe(value => {
+      this.floatingWindowStoreValue = value;
     });
   };
 
@@ -692,7 +710,7 @@ export class Embedding {
     };
     this.searchBarStoreValue.highlightSearchPoint = highlightSearchPoint;
     if (this.gridData.jsonPoint) {
-      this.searchBarStoreValue.textKey = this.gridData.jsonPoint.text_key;
+      this.searchBarStoreValue.textKey = this.gridData.jsonPoint.textKey;
     }
     this.searchBarStore.set(this.searchBarStoreValue);
 
@@ -1060,7 +1078,7 @@ export class Embedding {
         }
         let textKey = null;
         if (this.gridData.jsonPoint) {
-          textKey = this.gridData.jsonPoint.text_key;
+          textKey = this.gridData.jsonPoint.textKey;
         }
 
         if (e.data.payload.isFirstBatch) {
@@ -1283,6 +1301,19 @@ export class Embedding {
     // Show labels
     if (!this.hideHighlights) {
       this.mouseoverLabel(x, y);
+    }
+  };
+
+  /**
+   * Event handler for mouseclick
+   * @param e Mouse event
+   */
+  clickHandler = (e: MouseEvent) => {
+    // If there is a highlighted point, show the floating window
+    if (this.hoverPoint) {
+      this.floatingWindowStoreValue.point = this.hoverPoint;
+      this.floatingWindowStoreValue.gridData = this.gridData;
+      this.floatingWindowStore.set(this.floatingWindowStoreValue);
     }
   };
 

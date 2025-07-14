@@ -1,5 +1,8 @@
 import { config } from '../../config/config';
-import type { PromptPoint } from '../../types/embedding-types';
+import type {
+  HighlightedPromptPoint,
+  PromptPoint
+} from '../../types/embedding-types';
 import d3 from '../../utils/d3-import';
 import { rgbToHex, timeit } from '../../utils/utils';
 import type { Embedding } from './Embedding';
@@ -531,12 +534,16 @@ export function highlightPoint(
   }
 
   // Hovering over a point
-  this.hoverPoint = point;
+  const highlightedPoint: HighlightedPromptPoint = {
+    ...point,
+    tooltip: point.prompt
+  };
+  this.hoverPoint = highlightedPoint;
 
   // Change the point's text to an image tag if this is an image point
   if (this.gridData?.image !== undefined) {
     if (this.gridData?.image.imageGroup == this.hoverPoint.groupID) {
-      this.hoverPoint.prompt = `<img class="tooltip-image"
+      this.hoverPoint.tooltip = `<img class="tooltip-image"
         src="${this.gridData?.image.imageURLPrefix + this.hoverPoint.prompt}"
       >`;
     }
@@ -544,17 +551,17 @@ export function highlightPoint(
 
   if (this.gridData?.jsonPoint !== undefined) {
     if (
-      this.gridData?.jsonPoint.group_labels == undefined ||
+      this.gridData?.jsonPoint.groupLabels == undefined ||
       (this.hoverPoint.groupID !== undefined &&
-        this.gridData?.jsonPoint.group_labels.includes(this.hoverPoint.groupID))
+        this.gridData?.jsonPoint.groupLabels.includes(this.hoverPoint.groupID))
     ) {
       try {
         const jsonData = JSON.parse(this.hoverPoint.prompt) as Record<
           string,
           string
         >;
-        const textKey = this.gridData?.jsonPoint.text_key;
-        const imageKey = this.gridData?.jsonPoint.image_key;
+        const textKey = this.gridData?.jsonPoint.textKey;
+        const imageKey = this.gridData?.jsonPoint.imageKey;
         const text = jsonData[textKey];
         let imageSrc: string | null = null;
         let imageHTML = '';
@@ -563,12 +570,12 @@ export function highlightPoint(
           if (imageSrc) {
             imageHTML = `<div class="tooltip-image-container">
           <img class="tooltip-image" src="${
-            (this.gridData?.jsonPoint.image_url_prefix || '') + imageSrc
+            (this.gridData?.jsonPoint.imageURLPrefix || '') + imageSrc
           }"></div>`;
           }
         }
 
-        this.hoverPoint.prompt = `<div class="tooltip-json-container">
+        this.hoverPoint.tooltip = `<div class="tooltip-json-container">
         ${imageHTML}
         <div class="tooltip-json-text">
           ${text}
@@ -624,7 +631,7 @@ export function highlightPoint(
           updatePopperTooltip(
             this.tooltipTop,
             curHighlightPoint.node()! as unknown as HTMLElement,
-            point.prompt,
+            highlightedPoint.tooltip,
             'top',
             null
           );
@@ -639,7 +646,7 @@ export function highlightPoint(
       updatePopperTooltip(
         this.tooltipTop,
         curHighlightPoint.node()! as unknown as HTMLElement,
-        point.prompt,
+        highlightedPoint.tooltip,
         'top',
         null
       );
