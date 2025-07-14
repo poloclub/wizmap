@@ -1,5 +1,9 @@
 import { writable } from 'svelte/store';
-import type { PromptPoint } from './types/embedding-types';
+import type {
+  GridData,
+  HighlightedPromptPoint,
+  PromptPoint
+} from './types/embedding-types';
 import d3 from './utils/d3-import';
 
 export interface SearchBarStoreValue {
@@ -34,6 +38,13 @@ export interface TooltipStoreValue {
   fontSize: number;
   orientation: string;
   mouseoverTimeout: number | null;
+}
+
+export interface FloatingWindowStoreValue {
+  point: HighlightedPromptPoint | null;
+  gridData: GridData | null;
+  left?: number;
+  top?: number;
 }
 
 export const getSearchBarStoreDefaultValue = (): SearchBarStoreValue => {
@@ -74,6 +85,16 @@ export const getTooltipStoreDefaultValue = (): TooltipStoreValue => {
   };
 };
 
+export const getFloatingWindowStoreDefaultValue =
+  (): FloatingWindowStoreValue => {
+    return {
+      point: null,
+      gridData: null,
+      left: undefined,
+      top: undefined
+    };
+  };
+
 export const getSearchBarStore = () => {
   return writable(getSearchBarStoreDefaultValue());
 };
@@ -84,4 +105,8 @@ export const getFooterStore = () => {
 
 export const getTooltipStore = () => {
   return writable(getTooltipStoreDefaultValue());
+};
+
+export const getFloatingWindowStore = () => {
+  return writable(getFloatingWindowStoreDefaultValue());
 };

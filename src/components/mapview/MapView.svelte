@@ -1,11 +1,16 @@
 <script lang="ts">
-  import { getFooterStore, getSearchBarStore } from '../../stores';
+  import {
+    getFloatingWindowStore,
+    getFooterStore,
+    getSearchBarStore
+  } from '../../stores';
   import Embedding from '../embedding/Embedding.svelte';
   import Footer from '../footer/Footer.svelte';
   import SearchPanel from '../search-panel/SearchPanel.svelte';
 
   let component: HTMLElement | null = null;
   let datasetName = 'acl-abstracts';
+  // let datasetName = 'temp';
   let dataURL: string | null = null;
   let gridURL: string | null = null;
   let notebookMode = false;
@@ -31,6 +36,7 @@
   // Create stores for child components to consume
   const footerStore = getFooterStore();
   const searchBarStore = getSearchBarStore();
+  const floatingWindowStore = getFloatingWindowStore();
 </script>
 
 <style lang="scss">
@@ -57,6 +63,7 @@
           {gridURL}
           {footerStore}
           {searchBarStore}
+          {floatingWindowStore}
           {notebookMode}
         />
       </div>

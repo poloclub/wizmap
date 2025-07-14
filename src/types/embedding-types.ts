@@ -271,6 +271,10 @@ export interface PromptPoint extends Point {
   groupID?: number;
 }
 
+export interface HighlightedPromptPoint extends PromptPoint {
+  tooltip: string;
+}
+
 export interface PromptUMAPData {
   xs: number[];
   ys: number[];
@@ -278,8 +282,11 @@ export interface PromptUMAPData {
 }
 
 export interface GridJSONPointEntry {
-  group_labels: number[];
-  text_key: string;
-  image_key?: string | null;
-  image_url_prefix?: string | null;
+  textKey: string;
+  groupLabels?: number[];
+  imageKey?: string | null;
+  imageURLPrefix?: string | null;
+  largeImageKey?: string | null;
+  largeImageURLPrefix?: string | null;
+  linkFieldKeys?: string[];
 }
