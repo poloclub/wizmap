@@ -87,6 +87,29 @@
     class="content"
     on:mousedown="{e => floatingWindow?.contentMousedownHandler(e)}"
   >
-    {floatingWindow?.floatingWindowStoreValue.point?.prompt}
+    {#if floatingWindow?.formattedSections && floatingWindow.formattedSections.length > 0}
+      {#each floatingWindow.formattedSections as section}
+        {#if section.type === 'image'}
+          <div class="section">
+            <div class="section-header">Image</div>
+            <div class="section-content">
+              <img src="{section.content}" alt="{section.header}" />
+            </div>
+          </div>
+        {:else if section.type === 'link'}
+          <div class="section">
+            <div class="section-header">{section.header}</div>
+            <div class="section-content">
+              <a href="{section.content}" target="_blank">{section.content}</a>
+            </div>
+          </div>
+        {:else}
+          <div class="section">
+            <div class="section-header">{section.header}</div>
+            <div class="section-content">{section.content}</div>
+          </div>
+        {/if}
+      {/each}
+    {/if}
   </div>
 </div>

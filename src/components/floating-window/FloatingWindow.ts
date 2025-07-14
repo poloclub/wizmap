@@ -122,18 +122,7 @@ export class FloatingWindow {
     gridData: GridData
   ): FormattedSection[] {
     const sections: FormattedSection[] = [];
-
-    // Case 1: If the point is just a norm text, we show it in one text section
-    if (gridData.image === undefined && gridData.jsonPoint === undefined) {
-      sections.push({
-        type: 'text',
-        header: 'Text',
-        content: point.prompt
-      });
-      return sections;
-    }
-
-    // Case 2: If the point is an image, we show it in one image section
+    // Case 1: If the point is an image, we show it in one image section
     if (
       gridData.image !== undefined &&
       gridData.image.imageGroup == point.groupID
@@ -147,13 +136,65 @@ export class FloatingWindow {
       return sections;
     }
 
-    // Case 3: If the point is a json object, we show it in multiple sections
+    // Case 2: If the point is a json object, we show it in multiple sections
     if (gridData.jsonPoint !== undefined) {
-      const jsonData = JSON.parse(point.prompt) as Record<string, string>;
-      const textKey = gridData.jsonPoint.text_key;
-      const imageKey = gridData.jsonPoint.image_key;
-      const text = jsonData[textKey];
+      if (
+        gridData.jsonPoint.groupLabels == undefined ||
+        (point.groupID !== undefined &&
+          gridData.jsonPoint.groupLabels.includes(point.groupID))
+      ) {
+        const jsonData = JSON.parse(point.prompt) as Record<string, string>;
+        const textKey = gridData.jsonPoint.textKey;
+
+        // If the image key is set, we show the image
+        const imageKey =
+          gridData.jsonPoint.largeImageKey || gridData.jsonPoint.imageKey;
+        const imageURLPrefix =
+          gridData.jsonPoint.largeImageURLPrefix ||
+          gridData.jsonPoint.imageURLPrefix;
+        if (imageKey && imageURLPrefix) {
+          const image = imageURLPrefix + jsonData[imageKey];
+          sections.push({
+            type: 'image',
+            header: 'Image',
+            content: image
+          });
+        }
+
+        // Add text
+        sections.push({
+          type: 'text',
+          header: 'Text',
+          content: jsonData[textKey]
+        });
+
+        // Add all other json fields
+        const usedKeys = new Set([
+          textKey,
+          gridData.jsonPoint.imageKey,
+          gridData.jsonPoint.largeImageKey
+        ]);
+        for (const key in jsonData) {
+          if (!usedKeys.has(key)) {
+            sections.push({
+              type: gridData.jsonPoint.linkFieldKeys?.includes(key)
+                ? 'link'
+                : 'text',
+              header: key,
+              content: jsonData[key]
+            });
+          }
+        }
+      }
+      return sections;
     }
+
+    // Case 3: Everything else, we show it in one text section
+    sections.push({
+      type: 'text',
+      header: 'Text',
+      content: point.prompt
+    });
     return sections;
   }
 
