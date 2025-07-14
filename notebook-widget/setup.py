@@ -12,7 +12,7 @@ requirements = ["numpy", "ipython", "tqdm", "quadtreed3", "ndjson", "scikit-lear
 test_requirements: list[str] = []
 
 # TODO: remember to update version in wizmap/__init__.py as well!
-version = "0.1.5"
+version = "0.1.6"
 
 setup(
     author="Jay Wang",
