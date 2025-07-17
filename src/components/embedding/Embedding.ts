@@ -634,16 +634,19 @@ export class Embedding {
 
       for (let i = 0; i < this.groupNames.length; i++) {
         // Add groups to the control states
-        // (Default is to show the first group only)
-        this.showContours.push(i === 0);
-        this.showPoints.push(i === 0);
+        // (Default is to show all groups)
+        this.showContours.push(true);
+        this.showPoints.push(true);
 
         // Add contour elements for other groups
         const name = this.groupNames[i];
         umapGroup
           .append('g')
-          .attr('class', `contour-group-generic contour-group-${name}`)
-          .classed('hidden', i !== 0);
+          .attr(
+            'class',
+            `contour-group-generic contour-group-${getCSSSafeName(name)}`
+          )
+          .classed('hidden', false);
 
         // Drw the group contour
         const curContour = this.drawGroupContour(name);
@@ -901,7 +904,7 @@ export class Embedding {
     }
 
     const contourGroup = this.svg.select<SVGGElement>(
-      `.contour-group-${group}`
+      `.contour-group-${getCSSSafeName(group)}`
     );
 
     const gridData1D: number[] = [];
@@ -1391,7 +1394,7 @@ export class Embedding {
             const groupIndex = this.groupNames?.indexOf(group);
             this.showContours[groupIndex] = checked;
             this.svg
-              .select(`g.contour-group-${group}`)
+              .select(`g.contour-group-${getCSSSafeName(group)}`)
               .classed('hidden', !this.showContours[groupIndex]);
 
             if (this.showLabel) {
@@ -1531,3 +1534,11 @@ export class Embedding {
 
 const anyTrue = (items: boolean[]) => items.reduce((a, b) => a || b);
 const allTrue = (items: boolean[]) => items.reduce((a, b) => a && b);
+
+const getCSSSafeName = (name: string) => {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '');
+};

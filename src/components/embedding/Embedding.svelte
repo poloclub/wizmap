@@ -238,7 +238,7 @@
               class="checkbox"
               id="checkbox-contour-2"
               name="checkbox-contour-2"
-              checked="{false}"
+              checked="{defaultSetting.showContour}"
               on:input="{e =>
                 displayCheckboxChanged(
                   e,
@@ -319,7 +319,7 @@
               class="checkbox"
               id="checkbox-point-2"
               name="checkbox-point-2"
-              checked="{false}"
+              checked="{defaultSetting.showPoint}"
               on:input="{e =>
                 displayCheckboxChanged(e, 'point', myEmbedding?.groupNames[1])}"
             />
