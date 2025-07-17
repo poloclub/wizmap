@@ -1,11 +1,11 @@
-import d3 from '../../../utils/d3-import';
+import { config } from '../../../config/config';
 import type {
   PromptPoint,
-  UMAPPointStreamData,
-  TreeWorkerMessage
+  TreeWorkerMessage,
+  UMAPPointStreamData
 } from '../../../types/embedding-types';
+import d3 from '../../../utils/d3-import';
 import { timeit } from '../../../utils/utils';
-import { config } from '../../../config/config';
 
 const DEBUG = config.debug;
 
@@ -122,7 +122,6 @@ const initTimeQuadtrees = (
 const updateQuadtree = (points: PromptPoint[]) => {
   // Add these points to the quadtree after sending them to the main thread
   const allTree = groupTimeTreeMap.get(-1)!.get('')!;
-
   for (const point of points) {
     // Add the point to the tree containing all points
     allTree.add(point);
