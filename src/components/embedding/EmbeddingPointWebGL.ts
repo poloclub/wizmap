@@ -575,10 +575,16 @@ export function highlightPoint(
           }
         }
 
+        // Sanitize text by replacing < and > with HTML-safe equivalents
+        const sanitizedText = text
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/&/g, '&amp;');
+
         this.hoverPoint.tooltip = `<div class="tooltip-json-container">
         ${imageHTML}
         <div class="tooltip-json-text">
-          ${text}
+          ${sanitizedText}
         </div>
       </div>`;
       } catch (e) {
