@@ -483,8 +483,9 @@ export function updateHighlightPoint(this: Embedding) {
   updatePopperTooltip(
     this.tooltipTop,
     oldHighlightPoint.node()! as unknown as HTMLElement,
-    this.hoverPoint.prompt,
-    'top'
+    this.hoverPoint.tooltip,
+    'top',
+    null
   );
 }
 
