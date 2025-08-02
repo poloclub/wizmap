@@ -345,3 +345,15 @@ export const yieldToMain = () => {
     setTimeout(resolve, 0);
   });
 };
+
+/**
+ * Joins two path segments, ensuring there is exactly one slash between them
+ * if segment1 does not already end with a slash.
+ */
+export const joinPath = (segment1: string, segment2: string) => {
+  if (segment1.endsWith('/')) {
+    return segment1 + segment2;
+  } else {
+    return segment1 + '/' + segment2;
+  }
+};

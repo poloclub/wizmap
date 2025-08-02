@@ -4,7 +4,7 @@ import type {
   PromptPoint
 } from '../../types/embedding-types';
 import d3 from '../../utils/d3-import';
-import { rgbToHex, timeit } from '../../utils/utils';
+import { joinPath, rgbToHex, timeit } from '../../utils/utils';
 import type { Embedding } from './Embedding';
 import { updatePopperTooltip } from './EmbeddingLabel';
 import fragmentShader from './shaders/point.frag?raw';
@@ -545,7 +545,10 @@ export function highlightPoint(
   if (this.gridData?.image !== undefined) {
     if (this.gridData?.image.imageGroup == this.hoverPoint.groupID) {
       this.hoverPoint.tooltip = `<img class="tooltip-image"
-        src="${this.gridData?.image.imageURLPrefix + this.hoverPoint.prompt}"
+        src="${joinPath(
+          this.gridData?.image.imageURLPrefix || '',
+          this.hoverPoint.prompt
+        )}"
       >`;
     }
   }
@@ -570,9 +573,10 @@ export function highlightPoint(
           imageSrc = jsonData[imageKey];
           if (imageSrc) {
             imageHTML = `<div class="tooltip-image-container">
-          <img class="tooltip-image" src="${
-            (this.gridData?.jsonPoint.imageURLPrefix || '') + imageSrc
-          }"></div>`;
+          <img class="tooltip-image" src="${joinPath(
+            this.gridData?.jsonPoint.imageURLPrefix || '',
+            imageSrc
+          )}"></div>`;
           }
         }
 

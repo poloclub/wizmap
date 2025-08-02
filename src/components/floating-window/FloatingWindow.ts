@@ -15,8 +15,7 @@ import type {
   HighlightedPromptPoint
 } from '../../types/embedding-types';
 import d3 from '../../utils/d3-import';
-import { getLatoTextWidth } from '../../utils/text-width';
-import { getContrastRatio, round } from '../../utils/utils';
+import { joinPath } from '../../utils/utils';
 
 interface FormattedSection {
   type: 'text' | 'image' | 'link';
@@ -127,7 +126,7 @@ export class FloatingWindow {
       gridData.image !== undefined &&
       gridData.image.imageGroup == point.groupID
     ) {
-      const imageURL = gridData.image.imageURLPrefix + point.prompt;
+      const imageURL = joinPath(gridData.image.imageURLPrefix, point.prompt);
       sections.push({
         type: 'image',
         header: 'Image',
@@ -153,7 +152,7 @@ export class FloatingWindow {
           gridData.jsonPoint.largeImageURLPrefix ||
           gridData.jsonPoint.imageURLPrefix;
         if (imageKey && imageURLPrefix) {
-          const image = imageURLPrefix + jsonData[imageKey];
+          const image = joinPath(imageURLPrefix, jsonData[imageKey]);
           sections.push({
             type: 'image',
             header: 'Image',
